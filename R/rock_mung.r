@@ -42,7 +42,8 @@ rock.wordfreq <- table(rock.words)
 
 lit <- llply(lit, function(x) aggregate(as.numeric(x[, 2]) ~ x[, 1], FUN = sum))
 rock.matrix <- lith.matrix(lit)
-comp.tr <- ilr(rock.matrix)
+rock.matrix <- rowSums(t(apply(rock.matrix, 1, function(x) x / sum(x))))
+comp.tr <- ilr(rock.matrix)  # isometric log ratio transform
 # to read coefs from a reg, do ilrInv to the coefs given comp.tr
 # i.e. ilrInv(coefs, x = comp.tr)
 # turns out this matrix is super big and relatively not helpful
@@ -59,13 +60,17 @@ sho.words <- llply(sho.words, function(x)
                    laply(x, function(y) paste0(y, collapse = ' ')))
 sho <- Map(function(x, y) {x[, 1] <- y; x}, lit, sho.words)
 sho <- llply(sho, function(x) aggregate(as.numeric(x[, 2]) ~ x[, 1], FUN = sum))
-short.matrix <- lith.matrix(sho)
+short.matrix <- lith.matrix(sho)  
+short.matrix <- t(apply(short.matrix, 1, function(x) x / sum(x)))
+shcm.tr <- ilr(short.matrix)  # isometric log ratio transform
 #table(Reduce(c, str_split(unique(Reduce(c, sho.words)), ' ')))
 
 # i still think there are too many lithology types
 # can i do better than this?
 #   colors?
 #   similar words (e.g. shale, shaly)
+still.words <- table(Reduce(c, str_split(colnames(short.matrix), ' ')))
+
 
 
 
