@@ -1,3 +1,4 @@
+# make lithology occurrence matrix
 lith.matrix <- function(lit) {
   rock.desc <- unique(Reduce(c, llply(lit, function(x) x[, 1])))
   # make composition matrix
@@ -15,3 +16,12 @@ lith.matrix <- function(lit) {
   rock.matrix
 }
 
+# replace words in lith desc with one word
+wordrep <- function(dec, wordd) {
+  out <- llply(dec, function(y) 
+               llply(y, function(x) {
+                       w <- x %in% wordd
+                       x[w] <- wordd[1]
+                       x}))
+  out
+}

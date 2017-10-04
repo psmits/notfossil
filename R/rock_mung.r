@@ -40,9 +40,29 @@ rock.words <- Reduce(c, str_split(rock.desc, ' '))
 rock.word <- unique(rock.words)
 rock.wordfreq <- table(rock.words)
 
+# cull unhelpful descriptions
+bad <- c('igneous', 'volcanic', 'metamorphic', 'chemical',
+         'anhydrite', 'evaporite', 'halite')
+dec <- llply(lit, function(x) str_split(x[, 1], ' '))
+torm <- llply(dec, function(y) laply(y, function(x) any(bad %in% x)))
+lit <- Map(function(x, y) x[!y, , drop = FALSE], x = lit, y = torm)
+lit <- lit[laply(lit, nrow) > 0]
+
+# synonymize some words
+dec <- llply(lit, function(x) str_split(x[, 1], ' '))
+dec <- wordrep(dec, c('green', 'greenish'))
+dec <- wordrep(dec, c('red', 'reddish'))
+dec <- wordrep(dec, c('dolomite', 'dolomitic'))
+dec <- wordrep(dec, c('chert', 'cherty'))
+dec <- wordrep(dec, c('sandstone', 'sand', 'sandy'))
+dec <- wordrep(dec, c('shale', 'shaly', 'shaley'))
+dec <- wordrep(dec, c('siltstone', 'silty'))
+dec <- llply(dec, function(y) laply(y, function(x) paste0(x, collapse = ' ')))
+lit <- Map(function(x, y) {x[, 1] <- y; x}, lit, dec)
+
 lit <- llply(lit, function(x) aggregate(as.numeric(x[, 2]) ~ x[, 1], FUN = sum))
 rock.matrix <- lith.matrix(lit)
-rock.matrix <- rowSums(t(apply(rock.matrix, 1, function(x) x / sum(x))))
+rock.matrix <- t(apply(rock.matrix, 1, function(x) x / sum(x)))
 comp.tr <- ilr(rock.matrix)  # isometric log ratio transform
 # to read coefs from a reg, do ilrInv to the coefs given comp.tr
 # i.e. ilrInv(coefs, x = comp.tr)
@@ -70,8 +90,8 @@ shcm.tr <- ilr(short.matrix)  # isometric log ratio transform
 #   colors?
 #   similar words (e.g. shale, shaly)
 still.words <- table(Reduce(c, str_split(colnames(short.matrix), ' ')))
-
-
+colnames(short.matrix)
+table(colSums(apply(short.matrix, 2, function(x) x != 0)))
 
 
 ## top, bottom age est; continuous time model
