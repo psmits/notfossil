@@ -182,4 +182,4 @@ to.trop <- (bot.temp == 1 & top.temp == 0) * 1
 # difference between b_age and t_age
 #   the plng and plat variables follow this time model
 dr.col <- (strat.ord$b_age - strat.ord$t_age)
-dr.col <- arm:rescale(log(dr.col))
+dr.col <- arm::rescale(log(dr.col))
