@@ -8,6 +8,7 @@ library(geosphere)
 #library(rpart)
 
 source('download_scrap.r')
+source('fossil_functions.r')
 
 
 # genus id numbers
@@ -55,7 +56,9 @@ for(ii in seq(length(colec.unit))) {
   fossils$unit_id[fossils$collection_no %in% colec.unit[[ii]]] <- nn[ii]
 }
 
-
-not.enough <- fossils[fossils$phylum == '' | fossils$class == '', taxonomy]
 # some of the orders missing phylum/class are easy to fix
-# trilobite group, radiolarians, brach relatives
+fossils <- clean.taxon(fossils)
+
+
+by.unit <- split(fossils, fossils$unit_id)
+unit.counts <- llply(by.unit, function(x) table(x$order))
