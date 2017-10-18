@@ -1,4 +1,5 @@
 library(rstanarm)
+library(reshape2)
 library(arm)
 library(plyr)
 library(stringr)
@@ -62,3 +63,11 @@ fossils <- clean.taxon(fossils)
 
 by.unit <- split(fossils, fossils$unit_id)
 unit.counts <- llply(by.unit, function(x) table(x$order))
+
+taxon.count.unit <- melt(unit.counts)
+taxon.count.unit[, 1] <- as.character(taxon.count.unit[, 1])
+
+mm <- match(taxon.count.unit[, 1], fossils$order)
+tcu <- data.frame(fossils[mm, taxonomy[1:2]], taxon.count.unit, 
+                  stringsAsFactors = FALSE)
+
