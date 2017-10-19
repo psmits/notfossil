@@ -29,12 +29,12 @@ data {
   int p[C];  // phylum membership
 }
 parameters {
-  # horseshoe prior on effects of unit covariates
+  // horseshoe prior on effects of unit covariates
   vector[K] beta_theta;
   vector<lower=0>[K] shrink_theta_local;
   real<lower=0> shrink_theta_global;
   
-  # horseshoe prior on effects of unit covariates
+  // horseshoe prior on effects of unit covariates
   vector[K] beta_lambda;
   vector<lower=0>[K] shrink_lambda_local;
   real<lower=0> shrink_lambda_global;
@@ -51,17 +51,17 @@ transformed parameters {
   vector<lower=0, upper=1>[Nz] theta;
   vector<lower=0>[Nnz] lambda;
 
-  theta = inv_logit(X * beta_theta);
+  theta = inv_logit(X[uz, ] * beta_theta);
 
-  lambda = exp(X * beta_lambda + h1[o]);
+  lambda = exp(X[unz, ] * beta_lambda + h1[o]);
 }
 model {
-  # horseshoe prior on effects of unit covariates
+  // horseshoe prior on effects of unit covariates
   beta_theta ~ normal(0, shrink_theta_local * shrink_theta_global);
   shrink_theta_local ~ cauchy(0, 1);
   shrink_theta_global ~ cauchy(0, 1);
 
-  # horseshoe prior on effects of unit covariates
+  // horseshoe prior on effects of unit covariates
   beta_lambda ~ normal(0, shrink_lambda_local * shrink_lambda_global);
   shrink_lambda_local ~ cauchy(0, 1);
   shrink_lambda_global ~ cauchy(0, 1);
