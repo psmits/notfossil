@@ -176,6 +176,9 @@ process.strat <- function(strat.ord) {
   dr.col <- arm::rescale(log(dr.col))
 
 
+  # subsurface
+  subsurf <- (so$outcrop == 'subsurface') * 1
+
 
   clean.data <- list(unit.id = rownames(rock.fossil),
                      fossils = rock.fossil, 
@@ -187,7 +190,8 @@ process.strat <- function(strat.ord) {
                      change = loc.ch,
                      location = list(top.temp = top.temp, bot.temp = bot.temp, 
                                      cross.eq = cros.eq, switches = swit),
-                     duration = dr.col)
+                     duration = dr.col,
+                     subsuface = subsurf)
 
   clean.data
 }

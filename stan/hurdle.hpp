@@ -22,7 +22,7 @@ static int current_statement_begin__;
 stan::io::program_reader prog_reader__() {
     stan::io::program_reader reader;
     reader.add_event(0, 0, "start", "../projects/not_fossil/stan/hurdle.stan");
-    reader.add_event(45, 45, "end", "../projects/not_fossil/stan/hurdle.stan");
+    reader.add_event(76, 76, "end", "../projects/not_fossil/stan/hurdle.stan");
     return reader;
 }
 
@@ -75,11 +75,21 @@ struct num_zero_functor__ {
 
 class hurdle_model : public prob_grad {
 private:
-    int N;
-    vector<int> y;
-    int N0;
-    int Ngt0;
-    vector<int> y_nz;
+    int Nz;
+    vector<int> yz;
+    vector<int> uz;
+    int Nnz;
+    vector<int> ynz;
+    vector<int> unz;
+    int Nu;
+    int K;
+    matrix_d X;
+    int O;
+    vector<int> o;
+    int C;
+    vector<int> c;
+    int P;
+    vector<int> p;
 public:
     hurdle_model(stan::io::var_context& context__,
         std::ostream* pstream__ = 0)
@@ -115,88 +125,203 @@ public:
         // initialize member variables
         try {
             current_statement_begin__ = 12;
-            context__.validate_dims("data initialization", "N", "int", context__.to_vec());
-            N = int(0);
-            vals_i__ = context__.vals_i("N");
+            context__.validate_dims("data initialization", "Nz", "int", context__.to_vec());
+            Nz = int(0);
+            vals_i__ = context__.vals_i("Nz");
             pos__ = 0;
-            N = vals_i__[pos__++];
+            Nz = vals_i__[pos__++];
             current_statement_begin__ = 13;
-            validate_non_negative_index("y", "N", N);
-            context__.validate_dims("data initialization", "y", "int", context__.to_vec(N));
-            validate_non_negative_index("y", "N", N);
-            y = std::vector<int>(N,int(0));
-            vals_i__ = context__.vals_i("y");
+            validate_non_negative_index("yz", "Nz", Nz);
+            context__.validate_dims("data initialization", "yz", "int", context__.to_vec(Nz));
+            validate_non_negative_index("yz", "Nz", Nz);
+            yz = std::vector<int>(Nz,int(0));
+            vals_i__ = context__.vals_i("yz");
             pos__ = 0;
-            size_t y_limit_0__ = N;
-            for (size_t i_0__ = 0; i_0__ < y_limit_0__; ++i_0__) {
-                y[i_0__] = vals_i__[pos__++];
+            size_t yz_limit_0__ = Nz;
+            for (size_t i_0__ = 0; i_0__ < yz_limit_0__; ++i_0__) {
+                yz[i_0__] = vals_i__[pos__++];
+            }
+            current_statement_begin__ = 14;
+            validate_non_negative_index("uz", "Nz", Nz);
+            context__.validate_dims("data initialization", "uz", "int", context__.to_vec(Nz));
+            validate_non_negative_index("uz", "Nz", Nz);
+            uz = std::vector<int>(Nz,int(0));
+            vals_i__ = context__.vals_i("uz");
+            pos__ = 0;
+            size_t uz_limit_0__ = Nz;
+            for (size_t i_0__ = 0; i_0__ < uz_limit_0__; ++i_0__) {
+                uz[i_0__] = vals_i__[pos__++];
+            }
+            current_statement_begin__ = 16;
+            context__.validate_dims("data initialization", "Nnz", "int", context__.to_vec());
+            Nnz = int(0);
+            vals_i__ = context__.vals_i("Nnz");
+            pos__ = 0;
+            Nnz = vals_i__[pos__++];
+            current_statement_begin__ = 17;
+            validate_non_negative_index("ynz", "Nnz", Nnz);
+            context__.validate_dims("data initialization", "ynz", "int", context__.to_vec(Nnz));
+            validate_non_negative_index("ynz", "Nnz", Nnz);
+            ynz = std::vector<int>(Nnz,int(0));
+            vals_i__ = context__.vals_i("ynz");
+            pos__ = 0;
+            size_t ynz_limit_0__ = Nnz;
+            for (size_t i_0__ = 0; i_0__ < ynz_limit_0__; ++i_0__) {
+                ynz[i_0__] = vals_i__[pos__++];
+            }
+            current_statement_begin__ = 18;
+            validate_non_negative_index("unz", "Nnz", Nnz);
+            context__.validate_dims("data initialization", "unz", "int", context__.to_vec(Nnz));
+            validate_non_negative_index("unz", "Nnz", Nnz);
+            unz = std::vector<int>(Nnz,int(0));
+            vals_i__ = context__.vals_i("unz");
+            pos__ = 0;
+            size_t unz_limit_0__ = Nnz;
+            for (size_t i_0__ = 0; i_0__ < unz_limit_0__; ++i_0__) {
+                unz[i_0__] = vals_i__[pos__++];
+            }
+            current_statement_begin__ = 20;
+            context__.validate_dims("data initialization", "Nu", "int", context__.to_vec());
+            Nu = int(0);
+            vals_i__ = context__.vals_i("Nu");
+            pos__ = 0;
+            Nu = vals_i__[pos__++];
+            current_statement_begin__ = 21;
+            context__.validate_dims("data initialization", "K", "int", context__.to_vec());
+            K = int(0);
+            vals_i__ = context__.vals_i("K");
+            pos__ = 0;
+            K = vals_i__[pos__++];
+            current_statement_begin__ = 22;
+            validate_non_negative_index("X", "Nu", Nu);
+            validate_non_negative_index("X", "K", K);
+            context__.validate_dims("data initialization", "X", "matrix_d", context__.to_vec(Nu,K));
+            validate_non_negative_index("X", "Nu", Nu);
+            validate_non_negative_index("X", "K", K);
+            X = matrix_d(static_cast<Eigen::VectorXd::Index>(Nu),static_cast<Eigen::VectorXd::Index>(K));
+            vals_r__ = context__.vals_r("X");
+            pos__ = 0;
+            size_t X_m_mat_lim__ = Nu;
+            size_t X_n_mat_lim__ = K;
+            for (size_t n_mat__ = 0; n_mat__ < X_n_mat_lim__; ++n_mat__) {
+                for (size_t m_mat__ = 0; m_mat__ < X_m_mat_lim__; ++m_mat__) {
+                    X(m_mat__,n_mat__) = vals_r__[pos__++];
+                }
+            }
+            current_statement_begin__ = 24;
+            context__.validate_dims("data initialization", "O", "int", context__.to_vec());
+            O = int(0);
+            vals_i__ = context__.vals_i("O");
+            pos__ = 0;
+            O = vals_i__[pos__++];
+            current_statement_begin__ = 25;
+            validate_non_negative_index("o", "Nnz", Nnz);
+            context__.validate_dims("data initialization", "o", "int", context__.to_vec(Nnz));
+            validate_non_negative_index("o", "Nnz", Nnz);
+            o = std::vector<int>(Nnz,int(0));
+            vals_i__ = context__.vals_i("o");
+            pos__ = 0;
+            size_t o_limit_0__ = Nnz;
+            for (size_t i_0__ = 0; i_0__ < o_limit_0__; ++i_0__) {
+                o[i_0__] = vals_i__[pos__++];
+            }
+            current_statement_begin__ = 26;
+            context__.validate_dims("data initialization", "C", "int", context__.to_vec());
+            C = int(0);
+            vals_i__ = context__.vals_i("C");
+            pos__ = 0;
+            C = vals_i__[pos__++];
+            current_statement_begin__ = 27;
+            validate_non_negative_index("c", "O", O);
+            context__.validate_dims("data initialization", "c", "int", context__.to_vec(O));
+            validate_non_negative_index("c", "O", O);
+            c = std::vector<int>(O,int(0));
+            vals_i__ = context__.vals_i("c");
+            pos__ = 0;
+            size_t c_limit_0__ = O;
+            for (size_t i_0__ = 0; i_0__ < c_limit_0__; ++i_0__) {
+                c[i_0__] = vals_i__[pos__++];
+            }
+            current_statement_begin__ = 28;
+            context__.validate_dims("data initialization", "P", "int", context__.to_vec());
+            P = int(0);
+            vals_i__ = context__.vals_i("P");
+            pos__ = 0;
+            P = vals_i__[pos__++];
+            current_statement_begin__ = 29;
+            validate_non_negative_index("p", "C", C);
+            context__.validate_dims("data initialization", "p", "int", context__.to_vec(C));
+            validate_non_negative_index("p", "C", C);
+            p = std::vector<int>(C,int(0));
+            vals_i__ = context__.vals_i("p");
+            pos__ = 0;
+            size_t p_limit_0__ = C;
+            for (size_t i_0__ = 0; i_0__ < p_limit_0__; ++i_0__) {
+                p[i_0__] = vals_i__[pos__++];
             }
 
             // validate, data variables
             current_statement_begin__ = 12;
-            check_greater_or_equal(function__,"N",N,0);
+            check_greater_or_equal(function__,"Nz",Nz,0);
             current_statement_begin__ = 13;
-            for (int k0__ = 0; k0__ < N; ++k0__) {
-                check_greater_or_equal(function__,"y[k0__]",y[k0__],0);
+            for (int k0__ = 0; k0__ < Nz; ++k0__) {
+                check_greater_or_equal(function__,"yz[k0__]",yz[k0__],0);
             }
-            // initialize data variables
+            current_statement_begin__ = 14;
             current_statement_begin__ = 16;
-            N0 = int(0);
-            stan::math::fill(N0, std::numeric_limits<int>::min());
+            check_greater_or_equal(function__,"Nnz",Nnz,0);
             current_statement_begin__ = 17;
-            Ngt0 = int(0);
-            stan::math::fill(Ngt0, std::numeric_limits<int>::min());
+            for (int k0__ = 0; k0__ < Nnz; ++k0__) {
+                check_greater_or_equal(function__,"ynz[k0__]",ynz[k0__],0);
+            }
             current_statement_begin__ = 18;
-            validate_non_negative_index("y_nz", "(N - num_zero(y, pstream__))", (N - num_zero(y, pstream__)));
-            y_nz = std::vector<int>((N - num_zero(y, pstream__)),int(0));
-            stan::math::fill(y_nz, std::numeric_limits<int>::min());
-
             current_statement_begin__ = 20;
-            stan::math::assign(N0, num_zero(y, pstream__));
             current_statement_begin__ = 21;
-            stan::math::assign(Ngt0, (N - N0));
-            {
-            current_statement_begin__ = 23;
-            int pos(0);
-            (void) pos;  // dummy to suppress unused var warning
-
-            stan::math::fill(pos, std::numeric_limits<int>::min());
-
-
+            current_statement_begin__ = 22;
             current_statement_begin__ = 24;
-            stan::math::assign(pos, 1);
             current_statement_begin__ = 25;
-            for (int n = 1; n <= N; ++n) {
+            current_statement_begin__ = 26;
+            current_statement_begin__ = 27;
+            current_statement_begin__ = 28;
+            current_statement_begin__ = 29;
+            // initialize data variables
 
-                current_statement_begin__ = 26;
-                if (as_bool(logical_neq(get_base1(y,n,"y",1),0))) {
-
-                    current_statement_begin__ = 27;
-                    stan::math::assign(get_base1_lhs(y_nz,pos,"y_nz",1), get_base1(y,n,"y",1));
-                    current_statement_begin__ = 28;
-                    stan::math::assign(pos, (pos + 1));
-                }
-            }
-            }
 
             // validate transformed data
-            current_statement_begin__ = 16;
-            check_greater_or_equal(function__,"N0",N0,0);
-            check_less_or_equal(function__,"N0",N0,N);
-            current_statement_begin__ = 17;
-            check_greater_or_equal(function__,"Ngt0",Ngt0,0);
-            check_less_or_equal(function__,"Ngt0",Ngt0,N);
-            current_statement_begin__ = 18;
-            for (int k0__ = 0; k0__ < (N - num_zero(y, pstream__)); ++k0__) {
-                check_greater_or_equal(function__,"y_nz[k0__]",y_nz[k0__],1);
-            }
 
             // validate, set parameter ranges
             num_params_r__ = 0U;
             param_ranges_i__.clear();
+            current_statement_begin__ = 32;
+            validate_non_negative_index("beta_theta", "K", K);
+            num_params_r__ += K;
+            current_statement_begin__ = 33;
+            validate_non_negative_index("shrink_theta_local", "K", K);
+            num_params_r__ += K;
             current_statement_begin__ = 34;
             ++num_params_r__;
-            current_statement_begin__ = 35;
+            current_statement_begin__ = 36;
+            validate_non_negative_index("beta_lambda", "K", K);
+            num_params_r__ += K;
+            current_statement_begin__ = 37;
+            validate_non_negative_index("shrink_lambda_local", "K", K);
+            num_params_r__ += K;
+            current_statement_begin__ = 38;
+            ++num_params_r__;
+            current_statement_begin__ = 40;
+            validate_non_negative_index("h1", "O", O);
+            num_params_r__ += O;
+            current_statement_begin__ = 41;
+            ++num_params_r__;
+            current_statement_begin__ = 42;
+            validate_non_negative_index("h2", "C", C);
+            num_params_r__ += C;
+            current_statement_begin__ = 43;
+            ++num_params_r__;
+            current_statement_begin__ = 44;
+            validate_non_negative_index("h3", "P", P);
+            num_params_r__ += P;
+            current_statement_begin__ = 45;
             ++num_params_r__;
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
@@ -218,30 +343,174 @@ public:
         std::vector<double> vals_r__;
         std::vector<int> vals_i__;
 
-        if (!(context__.contains_r("theta")))
-            throw std::runtime_error("variable theta missing");
-        vals_r__ = context__.vals_r("theta");
+        if (!(context__.contains_r("beta_theta")))
+            throw std::runtime_error("variable beta_theta missing");
+        vals_r__ = context__.vals_r("beta_theta");
         pos__ = 0U;
-        context__.validate_dims("initialization", "theta", "double", context__.to_vec());
-        double theta(0);
-        theta = vals_r__[pos__++];
+        validate_non_negative_index("beta_theta", "K", K);
+        context__.validate_dims("initialization", "beta_theta", "vector_d", context__.to_vec(K));
+        vector_d beta_theta(static_cast<Eigen::VectorXd::Index>(K));
+        for (int j1__ = 0U; j1__ < K; ++j1__)
+            beta_theta(j1__) = vals_r__[pos__++];
         try {
-            writer__.scalar_lub_unconstrain(0,1,theta);
+            writer__.vector_unconstrain(beta_theta);
         } catch (const std::exception& e) { 
-            throw std::runtime_error(std::string("Error transforming variable theta: ") + e.what());
+            throw std::runtime_error(std::string("Error transforming variable beta_theta: ") + e.what());
         }
 
-        if (!(context__.contains_r("lambda")))
-            throw std::runtime_error("variable lambda missing");
-        vals_r__ = context__.vals_r("lambda");
+        if (!(context__.contains_r("shrink_theta_local")))
+            throw std::runtime_error("variable shrink_theta_local missing");
+        vals_r__ = context__.vals_r("shrink_theta_local");
         pos__ = 0U;
-        context__.validate_dims("initialization", "lambda", "double", context__.to_vec());
-        double lambda(0);
-        lambda = vals_r__[pos__++];
+        validate_non_negative_index("shrink_theta_local", "K", K);
+        context__.validate_dims("initialization", "shrink_theta_local", "vector_d", context__.to_vec(K));
+        vector_d shrink_theta_local(static_cast<Eigen::VectorXd::Index>(K));
+        for (int j1__ = 0U; j1__ < K; ++j1__)
+            shrink_theta_local(j1__) = vals_r__[pos__++];
         try {
-            writer__.scalar_lb_unconstrain(0,lambda);
+            writer__.vector_lb_unconstrain(0,shrink_theta_local);
         } catch (const std::exception& e) { 
-            throw std::runtime_error(std::string("Error transforming variable lambda: ") + e.what());
+            throw std::runtime_error(std::string("Error transforming variable shrink_theta_local: ") + e.what());
+        }
+
+        if (!(context__.contains_r("shrink_theta_global")))
+            throw std::runtime_error("variable shrink_theta_global missing");
+        vals_r__ = context__.vals_r("shrink_theta_global");
+        pos__ = 0U;
+        context__.validate_dims("initialization", "shrink_theta_global", "double", context__.to_vec());
+        double shrink_theta_global(0);
+        shrink_theta_global = vals_r__[pos__++];
+        try {
+            writer__.scalar_lb_unconstrain(0,shrink_theta_global);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable shrink_theta_global: ") + e.what());
+        }
+
+        if (!(context__.contains_r("beta_lambda")))
+            throw std::runtime_error("variable beta_lambda missing");
+        vals_r__ = context__.vals_r("beta_lambda");
+        pos__ = 0U;
+        validate_non_negative_index("beta_lambda", "K", K);
+        context__.validate_dims("initialization", "beta_lambda", "vector_d", context__.to_vec(K));
+        vector_d beta_lambda(static_cast<Eigen::VectorXd::Index>(K));
+        for (int j1__ = 0U; j1__ < K; ++j1__)
+            beta_lambda(j1__) = vals_r__[pos__++];
+        try {
+            writer__.vector_unconstrain(beta_lambda);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable beta_lambda: ") + e.what());
+        }
+
+        if (!(context__.contains_r("shrink_lambda_local")))
+            throw std::runtime_error("variable shrink_lambda_local missing");
+        vals_r__ = context__.vals_r("shrink_lambda_local");
+        pos__ = 0U;
+        validate_non_negative_index("shrink_lambda_local", "K", K);
+        context__.validate_dims("initialization", "shrink_lambda_local", "vector_d", context__.to_vec(K));
+        vector_d shrink_lambda_local(static_cast<Eigen::VectorXd::Index>(K));
+        for (int j1__ = 0U; j1__ < K; ++j1__)
+            shrink_lambda_local(j1__) = vals_r__[pos__++];
+        try {
+            writer__.vector_lb_unconstrain(0,shrink_lambda_local);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable shrink_lambda_local: ") + e.what());
+        }
+
+        if (!(context__.contains_r("shrink_lambda_global")))
+            throw std::runtime_error("variable shrink_lambda_global missing");
+        vals_r__ = context__.vals_r("shrink_lambda_global");
+        pos__ = 0U;
+        context__.validate_dims("initialization", "shrink_lambda_global", "double", context__.to_vec());
+        double shrink_lambda_global(0);
+        shrink_lambda_global = vals_r__[pos__++];
+        try {
+            writer__.scalar_lb_unconstrain(0,shrink_lambda_global);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable shrink_lambda_global: ") + e.what());
+        }
+
+        if (!(context__.contains_r("h1")))
+            throw std::runtime_error("variable h1 missing");
+        vals_r__ = context__.vals_r("h1");
+        pos__ = 0U;
+        validate_non_negative_index("h1", "O", O);
+        context__.validate_dims("initialization", "h1", "vector_d", context__.to_vec(O));
+        vector_d h1(static_cast<Eigen::VectorXd::Index>(O));
+        for (int j1__ = 0U; j1__ < O; ++j1__)
+            h1(j1__) = vals_r__[pos__++];
+        try {
+            writer__.vector_unconstrain(h1);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable h1: ") + e.what());
+        }
+
+        if (!(context__.contains_r("scale_h1")))
+            throw std::runtime_error("variable scale_h1 missing");
+        vals_r__ = context__.vals_r("scale_h1");
+        pos__ = 0U;
+        context__.validate_dims("initialization", "scale_h1", "double", context__.to_vec());
+        double scale_h1(0);
+        scale_h1 = vals_r__[pos__++];
+        try {
+            writer__.scalar_lb_unconstrain(0,scale_h1);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable scale_h1: ") + e.what());
+        }
+
+        if (!(context__.contains_r("h2")))
+            throw std::runtime_error("variable h2 missing");
+        vals_r__ = context__.vals_r("h2");
+        pos__ = 0U;
+        validate_non_negative_index("h2", "C", C);
+        context__.validate_dims("initialization", "h2", "vector_d", context__.to_vec(C));
+        vector_d h2(static_cast<Eigen::VectorXd::Index>(C));
+        for (int j1__ = 0U; j1__ < C; ++j1__)
+            h2(j1__) = vals_r__[pos__++];
+        try {
+            writer__.vector_unconstrain(h2);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable h2: ") + e.what());
+        }
+
+        if (!(context__.contains_r("scale_h2")))
+            throw std::runtime_error("variable scale_h2 missing");
+        vals_r__ = context__.vals_r("scale_h2");
+        pos__ = 0U;
+        context__.validate_dims("initialization", "scale_h2", "double", context__.to_vec());
+        double scale_h2(0);
+        scale_h2 = vals_r__[pos__++];
+        try {
+            writer__.scalar_lb_unconstrain(0,scale_h2);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable scale_h2: ") + e.what());
+        }
+
+        if (!(context__.contains_r("h3")))
+            throw std::runtime_error("variable h3 missing");
+        vals_r__ = context__.vals_r("h3");
+        pos__ = 0U;
+        validate_non_negative_index("h3", "P", P);
+        context__.validate_dims("initialization", "h3", "vector_d", context__.to_vec(P));
+        vector_d h3(static_cast<Eigen::VectorXd::Index>(P));
+        for (int j1__ = 0U; j1__ < P; ++j1__)
+            h3(j1__) = vals_r__[pos__++];
+        try {
+            writer__.vector_unconstrain(h3);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable h3: ") + e.what());
+        }
+
+        if (!(context__.contains_r("scale_h3")))
+            throw std::runtime_error("variable scale_h3 missing");
+        vals_r__ = context__.vals_r("scale_h3");
+        pos__ = 0U;
+        context__.validate_dims("initialization", "scale_h3", "double", context__.to_vec());
+        double scale_h3(0);
+        scale_h3 = vals_r__[pos__++];
+        try {
+            writer__.scalar_lb_unconstrain(0,scale_h3);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable scale_h3: ") + e.what());
         }
 
         params_r__ = writer__.data_r();
@@ -275,38 +544,169 @@ public:
             // model parameters
             stan::io::reader<T__> in__(params_r__,params_i__);
 
-            T__ theta;
-            (void) theta;  // dummy to suppress unused var warning
+            Eigen::Matrix<T__,Eigen::Dynamic,1>  beta_theta;
+            (void) beta_theta;  // dummy to suppress unused var warning
             if (jacobian__)
-                theta = in__.scalar_lub_constrain(0,1,lp__);
+                beta_theta = in__.vector_constrain(K,lp__);
             else
-                theta = in__.scalar_lub_constrain(0,1);
+                beta_theta = in__.vector_constrain(K);
 
-            T__ lambda;
-            (void) lambda;  // dummy to suppress unused var warning
+            Eigen::Matrix<T__,Eigen::Dynamic,1>  shrink_theta_local;
+            (void) shrink_theta_local;  // dummy to suppress unused var warning
             if (jacobian__)
-                lambda = in__.scalar_lb_constrain(0,lp__);
+                shrink_theta_local = in__.vector_lb_constrain(0,K,lp__);
             else
-                lambda = in__.scalar_lb_constrain(0);
+                shrink_theta_local = in__.vector_lb_constrain(0,K);
+
+            T__ shrink_theta_global;
+            (void) shrink_theta_global;  // dummy to suppress unused var warning
+            if (jacobian__)
+                shrink_theta_global = in__.scalar_lb_constrain(0,lp__);
+            else
+                shrink_theta_global = in__.scalar_lb_constrain(0);
+
+            Eigen::Matrix<T__,Eigen::Dynamic,1>  beta_lambda;
+            (void) beta_lambda;  // dummy to suppress unused var warning
+            if (jacobian__)
+                beta_lambda = in__.vector_constrain(K,lp__);
+            else
+                beta_lambda = in__.vector_constrain(K);
+
+            Eigen::Matrix<T__,Eigen::Dynamic,1>  shrink_lambda_local;
+            (void) shrink_lambda_local;  // dummy to suppress unused var warning
+            if (jacobian__)
+                shrink_lambda_local = in__.vector_lb_constrain(0,K,lp__);
+            else
+                shrink_lambda_local = in__.vector_lb_constrain(0,K);
+
+            T__ shrink_lambda_global;
+            (void) shrink_lambda_global;  // dummy to suppress unused var warning
+            if (jacobian__)
+                shrink_lambda_global = in__.scalar_lb_constrain(0,lp__);
+            else
+                shrink_lambda_global = in__.scalar_lb_constrain(0);
+
+            Eigen::Matrix<T__,Eigen::Dynamic,1>  h1;
+            (void) h1;  // dummy to suppress unused var warning
+            if (jacobian__)
+                h1 = in__.vector_constrain(O,lp__);
+            else
+                h1 = in__.vector_constrain(O);
+
+            T__ scale_h1;
+            (void) scale_h1;  // dummy to suppress unused var warning
+            if (jacobian__)
+                scale_h1 = in__.scalar_lb_constrain(0,lp__);
+            else
+                scale_h1 = in__.scalar_lb_constrain(0);
+
+            Eigen::Matrix<T__,Eigen::Dynamic,1>  h2;
+            (void) h2;  // dummy to suppress unused var warning
+            if (jacobian__)
+                h2 = in__.vector_constrain(C,lp__);
+            else
+                h2 = in__.vector_constrain(C);
+
+            T__ scale_h2;
+            (void) scale_h2;  // dummy to suppress unused var warning
+            if (jacobian__)
+                scale_h2 = in__.scalar_lb_constrain(0,lp__);
+            else
+                scale_h2 = in__.scalar_lb_constrain(0);
+
+            Eigen::Matrix<T__,Eigen::Dynamic,1>  h3;
+            (void) h3;  // dummy to suppress unused var warning
+            if (jacobian__)
+                h3 = in__.vector_constrain(P,lp__);
+            else
+                h3 = in__.vector_constrain(P);
+
+            T__ scale_h3;
+            (void) scale_h3;  // dummy to suppress unused var warning
+            if (jacobian__)
+                scale_h3 = in__.scalar_lb_constrain(0,lp__);
+            else
+                scale_h3 = in__.scalar_lb_constrain(0);
 
 
             // transformed parameters
+            current_statement_begin__ = 48;
+            validate_non_negative_index("theta", "Nz", Nz);
+            Eigen::Matrix<T__,Eigen::Dynamic,1>  theta(static_cast<Eigen::VectorXd::Index>(Nz));
+            (void) theta;  // dummy to suppress unused var warning
+
+            stan::math::initialize(theta, DUMMY_VAR__);
+            stan::math::fill(theta,DUMMY_VAR__);
+            current_statement_begin__ = 49;
+            validate_non_negative_index("lambda", "Nnz", Nnz);
+            Eigen::Matrix<T__,Eigen::Dynamic,1>  lambda(static_cast<Eigen::VectorXd::Index>(Nnz));
+            (void) lambda;  // dummy to suppress unused var warning
+
+            stan::math::initialize(lambda, DUMMY_VAR__);
+            stan::math::fill(lambda,DUMMY_VAR__);
 
 
+            current_statement_begin__ = 51;
+            stan::math::assign(theta, inv_logit(multiply(X,beta_theta)));
+            current_statement_begin__ = 53;
+            stan::math::assign(lambda, exp(add(multiply(X,beta_lambda),stan::model::rvalue(h1, stan::model::cons_list(stan::model::index_multi(o), stan::model::nil_index_list()), "h1"))));
 
             // validate transformed parameters
+            for (int i0__ = 0; i0__ < Nz; ++i0__) {
+                if (stan::math::is_uninitialized(theta(i0__))) {
+                    std::stringstream msg__;
+                    msg__ << "Undefined transformed parameter: theta" << '[' << i0__ << ']';
+                    throw std::runtime_error(msg__.str());
+                }
+            }
+            for (int i0__ = 0; i0__ < Nnz; ++i0__) {
+                if (stan::math::is_uninitialized(lambda(i0__))) {
+                    std::stringstream msg__;
+                    msg__ << "Undefined transformed parameter: lambda" << '[' << i0__ << ']';
+                    throw std::runtime_error(msg__.str());
+                }
+            }
 
             const char* function__ = "validate transformed params";
             (void) function__;  // dummy to suppress unused var warning
+            current_statement_begin__ = 48;
+            check_greater_or_equal(function__,"theta",theta,0);
+            check_less_or_equal(function__,"theta",theta,1);
+            current_statement_begin__ = 49;
+            check_greater_or_equal(function__,"lambda",lambda,0);
 
             // model body
 
-            current_statement_begin__ = 40;
-            lp_accum__.add(binomial_log<propto__>(N0, N, theta));
-            current_statement_begin__ = 41;
-            lp_accum__.add(poisson_log<propto__>(y_nz, lambda));
-            current_statement_begin__ = 42;
-            lp_accum__.add((-(Ngt0) * log1m_exp(-(lambda))));
+            current_statement_begin__ = 56;
+            lp_accum__.add(normal_log<propto__>(beta_theta, 0, multiply(shrink_theta_local,shrink_theta_global)));
+            current_statement_begin__ = 57;
+            lp_accum__.add(cauchy_log<propto__>(shrink_theta_local, 0, 1));
+            current_statement_begin__ = 58;
+            lp_accum__.add(cauchy_log<propto__>(shrink_theta_global, 0, 1));
+            current_statement_begin__ = 60;
+            lp_accum__.add(normal_log<propto__>(beta_lambda, 0, multiply(shrink_lambda_local,shrink_lambda_global)));
+            current_statement_begin__ = 61;
+            lp_accum__.add(cauchy_log<propto__>(shrink_lambda_local, 0, 1));
+            current_statement_begin__ = 62;
+            lp_accum__.add(cauchy_log<propto__>(shrink_lambda_global, 0, 1));
+            current_statement_begin__ = 64;
+            lp_accum__.add(normal_log<propto__>(h1, stan::model::rvalue(h2, stan::model::cons_list(stan::model::index_multi(c), stan::model::nil_index_list()), "h2"), scale_h1));
+            current_statement_begin__ = 65;
+            lp_accum__.add(normal_log<propto__>(scale_h1, 0, 1));
+            current_statement_begin__ = 66;
+            lp_accum__.add(normal_log<propto__>(h2, stan::model::rvalue(h3, stan::model::cons_list(stan::model::index_multi(p), stan::model::nil_index_list()), "h3"), scale_h2));
+            current_statement_begin__ = 67;
+            lp_accum__.add(normal_log<propto__>(scale_h2, 0, 1));
+            current_statement_begin__ = 68;
+            lp_accum__.add(normal_log<propto__>(h3, 0, scale_h3));
+            current_statement_begin__ = 69;
+            lp_accum__.add(normal_log<propto__>(scale_h3, 0, 1));
+            current_statement_begin__ = 71;
+            lp_accum__.add(bernoulli_log<propto__>(yz, theta));
+            current_statement_begin__ = 72;
+            lp_accum__.add(poisson_log<propto__>(ynz, lambda));
+            current_statement_begin__ = 73;
+            lp_accum__.add(multiply(-(Nnz),log1m_exp(minus(lambda))));
 
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
@@ -333,6 +733,18 @@ public:
 
     void get_param_names(std::vector<std::string>& names__) const {
         names__.resize(0);
+        names__.push_back("beta_theta");
+        names__.push_back("shrink_theta_local");
+        names__.push_back("shrink_theta_global");
+        names__.push_back("beta_lambda");
+        names__.push_back("shrink_lambda_local");
+        names__.push_back("shrink_lambda_global");
+        names__.push_back("h1");
+        names__.push_back("scale_h1");
+        names__.push_back("h2");
+        names__.push_back("scale_h2");
+        names__.push_back("h3");
+        names__.push_back("scale_h3");
         names__.push_back("theta");
         names__.push_back("lambda");
     }
@@ -342,8 +754,41 @@ public:
         dimss__.resize(0);
         std::vector<size_t> dims__;
         dims__.resize(0);
+        dims__.push_back(K);
         dimss__.push_back(dims__);
         dims__.resize(0);
+        dims__.push_back(K);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(K);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(K);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(O);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(C);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(P);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(Nz);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(Nnz);
         dimss__.push_back(dims__);
     }
 
@@ -360,10 +805,44 @@ public:
         static const char* function__ = "hurdle_model_namespace::write_array";
         (void) function__;  // dummy to suppress unused var warning
         // read-transform, write parameters
-        double theta = in__.scalar_lub_constrain(0,1);
-        double lambda = in__.scalar_lb_constrain(0);
-        vars__.push_back(theta);
-        vars__.push_back(lambda);
+        vector_d beta_theta = in__.vector_constrain(K);
+        vector_d shrink_theta_local = in__.vector_lb_constrain(0,K);
+        double shrink_theta_global = in__.scalar_lb_constrain(0);
+        vector_d beta_lambda = in__.vector_constrain(K);
+        vector_d shrink_lambda_local = in__.vector_lb_constrain(0,K);
+        double shrink_lambda_global = in__.scalar_lb_constrain(0);
+        vector_d h1 = in__.vector_constrain(O);
+        double scale_h1 = in__.scalar_lb_constrain(0);
+        vector_d h2 = in__.vector_constrain(C);
+        double scale_h2 = in__.scalar_lb_constrain(0);
+        vector_d h3 = in__.vector_constrain(P);
+        double scale_h3 = in__.scalar_lb_constrain(0);
+            for (int k_0__ = 0; k_0__ < K; ++k_0__) {
+            vars__.push_back(beta_theta[k_0__]);
+            }
+            for (int k_0__ = 0; k_0__ < K; ++k_0__) {
+            vars__.push_back(shrink_theta_local[k_0__]);
+            }
+        vars__.push_back(shrink_theta_global);
+            for (int k_0__ = 0; k_0__ < K; ++k_0__) {
+            vars__.push_back(beta_lambda[k_0__]);
+            }
+            for (int k_0__ = 0; k_0__ < K; ++k_0__) {
+            vars__.push_back(shrink_lambda_local[k_0__]);
+            }
+        vars__.push_back(shrink_lambda_global);
+            for (int k_0__ = 0; k_0__ < O; ++k_0__) {
+            vars__.push_back(h1[k_0__]);
+            }
+        vars__.push_back(scale_h1);
+            for (int k_0__ = 0; k_0__ < C; ++k_0__) {
+            vars__.push_back(h2[k_0__]);
+            }
+        vars__.push_back(scale_h2);
+            for (int k_0__ = 0; k_0__ < P; ++k_0__) {
+            vars__.push_back(h3[k_0__]);
+            }
+        vars__.push_back(scale_h3);
 
         if (!include_tparams__) return;
         // declare and define transformed parameters
@@ -375,12 +854,41 @@ public:
         (void) DUMMY_VAR__;  // suppress unused var warning
 
         try {
+            current_statement_begin__ = 48;
+            validate_non_negative_index("theta", "Nz", Nz);
+            vector_d theta(static_cast<Eigen::VectorXd::Index>(Nz));
+            (void) theta;  // dummy to suppress unused var warning
+
+            stan::math::initialize(theta, std::numeric_limits<double>::quiet_NaN());
+            stan::math::fill(theta,DUMMY_VAR__);
+            current_statement_begin__ = 49;
+            validate_non_negative_index("lambda", "Nnz", Nnz);
+            vector_d lambda(static_cast<Eigen::VectorXd::Index>(Nnz));
+            (void) lambda;  // dummy to suppress unused var warning
+
+            stan::math::initialize(lambda, std::numeric_limits<double>::quiet_NaN());
+            stan::math::fill(lambda,DUMMY_VAR__);
 
 
+            current_statement_begin__ = 51;
+            stan::math::assign(theta, inv_logit(multiply(X,beta_theta)));
+            current_statement_begin__ = 53;
+            stan::math::assign(lambda, exp(add(multiply(X,beta_lambda),stan::model::rvalue(h1, stan::model::cons_list(stan::model::index_multi(o), stan::model::nil_index_list()), "h1"))));
 
             // validate transformed parameters
+            current_statement_begin__ = 48;
+            check_greater_or_equal(function__,"theta",theta,0);
+            check_less_or_equal(function__,"theta",theta,1);
+            current_statement_begin__ = 49;
+            check_greater_or_equal(function__,"lambda",lambda,0);
 
             // write transformed parameters
+            for (int k_0__ = 0; k_0__ < Nz; ++k_0__) {
+            vars__.push_back(theta[k_0__]);
+            }
+            for (int k_0__ = 0; k_0__ < Nnz; ++k_0__) {
+            vars__.push_back(lambda[k_0__]);
+            }
 
             if (!include_gqs__) return;
             // declare and define generated quantities
@@ -424,14 +932,68 @@ public:
                                  bool include_tparams__ = true,
                                  bool include_gqs__ = true) const {
         std::stringstream param_name_stream__;
+        for (int k_0__ = 1; k_0__ <= K; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "beta_theta" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= K; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "shrink_theta_local" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
         param_name_stream__.str(std::string());
-        param_name_stream__ << "theta";
+        param_name_stream__ << "shrink_theta_global";
         param_names__.push_back(param_name_stream__.str());
+        for (int k_0__ = 1; k_0__ <= K; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "beta_lambda" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= K; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "shrink_lambda_local" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
         param_name_stream__.str(std::string());
-        param_name_stream__ << "lambda";
+        param_name_stream__ << "shrink_lambda_global";
+        param_names__.push_back(param_name_stream__.str());
+        for (int k_0__ = 1; k_0__ <= O; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "h1" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        param_name_stream__.str(std::string());
+        param_name_stream__ << "scale_h1";
+        param_names__.push_back(param_name_stream__.str());
+        for (int k_0__ = 1; k_0__ <= C; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "h2" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        param_name_stream__.str(std::string());
+        param_name_stream__ << "scale_h2";
+        param_names__.push_back(param_name_stream__.str());
+        for (int k_0__ = 1; k_0__ <= P; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "h3" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        param_name_stream__.str(std::string());
+        param_name_stream__ << "scale_h3";
         param_names__.push_back(param_name_stream__.str());
 
         if (!include_gqs__ && !include_tparams__) return;
+        for (int k_0__ = 1; k_0__ <= Nz; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "theta" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= Nnz; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "lambda" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
 
         if (!include_gqs__) return;
     }
@@ -441,14 +1003,68 @@ public:
                                    bool include_tparams__ = true,
                                    bool include_gqs__ = true) const {
         std::stringstream param_name_stream__;
+        for (int k_0__ = 1; k_0__ <= K; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "beta_theta" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= K; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "shrink_theta_local" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
         param_name_stream__.str(std::string());
-        param_name_stream__ << "theta";
+        param_name_stream__ << "shrink_theta_global";
         param_names__.push_back(param_name_stream__.str());
+        for (int k_0__ = 1; k_0__ <= K; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "beta_lambda" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= K; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "shrink_lambda_local" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
         param_name_stream__.str(std::string());
-        param_name_stream__ << "lambda";
+        param_name_stream__ << "shrink_lambda_global";
+        param_names__.push_back(param_name_stream__.str());
+        for (int k_0__ = 1; k_0__ <= O; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "h1" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        param_name_stream__.str(std::string());
+        param_name_stream__ << "scale_h1";
+        param_names__.push_back(param_name_stream__.str());
+        for (int k_0__ = 1; k_0__ <= C; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "h2" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        param_name_stream__.str(std::string());
+        param_name_stream__ << "scale_h2";
+        param_names__.push_back(param_name_stream__.str());
+        for (int k_0__ = 1; k_0__ <= P; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "h3" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        param_name_stream__.str(std::string());
+        param_name_stream__ << "scale_h3";
         param_names__.push_back(param_name_stream__.str());
 
         if (!include_gqs__ && !include_tparams__) return;
+        for (int k_0__ = 1; k_0__ <= Nz; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "theta" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= Nnz; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "lambda" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
 
         if (!include_gqs__) return;
     }

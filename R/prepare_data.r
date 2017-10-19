@@ -4,6 +4,7 @@ library(stringr)
 library(compositions)
 library(geosphere)
 library(reshape2)
+library(rstan)
 #library(glmnet)
 #library(rpart)
 
@@ -68,7 +69,8 @@ standata$X <- cbind(unit.info$lithology$ilr.trans,
                     unit.info$location$bot.temp, 
                     unit.info$location$cross.eq, 
                     unit.info$location$switches, 
-                    unit.info$duration)
+                    unit.info$duration,
+                    unit.info$subsurface)
 standata$K <- ncol(standata$X)
 standata$Nu <- nrow(standata$X)
 
@@ -87,7 +89,20 @@ foss.info <- cbind(tn, foss.info)
 names(foss.info)[1:3] <- c('phylum.num', 'class.num', 'order.num')
 standata$o <- foss.info$order.num
 standata$O <- max(standata$o)
-standata$c <- foss.info$class.num
+
+# match orders in classes
+uc <- unique(foss.info[2:3])
+uc <- uc[order(uc[, 2]), ]
+standata$c <- uc[, 1]
 standata$C <- max(standata$c)
-standata$p <- foss.info$phylum.num
-standata$P <- max(standata$P)
+
+# match classes in phyla
+up <- unique(foss.info[1:2])
+up <- up[order(up[, 2]), ]
+standata$p <- up[, 1]
+standata$P <- max(standata$p)
+
+
+# export the data
+with(standata, {stan_rdump(list = alply(names(standata), 1), 
+                           file = '../data/data_dump/unit_data.data.R')})
