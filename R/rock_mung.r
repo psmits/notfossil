@@ -1,15 +1,6 @@
-library(rstanarm)
-library(arm)
-library(plyr)
-library(stringr)
-library(compositions)
-library(geosphere)
-#library(glmnet)
-#library(rpart)
-
 source('rock_functions.r')
 
-proccess.strat <- function(strat.ord) {
+process.strat <- function(strat.ord) {
   # fossils in those rocks
   rock.fossil <- data.frame(nocc = strat.ord$pbdb_occurrences, 
                             ncol = strat.ord$pbdb_collections)
@@ -181,18 +172,21 @@ proccess.strat <- function(strat.ord) {
   # top, bottom age est; continuous time model
   # difference between b_age and t_age
   #   the plng and plat variables follow this time model
-  dr.col <- (strat.ord$b_age - strat.ord$t_age)
+  dr.col <- (so$b_age - so$t_age)
   dr.col <- arm::rescale(log(dr.col))
 
 
 
-  clean.data <- list(fossils = rock.fossil, 
-                     lithology = list(short.matrix, shcm.tr),
-                     thickness = list(thik.h, thik.l, thik.h.imp, thik.l.imp),
+  clean.data <- list(unit.id = rownames(rock.fossil),
+                     fossils = rock.fossil, 
+                     lithology = list(raw = short.matrix, ilr.trans = shcm.tr),
+                     thickness = list(high = thik.h, low = thik.l, 
+                                      impute.high = thik.h.imp, impute.low = thik.l.imp),
                      column.area = cola,
-                     contact = list(cont.a, cont.b),
+                     contact = list(above = cont.a, below = cont.b),
                      change = loc.ch,
-                     location = list(top.temp, bot.temp, cros.eq, swit),
+                     location = list(top.temp = top.temp, bot.temp = bot.temp, 
+                                     cross.eq = cros.eq, switches = swit),
                      duration = dr.col)
 
   clean.data
