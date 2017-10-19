@@ -104,5 +104,8 @@ standata$P <- max(standata$p)
 
 
 # export the data
+# for stan
 with(standata, {stan_rdump(list = alply(names(standata), 1), 
                            file = '../data/data_dump/unit_data.data.R')})
+# in less manipuated form
+save(unit.info, foss.info, file = '../data/data_dump/unit_image.rdata')
