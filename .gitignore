@@ -1,0 +1,5 @@
+data/mcmc_out/*
+data/data_dump/*
+*.cpp
+*.hpp
+*.rdata
