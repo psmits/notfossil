@@ -1,13 +1,13 @@
-functions {
-  int num_zero(int[] y) {
-    int nz;
-    nz = 0;
-    for (n in 1:size(y))
-      if (y[n] == 0)
-        nz = nz + 1;
-    return nz;
-  }
-}
+//functions {
+//  int num_zero(int[] y) {
+//    int nz;
+//    nz = 0;
+//    for (n in 1:size(y))
+//      if (y[n] == 0)
+//        nz = nz + 1;
+//    return nz;
+//  }
+//}
 data {
   int<lower=0> Nz;  // num zeroes
   int<lower=0> yz[Nz];  // vector of zeroes
@@ -28,14 +28,24 @@ data {
   int P;  // number of phyla
   int p[C];  // phylum membership
 }
+transformed data {
+  int N;
+  int<lower=0> yones[Nz];  // vector of zeroes 1s
+
+  N = Nz + Nnz;
+
+  for(i in 1:Nz) {
+    yones[i] = 1;
+  }
+}
 parameters {
-  // horseshoe prior on effects of unit covariates
   vector[K] beta_theta;
+  // horseshoe prior on effects of unit covariates
   vector<lower=0>[K] shrink_theta_local;
   real<lower=0> shrink_theta_global;
   
-  // horseshoe prior on effects of unit covariates
   vector[K] beta_lambda;
+  // horseshoe prior on effects of unit covariates
   vector<lower=0>[K] shrink_lambda_local;
   real<lower=0> shrink_lambda_global;
 
@@ -48,19 +58,22 @@ parameters {
 }
 transformed parameters {
   // assemble vectors of covariates and effects
-  vector<lower=0, upper=1>[Nz] theta;
+  vector<lower=0, upper=1>[N] theta;
   vector<lower=0>[Nnz] lambda;
 
-  theta = inv_logit(X[uz, ] * beta_theta);
+  theta[1:Nz] = inv_logit(X[uz, ] * beta_theta);
+  theta[(Nz+1):(N)] = inv_logit(X[unz, ] * beta_theta);
 
   lambda = exp(X[unz, ] * beta_lambda + h1[o]);
 }
 model {
+  //beta_theta ~ normal(0, 1);
   // horseshoe prior on effects of unit covariates
   beta_theta ~ normal(0, shrink_theta_local * shrink_theta_global);
   shrink_theta_local ~ cauchy(0, 1);
   shrink_theta_global ~ cauchy(0, 1);
 
+  //beta_lambda ~ normal(0, 1);
   // horseshoe prior on effects of unit covariates
   beta_lambda ~ normal(0, shrink_lambda_local * shrink_lambda_global);
   shrink_lambda_local ~ cauchy(0, 1);
@@ -74,9 +87,15 @@ model {
   scale_h3 ~ normal(0, 1);
 
   // modified from the stan manual
-  yz ~ bernoulli(theta);
-  ynz ~ poisson(lambda);
-  target += -Nnz * log1m_exp(-lambda);
+  //yz ~ bernoulli(theta);
+  yones[1:Nz] ~ bernoulli(theta[1:Nz]);  // use vectors ones because 1 means no fossil
+  for(i in 1:Nnz) {
+    0 ~ bernoulli(theta[Nz + i]);
+    ynz[i] ~ poisson(lambda[i]) T[1, ];
+  }
+  //target += -Nnz * log1m_exp(-lambda);
 }
 generated quantities {
+  // calculate log-lik 
+  // posterior predictive simulations
 }
