@@ -16,6 +16,7 @@ I think the most logical extension of this is actually a hurdle model where the 
   \end{cases}
 \]
 
+
 \theta is modeled is a logistic regression where the unit covariates are included (e.g. lithological composition, size, etc.). \lambda is modeled like a Poisson regression where the unit covariates are included along with taxonomic information. This means that the unit covariates have two very different interpretations. For the zero-generating process, the parameter associated with each covariate corresponds to their effect on NOT seeing a fossil. While in the count-generating process, the covariates correspond to the effect on seeing a fossil. It would be important to make that clear when explaining this analysis.
 
 

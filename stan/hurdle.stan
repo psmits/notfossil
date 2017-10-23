@@ -1,13 +1,3 @@
-//functions {
-//  int num_zero(int[] y) {
-//    int nz;
-//    nz = 0;
-//    for (n in 1:size(y))
-//      if (y[n] == 0)
-//        nz = nz + 1;
-//    return nz;
-//  }
-//}
 data {
   int<lower=0> Nz;  // num zeroes
   int<lower=0> yz[Nz];  // vector of zeroes
@@ -79,6 +69,9 @@ model {
   shrink_lambda_local ~ cauchy(0, 1);
   shrink_lambda_global ~ cauchy(0, 1);
 
+  // taxonomic elements
+  // this is currently a vary-intercept element
+  // something to consider is making beta vary by taxonomy
   h1 ~ normal(h2[c], scale_h1);
   scale_h1 ~ normal(0, 1);
   h2 ~ normal(h3[p], scale_h2);
@@ -97,5 +90,15 @@ model {
 }
 generated quantities {
   // calculate log-lik 
-  // posterior predictive simulations
+  vector[N] log_lik;
+  //// posterior predictive simulations
+  //vector[N] y_tilde;
+  for(i in 1:Nz) {
+    log_lik[i] = bernoulli_lpmf(1 | theta[i]);
+  }
+  for(j in 1:Nnz) {
+    log_lik[Nz + j] = bernoulli_lpmf(0 | theta[Nz + j]);
+    log_lik[Nz + j] = log_lik[Nz + j] + poisson_lpmf(ynz[j] | lambda[j]);
+    log_lik[Nz + j] = log_lik[Nz + j] - poisson_lccdf(0 | lambda[j]);
+  }
 }
