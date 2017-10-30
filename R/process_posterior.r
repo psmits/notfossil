@@ -12,7 +12,7 @@ library(coda)
 
 load(file = '../data/data_dump/unit_image.rdata')
 
-files <- list.files('../data/mcmc_out/', pattern = 'hurdle', full.names = TRUE)
-fit <- read_stan_csv(files)
+files <- list.files('../data/mcmc_out', pattern = 'hurdle', full.names = TRUE)
+fit <- read_stan_csv(files[5:8])
 
 post <- rstan::extract(fit, permuted = TRUE)

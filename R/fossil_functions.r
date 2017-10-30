@@ -22,8 +22,11 @@ clean.taxon <- function(fossils) {
 
   for(ii in seq(nrow(fixes))) {
     tt <- which(fossils$order %in% fixes[ii, 3])
-    for(jj in seq(length(tt))) {
-      fossils[tt[jj], c('phylum', 'class')] <- fixes[ii, 1:2]
+
+    if(length(tt) > 0) {
+      for(jj in seq(length(tt))) {
+        fossils[tt[jj], c('phylum', 'class')] <- fixes[ii, 1:2]
+      }
     }
   }
 

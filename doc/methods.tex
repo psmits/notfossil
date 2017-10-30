@@ -1,0 +1,59 @@
+\documentclass[12pt,letterpaper]{article}
+
+\usepackage{amsmath, amsthm, amsfonts, amssymb}
+\usepackage{microtype, parskip, graphicx}
+\usepackage[comma,numbers,sort&compress]{natbib}
+\usepackage{lineno}
+\usepackage{longtable}
+\usepackage{docmute}
+\usepackage{caption, subcaption, multirow, morefloats, rotating}
+\usepackage{wrapfig}
+\usepackage{hyperref}
+
+\frenchspacing
+
+\begin{document}
+
+
+\section{Geological unit lithological descriptions}
+Geological units were downloaded from Macrostrat platform CITATION 
+% give api link
+
+
+\section{Fossil occurrences in geological units}
+Units records in Macrostrat have lists of the Paleobiology Database collections found in that unit and the associated genera from those collections. Each collection and genus in the Paleobiology Database has a unique identifier which allows programmatic matching of geological and biological information in both databases.
+
+% give api link
+
+Paleobiology Database
+
+
+
+
+\section{A hurdle model of observing fossil species}
+
+A common occurrence in count data is an over-abundance of zeroes than would be expected from a Poisson distribution. Two common models for increasing the probability mass of a zero count are zero-inflated CITATION and hurdle models CITATION. These models are both mixtures of a Bernoulli distribution and some other discrete probability distribution, commonly a Poisson distribution though any discrete probability distribution if possible (e.g. Negative Binomial).
+
+In this study we use a Hurdle model which is a mixture model of a Bernoulli and Poisson distributions. In this type of model the Bernoulli distribution models the probability of observing zero fossil species in a geological unit, and the Poisson distribution models the expected number of fossil species observed if at least one species is observed. Importantly, the Poisson distribution is truncated at zero which means that only non-zero values can be drawn from that part of the model. The probability mass function for a basic Hurdle model, as detailed in the Stan Modeling Language User's Guide and Reference Manual CITATION, is defined as 
+\begin{equation}
+  p(y | \theta, \lambda)  = 
+  \begin{cases}
+    \theta & \text{if } y = 0, and \\
+    (1 - \theta) \frac{\text{Poisson}(y, \lambda)}{1 - \text{PoissonCDF}(0 | \lambda)} & y > 0
+  \end{cases}
+  \label{eq:hurdle_ex}
+\end{equation}
+where \(\theta\) is the Bernoulli probability of observing zero fossil species in a geological unit, \(\lambda\) is the expected number of fossil species observed in a geological unit observed from a truncated Poisson distribution, PoissonCDF stands in for the cumulative distribution function for the Poisson distribution.
+
+This basic model can be expanded to include covariate effects and multi-level structure through the \(\theta\) and \(\lambda\) parameters. These parameters are modeled separately and have different interpretations: effects increasing \(\lambda\) indicates that covariate is associated with an enrichment of zeroes, while effects increasing \(\lambda\) means that covariate is associated with an enrichment of non-zeroes. This difference in interpretation means that, for example, regression coefficients for covariates appearing in models of both \(\theta\) and \(\lambda\) have opposite interpretations with respect their effect on the observed species counts.
+
+
+\(\theta\), which describes the probability of observing zero fossil species in a geological unit, is modeled similarly to a logistic regression with multiple covariates describing the geological unit.
+
+\(\lambda\), which describes the expected count of fossil species from a zero-truncated Poisson distribution, is modeled similarly to a standard Poisson regression with multiple covariates the geological unit and an intercept varying by the fossil species taxonomic description.
+
+
+
+
+
+\end{document}

@@ -99,11 +99,6 @@ process.strat <- function(strat.ord) {
   sho <- llply(sho , function(x) aggregate(as.numeric(x[, 2]) ~ x[, 1], FUN = sum))
   short.matrix <- lith.matrix(sho)  
 
-  # covariates
-  short.matrix <- t(apply(short.matrix, 1, function(x) x / sum(x)))
-  shcm.tr <- ilr(short.matrix)  # isometric log ratio transform
-
-
   # i still think there are too many lithology types
   # can i do better than this?
   #   colors?
@@ -112,6 +107,13 @@ process.strat <- function(strat.ord) {
   apcount <- apply(short.matrix, 2, function(x) sum(x > 0))
   solos <- names(which(apcount == 1))
   sw <- apply(short.matrix[, solos], 1, function(x) x > 0)
+  sm <- short.matrix[, !(colnames(short.matrix) %in% solos)]
+  sm <- sm[rowSums(sm) != 0, ]
+  short.matrix <- sm
+
+  # covariates
+  short.matrix <- t(apply(short.matrix, 1, function(x) x / sum(x)))
+  shcm.tr <- ilr(short.matrix)  # isometric log ratio transform
 
   # consolidate
   rock.fossil <- rock.fossil[rownames(rock.fossil) %in% rownames(short.matrix), ]
