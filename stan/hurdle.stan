@@ -11,6 +11,9 @@ data {
   int K;  // number of unit covariates
   matrix[Nu, K] X;  // matrix of unit covariates
 
+  int G;  // number of units with fossil species
+  int g[G];  // unit membership of fossil species observations
+
   int O;  // number of orders
   int o[Nnz];  // order membership
   int C;  // number of classes
@@ -24,8 +27,8 @@ transformed data {
 
   N = Nz + Nnz;
 
-  for(i in 1:Nz) {
-    yones[i] = 1;
+  for(ii in 1:Nz) {
+    yones[ii] = 1;
   }
 }
 parameters {
@@ -45,6 +48,8 @@ parameters {
   real<lower=0> scale_h2;  // scale of class effect
   vector[P] h3;  // phylum effect
   real<lower=0> scale_h3;  // scale of phylum effect
+
+  vector[G] m;  // varying intercept for units w/ fossils
   
   // intercept terms
   real the;
@@ -58,7 +63,7 @@ transformed parameters {
   theta[1:Nz] = inv_logit(the + X[uz, ] * beta_theta);
   theta[(Nz+1):(N)] = inv_logit(the + X[unz, ] * beta_theta);
 
-  lambda = exp(lam + X[unz, ] * beta_lambda + h1[o]);
+  lambda = exp(lam + X[unz, ] * beta_lambda + h1[o] + m[g]);
 }
 model {
   the ~ normal(0, 1);

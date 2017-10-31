@@ -47,6 +47,13 @@ foss.info$unit.stan <-
 # unit memership for nonzero counts
 standata$unz <- foss.info$unit.stan
 
+curso <- sort(unique(foss.info$unit.stan))
+
+solos <- mapvalues(foss.info$unit.stan, curso, seq(length(curso)))
+standata$g <- solos
+standata$G <- max(solos)
+
+
 
 # X will be unit-level covariates
 #   (ilr transform) lithology
