@@ -7,10 +7,15 @@ data {
   int y[N];  // counts at each attempted observation 
   int o[N];  // order membership of each attempted observation
   int u[N];  // unit membership of each attempted observation
-  
+
   matrix[U, K] X;  // covariates for each unit
 
   vector[U] exposure;
+}
+transformed data {
+  vector[U] offset;
+
+  offset = log(exposure);
 }
 parameters {
   real the;  // intercept of theta
@@ -31,11 +36,11 @@ transformed parameters {
   vector<lower=0>[N] lambda;
 
   theta[1:N] = inv_logit(the + unit_eff_the[u] + order_eff_the[o]);
-  lambda[1:N] = exp(lam + unit_eff_lam[u] + order_eff_lam[o] + log(exposure[u]));
+  lambda[1:N] = exp(lam + unit_eff_lam[u] + order_eff_lam[o] + offset[u]);
 }
 model {
-  the ~ normal(1, 1);
-  lam ~ normal(0, 1);
+  the ~ normal(2.5, 1);
+  lam ~ normal(4, 1);
 
   unit_eff_the ~ normal(0, unit_scale_the);
   unit_scale_the ~ normal(0, 1);
