@@ -1,61 +1,42 @@
+functions {
+  int num_zero(int[] y) {
+    int nz;
+    nz = 0;
+    for (n in 1:size(y))
+      if (y[n] == 0)
+        nz = nz + 1;
+    return nz;
+  }
+}
 data {
-  int<lower=0> Nz;  // num zeroes
-  int<lower=0> yz[Nz];  // vector of zeroes
-  int uz[Nz];  // unit membership for zeroes
-
-  int<lower=0> Nnz;  // num non-zeroes
-  int<lower=0> ynz[Nnz];  // vector of non-zeroes
-  int unz[Nnz];  // unit membership for non-zeroes
-
-  int Nu;  // number of units
-  int K;  // number of unit covariates
-  matrix[Nu, K] X;  // matrix of unit covariates
-
-  int O;  // number of orders
-  int o[Nnz];  // order membership
-  int C;  // number of classes
-  int c[O];  // class membership
-  int P;  // number of phyla
-  int p[C];  // phylum membership
+  int<lower=0> N;  // num zeroes
+  int<lower=0> y[N];  // vector of non-zeroes
 }
 transformed data {
-  int N;
-  int<lower=0> yones[Nz];  // vector of zeroes 1s
-
-  N = Nz + Nnz;
-
-  for(i in 1:Nz) {
-    yones[i] = 1;
+  int<lower=0, upper=N> N0;
+  int<lower=0, upper=N> Ngt0;
+  int<lower=1> y_nz[N - num_zero(y)];
+  N0 = num_zero(y);
+  Ngt0 = N - N0;
+  {
+    int pos;
+    pos = 1;
+    for (n in 1:N) {
+      if (y[n] != 0) {
+        y_nz[pos] = y[n];
+        pos = pos + 1;
+      }
+    }
   }
 }
 parameters {
   real<lower=0, upper=1> theta;
-
-  vector[O] h1;  // order effect
-  real<lower=0> scale_h1;  // scale of order effect
-  vector[C] h2;  // class effect
-  real<lower=0> scale_h2;  // scale of class effect
-  vector[P] h3;  // phylum effect
-  real<lower=0> scale_h3;  // scale of phylum effect
-
-  real lam;
-}
-transformed parameters {
-  vector<lower=0>[Nnz] lambda;
-
-  lambda = exp(lam + h1[o]);
+  real<lower=0> lambda;
 }
 model {
-  h1 ~ normal(h2[c], scale_h1);
-  scale_h1 ~ normal(0, 1);
-  h2 ~ normal(h3[p], scale_h2);
-  scale_h2 ~ normal(0, 1);
-  h3 ~ normal(0, scale_h3);
-  scale_h3 ~ normal(0, 1);
-
-  lam ~ normal(0, 1);
-
-  Nz ~ binomial(N, theta);
-  ynz ~ poisson(lambda);
-  target += -Nnz * log1m_exp(-lambda);
+  theta ~ beta(2, 3);
+  lambda ~ exponential(10);
+  N0 ~ binomial(N, theta);
+  y_nz ~ poisson(lambda);
+  target += -Ngt0 * log1m_exp(-lambda);
 }

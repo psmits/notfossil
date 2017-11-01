@@ -1,116 +1,58 @@
 data {
-  int<lower=0> Nz;  // num zeroes
-  int<lower=0> yz[Nz];  // vector of zeroes
-  int uz[Nz];  // unit membership for zeroes
-
-  int<lower=0> Nnz;  // num non-zeroes
-  int<lower=0> ynz[Nnz];  // vector of non-zeroes
-  int unz[Nnz];  // unit membership for non-zeroes
-
-  int Nu;  // number of units
-  int K;  // number of unit covariates
-  matrix[Nu, K] X;  // matrix of unit covariates
-
-  int G;  // number of units with fossil species
-  int g[Nnz];  // unit membership of fossil species observations
-
+  int N;  // number of attempts at order observation at units
   int O;  // number of orders
-  int o[Nnz];  // order membership
-  int C;  // number of classes
-  int c[O];  // class membership
-  int P;  // number of phyla
-  int p[C];  // phylum membership
-}
-transformed data {
-  int N;
-  int<lower=0> yones[Nz];  // vector of zeroes 1s
+  int U;  // number of units
+  int K;  // number of unit covariates
 
-  N = Nz + Nnz;
+  int y[N];  // counts at each attempted observation 
+  int o[N];  // order membership of each attempted observation
+  int u[N];  // unit membership of each attempted observation
+  
+  matrix[U, K] X;  // covariates for each unit
 
-  for(ii in 1:Nz) {
-    yones[ii] = 1;
-  }
+  vector[U] exposure;
 }
 parameters {
-  vector[K] beta_theta;
-  // horseshoe prior on effects of unit covariates
-  //vector<lower=0>[K] shrink_theta_local;
-  //real<lower=0> shrink_theta_global;
-  
-  vector[K] beta_lambda;
-  // horseshoe prior on effects of unit covariates
-  //vector<lower=0>[K] shrink_lambda_local;
-  //real<lower=0> shrink_lambda_global;
+  real the;  // intercept of theta
+  real lam;  // intercept of lambda
 
-  vector[O] h1;  // order effect
-  real<lower=0> scale_h1;  // scale of order effect
-  vector[C] h2;  // class effect
-  real<lower=0> scale_h2;  // scale of class effect
-  vector[P] h3;  // phylum effect
-  real<lower=0> scale_h3;  // scale of phylum effect
+  vector[U] unit_eff_the;
+  real<lower=0> unit_scale_the;
+  vector[U] unit_eff_lam;
+  real<lower=0> unit_scale_lam;
 
-  vector[G] m;  // varying intercept for units w/ fossils
-  real<lower=0> scale_m; 
-  
-  // intercept terms
-  real the;
-  real lam;
+  vector[O] order_eff_the;
+  real<lower=0> order_scale_the;
+  vector[O] order_eff_lam;
+  real<lower=0> order_scale_lam;
 }
 transformed parameters {
-  // assemble vectors of covariates and effects
   vector<lower=0, upper=1>[N] theta;
-  vector<lower=0>[Nnz] lambda;
+  vector<lower=0>[N] lambda;
 
-  theta[1:Nz] = inv_logit(the + X[uz, ] * beta_theta);
-  theta[(Nz+1):(N)] = inv_logit(the + X[unz, ] * beta_theta);
-
-  lambda = exp(lam + X[unz, ] * beta_lambda + h1[o] + m[g]);
+  theta[1:N] = inv_logit(the + unit_eff_the[u] + order_eff_the[o]);
+  lambda[1:N] = exp(lam + unit_eff_lam[u] + order_eff_lam[o] + log(exposure[u]));
 }
 model {
-  the ~ normal(0, 1);
+  the ~ normal(1, 1);
   lam ~ normal(0, 1);
-  //beta_theta ~ normal(0, 1);
-  // horseshoe prior on effects of unit covariates
-  //beta_theta ~ normal(0, shrink_theta_local * shrink_theta_global);
-  //shrink_theta_local ~ cauchy(0, 1);
-  //shrink_theta_global ~ cauchy(0, 1);
-  beta_theta ~ normal(0, 1);
 
-  //beta_lambda ~ normal(0, 1);
-  // horseshoe prior on effects of unit covariates
-  //beta_lambda ~ normal(0, shrink_lambda_local * shrink_lambda_global);
-  //shrink_lambda_local ~ cauchy(0, 1);
-  //shrink_lambda_global ~ cauchy(0, 1);
-  beta_lambda ~ normal(0, 1);
+  unit_eff_the ~ normal(0, unit_scale_the);
+  unit_scale_the ~ normal(0, 1);
+  unit_eff_lam ~ normal(0, unit_scale_lam);
+  unit_scale_lam ~ normal(0, 1);
 
-  // taxonomic elements
-  // this is currently a vary-intercept element
-  // something to consider is making beta vary by taxonomy
-  h1 ~ normal(h2[c], scale_h1);
-  scale_h1 ~ normal(0, 1);
-  h2 ~ normal(h3[p], scale_h2);
-  scale_h2 ~ normal(0, 1);
-  h3 ~ normal(0, scale_h3);
-  scale_h3 ~ normal(0, 1);
+  order_eff_the ~ normal(0, order_scale_the);
+  order_scale_the ~ normal(0, 1);
+  order_eff_lam ~ normal(0, order_scale_lam);
+  order_scale_lam ~ normal(0, 1);
 
-  // unit intercepts for lambda
-  m ~ normal(0, scale_m);
-
-  // modified from the stan manual
-  // use vectors ones because 1 means no fossil
-  target += log(theta[1:Nz]); // zero count part
-  target += log1m(theta[(Nz + 1):N]) + poisson_lpmf(ynz[1:Nnz] | lambda[1:Nnz])
-    - log1m_exp(-lambda[1:Nnz]); // non zero count part
-}
-generated quantities {
-  // calculate log-lik 
-  vector[N] log_lik;
-  
-  for(i in 1:Nz) {
-    log_lik[i] = log(theta[i]);
-  }
-  for(j in 1:Nnz) {
-    log_lik[Nz + j] = log1m(theta[Nz + j]) + poisson_lpmf(ynz[j] | lambda[j])
-      - log1m_exp(-lambda[j]);
+  for(n in 1:N) {
+    if(y[n] == 0)
+      target += log(theta[n]);
+    else {
+      target += log1m(theta[n]) + poisson_lpmf(y[n] | lambda[n]) 
+        - log1m_exp(-lambda[n]);
+    }
   }
 }

@@ -14,7 +14,8 @@ source('rock_functions.r')
 source('rock_mung.r')
 
 source('download_scrap.r')
-# FYI: match(fossil.ord$unit_id, strat.ord$unit_id)  # match fossil occurrence to strat unit
+
+
 standata <- list()
 
 foss.info <- process.fossil(fossil.ord)
@@ -27,33 +28,36 @@ foss.info <- foss.info[match.match, ]
 # now it is about making an output file for stan
 
 # first set up the response variable
-# zero responses
-zero.count <- unit.info$unit.id[!(unit.info$unit.id %in% foss.info$unit)]  
-standata$yz <- rep(0, length(zero.count))  # zero response
-standata$Nz <- length(zero.count)
+# how many fossils in each unit???
+unit.count <- laply(split(foss.info, foss.info$unit), function(x) 
+                    c(unit = x$unit[1], count = sum(x$count)))
+unit.count <- apply(unit.count, 2, as.numeric)
+exposure <- rep(0, length(unit.info$unit.id))
+exposure[match(unit.count[, 1], unit.info$unit.id)] <- unit.count[, 2]
+standata$exposure <- exposure + 1
 
-# nonzero responses
-standata$ynz <- foss.info$count
-standata$Nnz <- length(foss.info$count)
+# set up every unit for every order
+by.ord <- split(foss.info, foss.info$order)
+by.ord <- by.ord[laply(by.ord, nrow) > 5]
 
+out <- list()
+nz <- c()
+for(ii in seq(length(by.ord))) {
+  o.count <- rep(0, length(unit.info$unit.id))
+  splts <- match(by.ord[[ii]]$unit, unit.info$unit.id)
+  o.count[splts] <- by.ord[[ii]]$count
+  out[[ii]] <- o.count
+  nz[ii] <- sum(o.count == 0)
 
-# for unit membership, have to standardize for all counts
-unit.info$unit.stan <- seq(length(unit.info$unit.id))
-# unit membership for zero counts
-standata$uz <- unit.info$unit.stan[!(unit.info$unit.id %in% foss.info$unit)]
+}
+out <- melt(out)
 
-foss.info$unit.stan <- 
-  unit.info$unit.stan[match(foss.info$unit, unit.info$unit.id)]
-# unit memership for nonzero counts
-standata$unz <- foss.info$unit.stan
-
-curso <- sort(unique(foss.info$unit.stan))
-
-solos <- mapvalues(foss.info$unit.stan, curso, seq(length(curso)))
-standata$g <- solos
-standata$G <- max(solos)
-
-
+standata$y <- out[, 1]  # count of order in unit
+standata$o <- out[, 2]  # order being looked at
+standata$O <- length(by.ord)
+standata$u <- rep(seq(length(unit.info$unit.id)), times = length(by.ord))
+standata$U <- length(unit.info$unit.id)
+standata$N <- length(standata$y)
 
 # X will be unit-level covariates
 #   (ilr transform) lithology
@@ -79,35 +83,7 @@ standata$X <- cbind(unit.info$lithology$ilr.trans,
                     #unit.info$duration,
                     unit.info$subsurface)
 standata$K <- ncol(standata$X)
-standata$Nu <- nrow(standata$X)
 
-
-# for when there are fossils
-# taxon information
-# taxon hierachy
-#   num orders
-#   order membership
-#   num class
-#   class membership
-#   num phylum
-#   phylum membership
-tn <- apply(foss.info[, 1:3], 2, function(x) as.numeric(as.factor(x)))
-foss.info <- cbind(tn, foss.info)
-names(foss.info)[1:3] <- c('phylum.num', 'class.num', 'order.num')
-standata$o <- foss.info$order.num
-standata$O <- max(standata$o)
-
-# match orders in classes
-uc <- unique(foss.info[2:3])
-uc <- uc[order(uc[, 2]), ]
-standata$c <- uc[, 1]
-standata$C <- max(standata$c)
-
-# match classes in phyla
-up <- unique(foss.info[1:2])
-up <- up[order(up[, 2]), ]
-standata$p <- up[, 1]
-standata$P <- max(standata$p)
 
 
 # export the data

@@ -31,6 +31,9 @@ process.fossil <- function(fossil.ord) {
   #fossils$collection_type
   #fossils$collection_coverage
 
+  shelly <- c('Arthropoda', 'Brachiopoda', 'Mollusca', 'Echinodermata', 
+              'Hemichordata', 'Bryozoa', 'Cnidaria')
+  fossils <- fossils[fossils$phylum %in% shelly, ]
 
   # curiosity: how many non-zero ids
   taxonomy <- c('phylum', 'class', 'order', 'family', 'genus')
