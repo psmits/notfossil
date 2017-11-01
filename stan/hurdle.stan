@@ -12,7 +12,7 @@ data {
   matrix[Nu, K] X;  // matrix of unit covariates
 
   int G;  // number of units with fossil species
-  int g[G];  // unit membership of fossil species observations
+  int g[Nnz];  // unit membership of fossil species observations
 
   int O;  // number of orders
   int o[Nnz];  // order membership
@@ -50,6 +50,7 @@ parameters {
   real<lower=0> scale_h3;  // scale of phylum effect
 
   vector[G] m;  // varying intercept for units w/ fossils
+  real<lower=0> scale_m; 
   
   // intercept terms
   real the;
@@ -91,6 +92,9 @@ model {
   scale_h2 ~ normal(0, 1);
   h3 ~ normal(0, scale_h3);
   scale_h3 ~ normal(0, 1);
+
+  // unit intercepts for lambda
+  m ~ normal(0, scale_m);
 
   // modified from the stan manual
   // use vectors ones because 1 means no fossil

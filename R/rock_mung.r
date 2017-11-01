@@ -105,7 +105,7 @@ process.strat <- function(strat.ord) {
   #   similar words (e.g. shale, shaly)
   still.words <- table(Reduce(c, str_split(colnames(short.matrix), ' ')))
   apcount <- apply(short.matrix, 2, function(x) sum(x > 0))
-  solos <- names(which(apcount == 1))
+  solos <- names(which(apcount <= 5))
   sw <- apply(short.matrix[, solos], 1, function(x) x > 0)
   sm <- short.matrix[, !(colnames(short.matrix) %in% solos)]
   sm <- sm[rowSums(sm) != 0, ]

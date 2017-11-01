@@ -6,7 +6,6 @@ do
   do
     ../stan/hurdle sample num_samples=2000 num_warmup=2000 thin=2 \
       id=$i \
-      init=0 \
       data file=$f \
       output file=../data/mcmc_out/hurdle_${i}.csv &
   done
