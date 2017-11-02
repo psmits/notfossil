@@ -5,6 +5,9 @@ library(compositions)
 library(geosphere)
 library(reshape2)
 library(rstan)
+library(brms)
+library(rstanarm)
+library(caret)
 #library(glmnet)
 #library(rpart)
 
@@ -13,11 +16,12 @@ source('fossil_mung.r')
 source('rock_functions.r')
 source('rock_mung.r')
 
+
+
+# bring in data
 source('download_scrap.r')
 
-
-standata <- list()
-
+# clean data
 foss.info <- process.fossil(fossil.ord)
 unit.info <- process.strat(strat.ord)  # everything is already transformed
 
@@ -26,19 +30,22 @@ match.match <- foss.info$unit %in% unit.info$unit.id
 foss.info <- foss.info[match.match, ]
 
 # now it is about making an output file for stan
+standata <- list()
 
-# first set up the response variable
+# set up every unit for every order
+by.ord <- split(foss.info, foss.info$order)
+by.ord <- by.ord[laply(by.ord, nrow) > 10]
+
+fi <- Reduce(rbind, by.ord)
+
 # how many fossils in each unit???
-unit.count <- laply(split(foss.info, foss.info$unit), function(x) 
+unit.count <- laply(split(fi, fi$unit), function(x) 
                     c(unit = x$unit[1], count = sum(x$count)))
 unit.count <- apply(unit.count, 2, as.numeric)
 exposure <- rep(0, length(unit.info$unit.id))
 exposure[match(unit.count[, 1], unit.info$unit.id)] <- unit.count[, 2]
 standata$exposure <- exposure + 1
 
-# set up every unit for every order
-by.ord <- split(foss.info, foss.info$order)
-by.ord <- by.ord[laply(by.ord, nrow) > 5]
 
 out <- list()
 nz <- c()
@@ -58,6 +65,7 @@ standata$O <- length(by.ord)
 standata$u <- rep(seq(length(unit.info$unit.id)), times = length(by.ord))
 standata$U <- length(unit.info$unit.id)
 standata$N <- length(standata$y)
+
 
 # X will be unit-level covariates
 #   (ilr transform) lithology
@@ -83,7 +91,6 @@ standata$X <- cbind(unit.info$lithology$ilr.trans,
                     #unit.info$duration,
                     unit.info$subsurface)
 standata$K <- ncol(standata$X)
-
 
 
 # export the data

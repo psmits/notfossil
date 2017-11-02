@@ -106,10 +106,10 @@ process.strat <- function(strat.ord) {
   still.words <- table(Reduce(c, str_split(colnames(short.matrix), ' ')))
   apcount <- apply(short.matrix, 2, function(x) sum(x > 0))
   solos <- names(which(apcount <= 5))
-  sw <- apply(short.matrix[, solos], 1, function(x) x > 0)
+  #sm <- apply(short.matrix[, solos], 1, function(x) x > 0)
   sm <- short.matrix[, !(colnames(short.matrix) %in% solos)]
-  sm <- sm[rowSums(sm) != 0, ]
   short.matrix <- sm
+  short.matrix <- short.matrix[rowSums(short.matrix) != 0, ]
 
   # covariates
   short.matrix <- t(apply(short.matrix, 1, function(x) x / sum(x)))
