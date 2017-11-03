@@ -15,10 +15,10 @@ rhurdle <- function(n, theta, lambda) {
   # lambda: poisson expectation
 
   out <- array(dim = n)
-  
+
   # first theta
   is.zero <- rbinom(n, 1, theta)
-  
+
   # then lambda
   not.zero <- !is.zero
   #nz <- rtpois(sum(not.zero), lambda)
@@ -35,10 +35,10 @@ roverhurdle <- function(n, theta, size, prob) {
   # lambda: poisson expectation
 
   out <- array(dim = n)
-  
+
   # first theta
   is.zero <- rbinom(n, 1, theta)
-  
+
   # then lambda
   not.zero <- !is.zero
   nz <- rztnbinom(sum(not.zero), size, prob)
@@ -74,7 +74,8 @@ sim <- sim + facet_grid(theta ~ lambda)
 sim <- sim + labs(y = 'Density of simultaed counts', x = 'Count')
 sim <- sim + theme_bw()
 sim <- sim + theme(strip.text = element_text(size = 25),
-                   axis.title = element_text(size = 30))
+                   axis.title = element_text(size = 30),
+                   axis.text = element_text(size = 20))
 ggsave(filename = '../doc/figure/hurdle_simulation.png',
        plot = sim, height = 8, width = 10)
 
@@ -102,6 +103,7 @@ sim2 <- sim2 + facet_grid(prob ~ size)
 sim2 <- sim2 + labs(y = 'Density of simultaed counts', x = 'Count')
 sim2 <- sim2 + theme_bw()
 sim2 <- sim2 + theme(strip.text = element_text(size = 25),
-                   axis.title = element_text(size = 30))
+                     axis.title = element_text(size = 30),
+                     axis.text = element_text(size = 20))
 ggsave(filename = '../doc/figure/overhurdle_simulation.png',
        plot = sim2, height = 8, width = 10)
