@@ -1,6 +1,6 @@
 source('fossil_functions.r')
 
-process.fossil <- function(fossil.ord) {
+process.fossil <- function(fossil.ord, shelly) {
 
   # genus id numbers
   genus.ids <- laply(fossil.ord$genus_no, function(x) str_split(x, '\\|'))
@@ -31,8 +31,6 @@ process.fossil <- function(fossil.ord) {
   #fossils$collection_type
   #fossils$collection_coverage
 
-  shelly <- c('Arthropoda', 'Brachiopoda', 'Mollusca', 'Echinodermata', 
-              'Hemichordata', 'Bryozoa', 'Cnidaria')
   fossils <- fossils[fossils$phylum %in% shelly, ]
 
   # curiosity: how many non-zero ids

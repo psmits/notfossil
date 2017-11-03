@@ -12,11 +12,11 @@ data {
 
   vector[U] exposure;
 }
-//transformed data {
-//  vector[U] offset;
-//
-//  offset = log(exposure);
-//}
+transformed data {
+  vector[U] offset;
+
+  offset = log(exposure);
+}
 parameters {
   real the;  // intercept of theta
   real lam;  // intercept of lambda

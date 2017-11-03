@@ -50,7 +50,7 @@ process.strat <- function(strat.ord) {
 
   #table(Reduce(c, Reduce(c, dec)))
   # cut out specific words
-  dec <- wordrm(dec, c('sedimentary', 'light', 'dark', 'white', 
+  dec <- wordrm(dec, c('sedimentary', 'light', 'dark', 'white', 'grey', 
                        'phosphatic', 'tan', 'yellow', 'medium'))
   dec <- llply(dec, function(y) laply(y, function(x) paste0(x, collapse = ' ')))
   lit <- Map(function(x, y) {x[, 1] <- y; x}, lit, dec)

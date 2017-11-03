@@ -5,8 +5,6 @@ library(compositions)
 library(geosphere)
 library(reshape2)
 library(rstan)
-library(brms)
-library(rstanarm)
 library(caret)
 #library(glmnet)
 #library(rpart)
@@ -22,7 +20,10 @@ source('rock_mung.r')
 source('download_scrap.r')
 
 # clean data
-foss.info <- process.fossil(fossil.ord)
+#shelly <- c('Arthropoda', 'Brachiopoda', 'Mollusca', 'Echinodermata', 
+#            'Hemichordata', 'Bryozoa', 'Cnidaria')
+shelly <- 'Brachiopoda'
+foss.info <- process.fossil(fossil.ord, shelly = shelly)
 unit.info <- process.strat(strat.ord)  # everything is already transformed
 
 # for some reason there area a few misaligns
@@ -31,39 +32,39 @@ foss.info <- foss.info[match.match, ]
 
 # now it is about making an output file for stan
 standata <- list()
+#unit.info$unit.id %in% foss.info$unit
+by.unit <- split(foss.info, foss.info$unit)
+by.unit <- data.frame(unit = as.character(names(by.unit)),
+                      count = laply(by.unit, function(x) sum(x$count)))
 
-# set up every unit for every order
-by.ord <- split(foss.info, foss.info$order)
-by.ord <- by.ord[laply(by.ord, nrow) > 10]
+# set up every unit for every shelly
+by.phyl <- split(foss.info, foss.info$phylum)
+by.phyl <- llply(by.phyl, function(x) split(x, x$unit))
+by.phyl <- melt(llply(by.phyl, function(x) llply(x, function(y) sum(y$count))))
+names(by.phyl) <- c('count', 'unit', 'phyl')
+by.phyl <- split(by.phyl, by.phyl$phyl)
 
-fi <- Reduce(rbind, by.ord)
-
-# how many fossils in each unit???
-unit.count <- laply(split(fi, fi$unit), function(x) 
-                    c(unit = x$unit[1], count = sum(x$count)))
-unit.count <- apply(unit.count, 2, as.numeric)
-exposure <- rep(0, length(unit.info$unit.id))
-exposure[match(unit.count[, 1], unit.info$unit.id)] <- unit.count[, 2]
-standata$exposure <- exposure + 1
-
-
-out <- list()
-nz <- c()
-for(ii in seq(length(by.ord))) {
-  o.count <- rep(0, length(unit.info$unit.id))
-  splts <- match(by.ord[[ii]]$unit, unit.info$unit.id)
-  o.count[splts] <- by.ord[[ii]]$count
-  out[[ii]] <- o.count
-  nz[ii] <- sum(o.count == 0)
-
+# response matrix!
+ymat <- matrix(0, nrow = length(unit.info$unit.id), ncol = length(shelly))
+for(ii in seq(ncol(ymat))) {
+  mm <- match(by.phyl[[ii]]$unit, unit.info$unit.id)
+  ymat[mm, ii] <- by.phyl[[ii]]$count
 }
-out <- melt(out)
 
-standata$y <- out[, 1]  # count of order in unit
-standata$o <- out[, 2]  # order being looked at
-standata$O <- length(by.ord)
-standata$u <- rep(seq(length(unit.info$unit.id)), times = length(by.ord))
-standata$U <- length(unit.info$unit.id)
+
+#out <- list()
+#nz <- c()
+#for(ii in seq(length(by.ord))) {
+u.count <- rep(0, length(unit.info$unit.id))
+u.count[unit.info$unit %in% by.unit$unit] <- by.unit$count
+nz <- sum(u.count == 0)
+
+#
+standata$y <- u.count # count of order in unit
+#standata$o <- out[, 2]  # order being looked at
+#standata$O <- length(by.ord)
+#standata$u <- rep(seq(length(unit.info$unit.id)), times = length(by.ord))
+#standata$U <- length(unit.info$unit.id)
 standata$N <- length(standata$y)
 
 
@@ -91,6 +92,12 @@ standata$X <- cbind(unit.info$lithology$ilr.trans,
                     #unit.info$duration,
                     unit.info$subsurface)
 standata$K <- ncol(standata$X)
+
+
+standata$Xnz <- standata$X[standata$y != 0, ]
+standata$Nnz <- nrow(standata$Xnz)
+standata$Nz <- nz
+
 
 
 # export the data
