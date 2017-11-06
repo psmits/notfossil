@@ -15,8 +15,8 @@ source('sim_hurdle.r')
 load(file = '../data/data_dump/unit_image.rdata')
 
 files <- list.files('../data/mcmc_out', pattern = 'hurdle', full.names = TRUE)
-fit <- read_stan_csv(files[5:8])
+fit <- read_stan_csv(files)
 
-post <- rstan::extract(fit, permuted = TRUE)
+#post <- rstan::extract(fit, permuted = TRUE)
 
 

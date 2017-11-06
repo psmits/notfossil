@@ -29,10 +29,13 @@ model {
   
   for(n in 1:N) {
     if(y[n] == 0)
-      1 ~ bernoulli(theta[n]);
+      target += log(theta[n]);
+      //1 ~ bernoulli(theta[n]);
     else {
-      0 ~ bernoulli(theta[n]);
-      y[n] ~ poisson(exp(lam + X[n, ] * beta_lam)) T[1, ];
+      target += log1m(theta[n]) + poisson_lpmf(y[n] | exp(lam + X[n, ] * beta_lam))
+        - log1m_exp(-(exp(lam + X[n, ] * beta_lam)));
+      //0 ~ bernoulli(theta[n]);
+      //y[n] ~ poisson(exp(lam + X[n, ] * beta_lam)) T[1, ];
     }
   }
 }
