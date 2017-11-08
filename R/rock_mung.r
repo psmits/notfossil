@@ -28,6 +28,7 @@ process.strat <- function(strat.ord) {
   dec <- llply(lit, function(x) str_split(x[, 1], ' '))
   # replace certain words
   dup.words <- list(c('green', 'greenish'), 
+                    c('limestone', 'lime'),
                     c('red', 'reddish'), 
                     c('blue', 'bluish'),
                     c('brown', 'brownish'),
@@ -51,7 +52,8 @@ process.strat <- function(strat.ord) {
   #table(Reduce(c, Reduce(c, dec)))
   # cut out specific words
   dec <- wordrm(dec, c('sedimentary', 'light', 'dark', 'white', 'grey', 
-                       'phosphatic', 'tan', 'yellow', 'medium'))
+                       'phosphatic', 'tan', 'yellow', 'medium', 'red',
+                       'black'))
   dec <- llply(dec, function(y) laply(y, function(x) paste0(x, collapse = ' ')))
   lit <- Map(function(x, y) {x[, 1] <- y; x}, lit, dec)
 
@@ -105,9 +107,11 @@ process.strat <- function(strat.ord) {
   #   similar words (e.g. shale, shaly)
   still.words <- table(Reduce(c, str_split(colnames(short.matrix), ' ')))
   apcount <- apply(short.matrix, 2, function(x) sum(x > 0))
-  solos <- names(which(apcount <= 5))
+  solos <- names(which(apcount >= 15))
   #sm <- apply(short.matrix[, solos], 1, function(x) x > 0)
-  sm <- short.matrix[, !(colnames(short.matrix) %in% solos)]
+  sm <- short.matrix[, (colnames(short.matrix) %in% solos)]
+  smc <- apply(sm, 2, function(x) sum(x > 0))
+  sm <- sm[, order(smc, decreasing = TRUE)]
   short.matrix <- sm
   short.matrix <- short.matrix[rowSums(short.matrix) != 0, ]
 

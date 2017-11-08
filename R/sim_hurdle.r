@@ -107,3 +107,4 @@ sim2 <- sim2 + theme(strip.text = element_text(size = 25),
                      axis.text = element_text(size = 20))
 ggsave(filename = '../doc/figure/overhurdle_simulation.png',
        plot = sim2, height = 8, width = 10)
+

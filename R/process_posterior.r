@@ -16,7 +16,7 @@ load(file = '../data/data_dump/unit_image.rdata')
 
 files <- list.files('../data/mcmc_out', pattern = 'hurdle', full.names = TRUE)
 fit <- read_stan_csv(files)
-
+stan_rhat(fit)
 #post <- rstan::extract(fit, permuted = TRUE)
 
 

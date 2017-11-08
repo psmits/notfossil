@@ -57,7 +57,6 @@ for(ii in seq(ncol(ymat))) {
 #for(ii in seq(length(by.ord))) {
 u.count <- rep(0, length(unit.info$unit.id))
 u.count[unit.info$unit %in% by.unit$unit] <- by.unit$count
-nz <- sum(u.count == 0)
 
 #
 standata$y <- u.count # count of order in unit
@@ -93,10 +92,12 @@ standata$X <- cbind(unit.info$lithology$ilr.trans,
                     unit.info$subsurface)
 standata$K <- ncol(standata$X)
 
-
-standata$Xnz <- standata$X[standata$y != 0, ]
-standata$Nnz <- nrow(standata$Xnz)
-standata$Nz <- nz
+inc <- standata$y ==0
+standata$zi <- inc * 1
+standata$Nz <- sum(inc)
+standata$Nnz <- sum(!inc)
+standata$Xnz <- standata$X[!inc, ]
+standata$ynz <- standata$y[!inc]
 
 
 

@@ -1,13 +1,16 @@
 data {
   int N;  // number of attempts at order observation at units
+  int Nz;
   int Nnz;
   int K;  // number of unit covariates
 
   int y[N];  // counts at each attempted observation 
+  int ynz[Nnz];  // counts at each attempted observation 
 
   matrix[N, K] X;  // covariates for each unit
-}
-transformed data {
+  matrix[Nnz, K] Xnz;
+
+  int zi[N];  // 1 if zero, 0 if not
 }
 parameters {
   real the;  // intercept of theta
@@ -18,24 +21,26 @@ parameters {
 }
 transformed parameters {
   vector<lower=0, upper=1>[N] theta;
+  vector<lower=0>[Nnz] lambda;
 
   theta[1:N] = inv_logit(the + X[1:N, ] * beta_the);
+  lambda[1:Nnz] = exp(lam + Xnz[1:Nnz, ] * beta_lam);
 }
 model {
   the ~ normal(2, 1);
   lam ~ normal(0, 1);
 
   beta_the ~ normal(0, 1);
+  beta_lam ~ normal(0, 1);
   
+  zi ~ bernoulli(theta);
+  target += poisson_lpmf(ynz[1:Nnz] | lambda[1:Nnz])
+    - log1m_exp(-(lambda[1:Nnz]));
+}
+generated quantities {
+  vector[N] lambda_est;  // for simulations
+
   for(n in 1:N) {
-    if(y[n] == 0)
-      target += log(theta[n]);
-      //1 ~ bernoulli(theta[n]);
-    else {
-      target += log1m(theta[n]) + poisson_lpmf(y[n] | exp(lam + X[n, ] * beta_lam))
-        - log1m_exp(-(exp(lam + X[n, ] * beta_lam)));
-      //0 ~ bernoulli(theta[n]);
-      //y[n] ~ poisson(exp(lam + X[n, ] * beta_lam)) T[1, ];
-    }
+    lambda_est[n] = exp(lam + X[n] * beta_lam);
   }
 }
