@@ -197,7 +197,7 @@ process.strat <- function(strat.ord) {
                      location = list(top.temp = top.temp, bot.temp = bot.temp, 
                                      cross.eq = cros.eq, switches = swit),
                      duration = dr.col,
-                     subsuface = subsurf)
+                     subsurface = subsurf)
 
   clean.data
 }

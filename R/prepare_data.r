@@ -82,14 +82,14 @@ standata$X <- cbind(unit.info$lithology$ilr.trans,
                     unit.info$thickness$high, 
                     unit.info$column.area, 
                     unit.info$contact$above, 
-                    unit.info$contact$below, 
+                    unit.info$contact$below,
+                    unit.info$subsurface)
                     #unit.info$change, 
                     #unit.info$location$top.temp, 
                     #unit.info$location$bot.temp, 
                     #unit.info$location$cross.eq, 
                     #unit.info$location$switches, 
                     #unit.info$duration,
-                    unit.info$subsurface)
 standata$K <- ncol(standata$X)
 
 inc <- standata$y ==0
