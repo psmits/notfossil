@@ -59,8 +59,39 @@ ppc.gg <- ppc.gg + geom_vline(mapping = aes(xintercept = em),
                               data = ee,
                               size = 1.5, colour = 'blue')
 
-# regression coefficients
-post$beta_the <- c(colnames(unit.info$lithology$raw)[-1], 
-                   'thickness', 'area', 'contact above', 
-                   'contact below', 'subsurface')
-names(post$beta_the)
+# residuals and standardized residuals
+resd <- llply(ppc, function(x) standata$y - x)
+resd <- laply(resd, mean)
+sdre <- llply(ppc, function(x) (standata$y - x) / sd(standata$y))
+sdre <- laply(sdre, mean)
+
+ppc.res <- data.frame(resid = resd, stan.resid = sdre)
+ppc.res <- melt(ppc.res)
+
+res.gg <- ggplot(ppc.res, aes(x = value))
+res.gg <- res.gg + geom_histogram()
+res.gg <- res.gg + facet_grid(. ~ variable, scales = 'free_x')
+
+
+# theta regression coefficients
+bet.the <- post$beta_the
+colnames(bet.the) <- c(colnames(unit.info$lithology$raw)[-1], 
+                       'thickness', 'area', 'contact above', 
+                       'contact below', 'subsurface')
+bet.the <- melt(bet.the)
+
+the.gg <- ggplot(bet.the, aes(x = value, y = Var2))
+the.gg <- the.gg + geom_density_ridges(rel_min_height = 0.01)
+the.gg <- the.gg + theme_ridges()
+
+# lambda regression coefficients
+bet.lam <- post$beta_lam
+colnames(bet.lam) <- c(colnames(unit.info$lithology$raw)[-1], 
+                       'thickness', 'area', 'contact above', 
+                       'contact below', 'subsurface')
+bet.lam <- melt(bet.lam)
+
+lam.gg <- ggplot(bet.lam, aes(x = value, y = Var2))
+lam.gg <- lam.gg + geom_density_ridges(rel_min_height = 0.01)
+lam.gg <- lam.gg + theme_ridges()
+
