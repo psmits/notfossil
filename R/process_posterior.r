@@ -10,6 +10,7 @@ library(arm)
 library(rstan)
 library(coda)
 
+source('stan_utility.R')
 source('sim_hurdle.r')
 
 nsim <- 1000
@@ -17,9 +18,8 @@ nsim <- 1000
 load(file = '../data/data_dump/unit_image.rdata')
 
 files <- list.files('../data/mcmc_out', pattern = 'hurdle', full.names = TRUE)
-fit <- read_stan_csv(files)
-fit.rhat <- stan_rhat(fit)
-fit.ess <- stan_ess(fit)
+fit <- read_stan_csv(files[1:4])
+check_all_diagnostics(fit)
 
 post <- rstan::extract(fit, permuted = TRUE)
 grab <- sample(standata$N, nsim)
