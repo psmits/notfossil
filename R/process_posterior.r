@@ -6,6 +6,7 @@ library(scales)
 library(grid)
 library(ggridges)
 
+library(compositions)
 library(arm)
 library(rstan)
 library(coda)
@@ -20,6 +21,7 @@ load(file = '../data/data_dump/unit_image.rdata')
 files <- list.files('../data/mcmc_out', pattern = 'hurdle', full.names = TRUE)
 fit <- read_stan_csv(files[1:4])
 check_all_diagnostics(fit)
+check_treedepth(fit, max_depth = 15)
 
 post <- rstan::extract(fit, permuted = TRUE)
 grab <- sample(standata$N, nsim)
@@ -83,6 +85,7 @@ bet.the <- melt(bet.the)
 the.gg <- ggplot(bet.the, aes(x = value, y = Var2))
 the.gg <- the.gg + geom_density_ridges(rel_min_height = 0.01)
 the.gg <- the.gg + theme_ridges()
+the.gg <- the.gg + labs(x = 'estimate', y = 'predictor of theta')
 
 # lambda regression coefficients
 bet.lam <- post$beta_lam
@@ -94,4 +97,14 @@ bet.lam <- melt(bet.lam)
 lam.gg <- ggplot(bet.lam, aes(x = value, y = Var2))
 lam.gg <- lam.gg + geom_density_ridges(rel_min_height = 0.01)
 lam.gg <- lam.gg + theme_ridges()
+lam.gg <- lam.gg + labs(x = 'estimate', y = 'predictor of lambda')
 
+
+# back transform the compositional variables
+tt <- colMeans(post$beta_the[, 1:22])
+ll <- colMeans(post$beta_lam[, 1:22])
+dim(post$beta_the[, 1:22])
+inv.theta <- alply(post$beta_the[, 1:22], 2, function(x) 
+                   ilrInv(x, orig = unit.info$lithology$raw))
+inv.lambda <- alply(post$beta_lam[, 1:22], 2, function(x) 
+                    ilrInv(x, orig = unit.info$lithology$raw))

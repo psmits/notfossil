@@ -17,7 +17,12 @@ parameters {
   real lam;  // intercept of lambda
 
   vector[K] beta_the;
+  vector<lower=0>[K] the_indiv;
+  real<lower=0> the_global;
+  
   vector[K] beta_lam;
+  vector<lower=0>[K] lam_indiv;
+  real<lower=0> lam_global;
 
   real<lower=0> phi;
 }
@@ -32,9 +37,14 @@ model {
   the ~ normal(2, 1);
   lam ~ normal(0, 1);
 
-  beta_the ~ normal(0, 1);
-  beta_lam ~ normal(0, 1);
+  beta_the ~ normal(0, the_indiv * the_global);
+  beta_lam ~ normal(0, lam_indiv * lam_global);
 
+  the_indiv ~ cauchy(0, 1);
+  the_global ~ cauchy(0, 1);
+  lam_indiv ~ cauchy(0, 1);
+  lam_global ~ cauchy(0, 1);
+  
   phi ~ normal(0, 1);
   
   zi ~ bernoulli(theta);
