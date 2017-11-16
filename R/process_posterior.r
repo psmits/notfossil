@@ -16,17 +16,23 @@ source('stan_utility.R')
 source('sim_hurdle.r')
 
 nsim <- 1000
+grab <- sample(standata$N, nsim)
 
 load(file = '../data/data_dump/unit_image.rdata')
 
 files <- list.files('../data/mcmc_out', pattern = 'hurdle', full.names = TRUE)
+
+# pois
 fit <- read_stan_csv(files[1:4])
 check_all_diagnostics(fit)
 check_treedepth(fit, max_depth = 15)
-
 post <- rstan::extract(fit, permuted = TRUE)
-grab <- sample(standata$N, nsim)
 
+# nb
+fit2 <- read_stan_csv(files[5:8])
+check_all_diagnostics(fit2)
+check_treedepth(fit2, max_depth = 15)
+post2 <- rstan::extract(fit, permuted = TRUE)
 
 # posterior predictive simulations
 ppc <- list()
@@ -42,49 +48,18 @@ for(jj in seq(nsim)) {
 }
 
 
-# empirical values
-em <- mean(standata$y)
-esd <- sd(standata$y)
-emx <- max(standata$y)
-epz <- mean(standata$y == 0)
-ee <- data.frame(emp = c(em, esd, emx, epz), 
-                 variable = c('mean', 'sd', 'max', 'prop'))
 
-# point estimates from sims
-ppc.m <- laply(ppc, mean)
-ppc.sd <- laply(ppc, sd)
-ppc.mx <- laply(ppc, max)
+# point estimates
+ppc.mean <- ppc_stat(standata$y, Reduce(rbind, ppc), stat = 'mean')
+ppc.sd <- ppc_stat(standata$y, Reduce(rbind, ppc), stat = 'sd')
+ppc.max <- ppc_stat(standata$y, Reduce(rbind, ppc), stat = 'max')
 prop_zero <- function(x) mean(x == 0)
-ppc.prop <- laply(ppc, prop_zero)
+ppc.zero <- ppc_stat(standata$y, Reduce(rbind, ppc), stat = 'prop_zero')
 
-# histogram plots
-ppc.sum <- data.frame(mean = ppc.m, sd = ppc.sd, 
-                      max = ppc.mx, prop = ppc.prop)
-ppc.sum <- melt(ppc.sum)
-
-ppc.gg <- ggplot(ppc.sum, aes(x = value))
-ppc.gg <- ppc.gg + geom_histogram()
-ppc.gg <- ppc.gg + facet_grid(. ~ variable, scales = 'free_x')
-ppc.gg <- ppc.gg + geom_vline(mapping = aes(xintercept = emp),
-                              data = ee,
-                              size = 1.5, colour = 'blue')
-
-# residuals and standardized residuals
-resd <- llply(ppc, function(x) standata$y - x)
-resd <- laply(resd, mean)
-sdre <- llply(ppc, function(x) (standata$y - x) / sd(standata$y))
-sdre <- laply(sdre, mean)
-
-ppc.res <- data.frame(resid = resd, stan.resid = sdre)
-ppc.res <- melt(ppc.res)
-
-res.gg <- ggplot(ppc.res, aes(x = value))
-res.gg <- res.gg + geom_histogram()
-res.gg <- res.gg + facet_grid(. ~ variable, scales = 'free_x')
-
-es <- ppc_error_scatter(standata$y, Reduce(rbind, ppc[1:6]))
-esa <- ppc_error_scatter_avg(standata$y, Reduce(rbind, ppc))
-estecdf <- ppc_ecdf_overlay(standata$y, Reduce(rbind, ppc[1:50]))
+# error
+ppc.err <- ppc_error_scatter(standata$y, Reduce(rbind, ppc[1:6]))
+ppc.avgerr <- ppc_error_scatter_avg(standata$y, Reduce(rbind, ppc))
+ppc.ecdf <- ppc_ecdf_overlay(standata$y, Reduce(rbind, ppc[1:50]))
 
 # rootograms because i find them easy to read
 rot.gg <- ppc_rootogram(standata$y, 

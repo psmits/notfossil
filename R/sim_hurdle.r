@@ -30,7 +30,7 @@ rhurdle <- function(n, theta, lambda) {
 
   out
 }
-roverhurdle <- function(n, theta, size, prob) {
+roverhurdle <- function(n, theta, mean, overdispersion) {
   # theta: probability of generating a 0
   # lambda: poisson expectation
 
@@ -41,6 +41,10 @@ roverhurdle <- function(n, theta, size, prob) {
 
   # then lambda
   not.zero <- !is.zero
+  # a is # fails
+  # p is prob
+  # mean = a / b
+  # overdisp = 1 + 1 / b
   nz <- rztnbinom(sum(not.zero), size, prob)
 
   # put it together
