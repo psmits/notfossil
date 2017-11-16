@@ -40,7 +40,6 @@ check_treedepth(fit2, max_depth = 15)
 post2 <- rstan::extract(fit2, permuted = TRUE)
 
 # posterior predictive simulations
-#ppc.sim.check <- function(post) {}
 ppc.p <- list()
 for(jj in seq(nsim)) {
   gg <- grab[jj]
@@ -103,7 +102,7 @@ po.check <- series.checks(standata, ppc.p)
 nb.check <- series.checks(standata, ppc.nb)
 
 
-
+# visualize regression coefs
 post.vis <- function(post, unit.info) {
   # theta regression coefficients
   bet.the <- post$beta_the

@@ -51,8 +51,12 @@ process.fossil <- function(fossil.ord, shelly) {
   # some of the orders missing phylum/class are easy to fix
   fossils <- clean.taxon(fossils)
 
+  names(fossils)
+  fossils$genus
+
 
   by.unit <- split(fossils, fossils$unit_id)
+  by.unit <- llply(by.unit, function(x) x[!duplicated(x$genus), ])
   unit.counts <- llply(by.unit, function(x) table(x$order))
 
   taxon.count.unit <- melt(unit.counts)
