@@ -187,6 +187,9 @@ process.strat <- function(strat.ord) {
 
 
   clean.data <- list(unit.id = rownames(rock.fossil),
+                     age = list(bottom.age = so$b_age, top.age = so$t_age,
+                                bottom.name = so$b_int_name,
+                                top.name = so$t_int_name),
                      fossils = rock.fossil, 
                      lithology = list(raw = short.matrix, ilr.trans = shcm.tr),
                      thickness = list(high = thik.h, low = thik.l, 
