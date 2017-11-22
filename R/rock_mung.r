@@ -1,11 +1,19 @@
 source('rock_functions.r')
 
-process.strat <- function(strat.ord) {
+process.strat <- function(strat.ord, bracket = c(485.4, 454.2, 443.8)) {
   # fossils in those rocks
+  
   rock.fossil <- data.frame(nocc = strat.ord$pbdb_occurrences, 
                             ncol = strat.ord$pbdb_collections)
   rock.fossil$yesno <- (rock.fossil$ncol > 0) * 1
   rownames(rock.fossil) <- strat.ord$unit_id
+  
+  # units that start and end in the ordovician
+  inbrack <- strat.ord$b_age <= bracket[1] & strat.ord$t_age >= bracket[3]
+  strat.ord <- strat.ord[inbrack, ]
+  topbrack <- strat.ord$b_age <= bracket[1] & strat.ord$t_age >= bracket[2]
+  botbrack <- strat.ord$b_age <= bracket[2] & strat.ord$t_age >= ord[2]
+  strat.ord <- strat.ord[topbrack | botbrack, ]
 
   # given data call, want to extract rock covariates
   # get lithology words and composition
@@ -83,7 +91,7 @@ process.strat <- function(strat.ord) {
 
   rock.matrix <- lith.matrix(lit)
   rock.matrix <- t(apply(rock.matrix, 1, function(x) x / sum(x)))
-  comp.tr <- ilr(rock.matrix)  # isometric log ratio transform
+  #comp.tr <- ilr(rock.matrix)  # isometric log ratio transform
   # to read coefs from a reg, do ilrInv to the coefs given comp.tr
   # i.e. ilrInv(coefs, x = comp.tr)
   # turns out this matrix is super big and relatively not helpful
@@ -117,7 +125,7 @@ process.strat <- function(strat.ord) {
 
   # covariates
   short.matrix <- t(apply(short.matrix, 1, function(x) x / sum(x)))
-  shcm.tr <- ilr(short.matrix)  # isometric log ratio transform
+  #shcm.tr <- ilr(short.matrix)  # isometric log ratio transform
 
   # consolidate
   rock.fossil <- rock.fossil[rownames(rock.fossil) %in% rownames(short.matrix), ]
@@ -142,15 +150,18 @@ process.strat <- function(strat.ord) {
   weird <- so$max_thick < so$min_thick
   so[weird, tt] <- so[weird, rev(tt)]
   # covariate form
-  thik.h <- arm::rescale(log1p(so$max_thick))
-  thik.l <- arm::rescale(log1p(so$min_thick))
+  #thik.h <- arm::rescale(log1p(so$max_thick))
+  thik.h <- so$max_thick
+  #thik.l <- arm::rescale(log1p(so$min_thick))
+  thik.l <- so$min_thick
   thik.h.imp <- so$max_thick == 0  # will need imputation?
   thik.l.imp <- so$min_thick == 0  # will need imputation?
 
 
   # area of the column
   # area estimate sq km; not very accurate
-  cola <- arm::rescale(log(so$col_area))  # rescaled
+  #cola <- arm::rescale(log(so$col_area))  # rescaled
+  cola <- so$col_area
 
 
   # contact units
@@ -163,7 +174,8 @@ process.strat <- function(strat.ord) {
   bcoo <- cbind(so$b_plng, so$b_plat)  # bot coord
   loc.change <- distGeo(tcoo, bcoo)  # distance is cal in meters
   loc.change <- loc.change / 1000  # to kilometers
-  loc.ch <- arm::rescale(log1p(loc.change))  # rescaled
+  #loc.ch <- arm::rescale(log1p(loc.change))  # rescaled
+  loc.ch <- loc.change
 
 
   # tropical vs temperate @ top and bottom
@@ -179,19 +191,27 @@ process.strat <- function(strat.ord) {
   # difference between b_age and t_age
   #   the plng and plat variables follow this time model
   dr.col <- (so$b_age - so$t_age)
-  dr.col <- arm::rescale(log(dr.col))
+  #dr.col <- arm::rescale(log(dr.col))
 
 
   # subsurface
   subsurf <- (so$outcrop == 'subsurface') * 1
+  
+  # train vs test 
+  topbrack <- so$b_age <= bracket[1] & so$t_age >= bracket[2]
+  botbrack <- so$b_age <= bracket[2] & so$t_age >= ord[2]
+
+  trainset <- so[topbrack, ]
+  testset <- so[botbrack, ]
 
 
-  clean.data <- list(unit.id = rownames(rock.fossil),
+  clean.data <- list(test = topbrack * 1,
+                     unit.id = rownames(rock.fossil),
                      age = list(bottom.age = so$b_age, top.age = so$t_age,
                                 bottom.name = so$b_int_name,
                                 top.name = so$t_int_name),
                      fossils = rock.fossil, 
-                     lithology = list(raw = short.matrix, ilr.trans = shcm.tr),
+                     lithology = short.matrix,
                      thickness = list(high = thik.h, low = thik.l, 
                                       impute.high = thik.h.imp, impute.low = thik.l.imp),
                      column.area = cola,
