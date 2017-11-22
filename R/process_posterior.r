@@ -28,16 +28,16 @@ grab <- sample(4000, nsim)
 files <- list.files('../data/mcmc_out', pattern = 'hurdle', full.names = TRUE)
 
 # pois
-fit <- read_stan_csv(files[9:12])
+fit <- read_stan_csv(files[13:16])
 check_all_diagnostics(fit)
 check_treedepth(fit, max_depth = 15)
 post <- rstan::extract(fit, permuted = TRUE)
 
-## nb
-#fit2 <- read_stan_csv(files[5:8])
-#check_all_diagnostics(fit2)
-#check_treedepth(fit2, max_depth = 15)
-#post2 <- rstan::extract(fit2, permuted = TRUE)
+# nb
+fit2 <- read_stan_csv(files[9:12])
+check_all_diagnostics(fit2)
+check_treedepth(fit2, max_depth = 15)
+post2 <- rstan::extract(fit2, permuted = TRUE)
 
 # posterior predictive simulations
 ppc.p <- list()
@@ -51,18 +51,18 @@ for(jj in seq(nsim)) {
   }
   ppc.p[[jj]] <- oo
 }
-#ppc.nb <- list()
-#for(jj in seq(nsim)) {
-#  gg <- grab[jj]
-#  oo <- c()
-#  for(ii in seq(standata$N)) {
-#    oo[ii] <- roverhurdle(1, 
-#                          theta = post2$theta[gg, ii], 
-#                          mu = post2$lambda_est[gg, ii],
-#                          omega = post2$phi[gg])
-#  }
-#  ppc.nb[[jj]] <- oo
-#}
+ppc.nb <- list()
+for(jj in seq(nsim)) {
+  gg <- grab[jj]
+  oo <- c()
+  for(ii in seq(standata$N_train)) {
+    oo[ii] <- roverhurdle(1, 
+                          theta = post2$theta[gg, ii], 
+                          mu = post2$lambda_est[gg, ii],
+                          omega = post2$phi[gg])
+  }
+  ppc.nb[[jj]] <- oo
+}
 
 series.checks <- function(standata, ppc) {
   # point estimates
@@ -100,7 +100,7 @@ series.checks <- function(standata, ppc) {
 }
 # internal checks
 po.check <- series.checks(standata, ppc.p)
-#nb.check <- series.checks(standata, ppc.nb)
+nb.check <- series.checks(standata, ppc.nb)
 
 
 # visualize regression coefs
@@ -155,4 +155,4 @@ post.vis <- function(post, unit.info) {
   out
 }
 po.vis <- post.vis(post, unit.info)
-#nb.vis <- post.vis(post2, unit.info)
+nb.vis <- post.vis(post2, unit.info)
