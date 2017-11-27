@@ -51,6 +51,7 @@ model {
     - log1m_exp(-(lambda));
 }
 generated quantities {
+  vector[N_train] log_lik;
   vector[N_train] lambda_est;  // for trainset simulations
   vector[N_test] theta_test; // estimated for testset
   vector[N_test] lambda_test;  // estimated for testset
@@ -62,5 +63,13 @@ generated quantities {
   for(n in 1:N_test) {
     theta_test[n] = inv_logit(the + X_test[n, ] * beta_the);
     lambda_test[n] = exp(lam + X_test[n, ] * beta_lam);
+  }
+
+  for(n in 1:N_train) {
+    log_lik[n] = bernoulli_lpmf(zi_train[n] | theta[n]);
+    if(zi_train[n] == 0) {
+      log_lik[n] = log_lik[n] + poisson_lpmf(y_train[n] | lambda_est[n]) 
+        - log1m_exp(-(lambda_est[n]));
+    }
   }
 }
