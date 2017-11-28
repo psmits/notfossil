@@ -19,7 +19,7 @@ library(bayesplot)
 # helpful functions
 source('stan_utility.R')
 source('sim_hurdle.r')
-souce('post_foo.r')
+source('post_foo.r')
 
 # set up data
 load(file = '../data/data_dump/unit_image.rdata')
@@ -43,11 +43,11 @@ post2 <- rstan::extract(fit2, permuted = TRUE)
 
 # training set
 # loo and waic
-postlik <- extract_log_lik(post)
+postlik <- extract_log_lik(fit)
 postloo <- loo(postlik)
 postwaic <- waic(postlik)
 
-post2lik <- extract_log_lik(post2)
+post2lik <- extract_log_lik(fit2)
 post2loo <- loo(post2lik)
 post2waic <- waic(post2lik)
 
