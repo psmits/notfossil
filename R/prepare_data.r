@@ -122,7 +122,7 @@ colar.train <- (colar.train - colar.m) / (2 * colar.s)
 colar.test <- colar[unit.info$test != 1]
 colar.test <- (colar.test - colar.m) / (2 * colar.s)
 
-lith.tfrain <- unit.info$lithology[unit.info$test == 1, ]
+lith.train <- unit.info$lithology[unit.info$test == 1, ]
 lith.test <- unit.info$lithology[unit.info$test != 1, ]
 
 X_train <- cbind(ilr(lith.train),
@@ -158,3 +158,8 @@ with(standata, {stan_rdump(list = alply(names(standata), 1),
 # in less manipuated form
 save(standata, unit.info, foss.info, 
      file = '../data/data_dump/unit_image.rdata')
+
+
+#ccd <- which(colnames(unit.info$lithology) == 'carbonate chert dolomite')
+#ccd.unit <- unit.info$unit.id[unit.info$lithology[, ccd] > 0]
+#by.unit[by.unit[, 1] %in% ccd.unit, 1]
