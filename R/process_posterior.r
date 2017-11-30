@@ -22,12 +22,14 @@ source('sim_hurdle.r')
 source('post_foo.r')
 
 # set up data
-load(file = '../data/data_dump/unit_image.rdata')
+shelly <- c('Brachiopoda', 'Arthropoda')
+
+load('../data/data_dump/unit_image_Brachiopoda.data.R')
 
 nsim <- 1000
 grab <- sample(4000, nsim)
 
-files <- list.files('../data/mcmc_out', pattern = 'hurdle', full.names = TRUE)
+files <- list.files('../data/mcmc_out', pattern = shelly[1], full.names = TRUE)
 
 # pois
 fit <- read_stan_csv(files[13:16])
