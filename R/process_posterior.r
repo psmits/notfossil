@@ -22,100 +22,111 @@ source('sim_hurdle.r')
 source('post_foo.r')
 
 # set up data
-shelly <- c('Brachiopoda', 'Arthropoda')
-
-load('../data/data_dump/unit_image_Brachiopoda.data.R')
-
 nsim <- 1000
 grab <- sample(4000, nsim)
+shelly <- c('Brachiopoda', 'Arthropoda')
 
-files <- list.files('../data/mcmc_out', pattern = shelly[1], full.names = TRUE)
+out <- list()
+for(kk in seq(length(shelly))) {
 
-# pois
-fit <- read_stan_csv(files[13:16])
-check_all_diagnostics(fit)
-check_treedepth(fit, max_depth = 15)
-post <- rstan::extract(fit, permuted = TRUE)
+  load(paste0('../data/data_dump/unit_image_', shelly[kk], '.data.R'))
 
-# nb
-fit2 <- read_stan_csv(files[9:12])
-check_all_diagnostics(fit2)
-check_treedepth(fit2, max_depth = 15)
-post2 <- rstan::extract(fit2, permuted = TRUE)
+  files <- list.files('../data/mcmc_out', pattern = shelly[kk], full.names = TRUE)
 
-# training set
-# loo and waic
-postlik <- extract_log_lik(fit)
-postloo <- loo(postlik)
-postwaic <- waic(postlik)
+  # pois
+  fit <- read_stan_csv(files[5:8])
+  check_all_diagnostics(fit)
+  check_treedepth(fit, max_depth = 15)
+  post <- rstan::extract(fit, permuted = TRUE)
 
-post2lik <- extract_log_lik(fit2)
-post2loo <- loo(post2lik)
-post2waic <- waic(post2lik)
+  # nb
+  fit2 <- read_stan_csv(files[1:4])
+  check_all_diagnostics(fit2)
+  check_treedepth(fit2, max_depth = 15)
+  post2 <- rstan::extract(fit2, permuted = TRUE)
 
-hurdleloo <- compare(postloo, post2loo)
-hurdlewaic <- compare(postwaic, post2waic)
+  # training set
+  # loo and waic
+  postlik <- extract_log_lik(fit)
+  postloo <- loo(postlik)
+  postwaic <- waic(postlik)
+
+  post2lik <- extract_log_lik(fit2)
+  post2loo <- loo(post2lik)
+  post2waic <- waic(post2lik)
+
+  #hurdleloo <- compare(postloo, post2loo)
+  #hurdlewaic <- compare(postwaic, post2waic)
 
 
-# posterior predictive simulations for train set
-ppc.p <- list()
-for(jj in seq(nsim)) {
-  gg <- grab[jj]
-  oo <- c()
-  for(ii in seq(standata$N_train)) {
-    oo[ii] <- rhurdle(1, 
-                      theta = post$theta[gg, ii], 
-                      lambda = post$lambda_est[gg, ii])
+  # posterior predictive simulations for train set
+  ppc.p <- list()
+  for(jj in seq(nsim)) {
+    gg <- grab[jj]
+    oo <- c()
+    for(ii in seq(standata$N_train)) {
+      oo[ii] <- rhurdle(1, 
+                        theta = post$theta[gg, ii], 
+                        lambda = post$lambda_est[gg, ii])
+    }
+    ppc.p[[jj]] <- oo
   }
-  ppc.p[[jj]] <- oo
-}
-ppc.nb <- list()
-for(jj in seq(nsim)) {
-  gg <- grab[jj]
-  oo <- c()
-  for(ii in seq(standata$N_train)) {
-    oo[ii] <- roverhurdle(1, 
-                          theta = post2$theta[gg, ii], 
-                          mu = post2$lambda_est[gg, ii],
-                          omega = post2$phi[gg])
+  ppc.nb <- list()
+  for(jj in seq(nsim)) {
+    gg <- grab[jj]
+    oo <- c()
+    for(ii in seq(standata$N_train)) {
+      oo[ii] <- roverhurdle(1, 
+                            theta = post2$theta[gg, ii], 
+                            mu = post2$lambda_est[gg, ii],
+                            omega = post2$phi[gg])
+    }
+    ppc.nb[[jj]] <- oo
   }
-  ppc.nb[[jj]] <- oo
-}
 
-# internal checks
-po.check <- series.checks(standata$y_train, ppc.p)
-nb.check <- series.checks(standata$y_train, ppc.nb)
+  # internal checks
+  po.check <- series.checks(standata$y_train, ppc.p)
+  nb.check <- series.checks(standata$y_train, ppc.nb)
 
 
-# visualize regression coefs
-po.vis <- post.vis(post, unit.info)
-nb.vis <- post.vis(post2, unit.info)
+  # visualize regression coefs
+  po.vis <- post.vis(post, unit.info)
+  nb.vis <- post.vis(post2, unit.info)
 
 
-# testing set
-# posterior predictive simulations for test set
-pre.p <- list()
-for(jj in seq(nsim)) {
-  gg <- grab[jj]
-  oo <- c()
-  for(ii in seq(standata$N_test)) {
-    oo[ii] <- rhurdle(1, 
-                      theta = post$theta_test[gg, ii], 
-                      lambda = post$lambda_test[gg, ii])
+  # testing set
+  # posterior predictive simulations for test set
+  pre.p <- list()
+  for(jj in seq(nsim)) {
+    gg <- grab[jj]
+    oo <- c()
+    for(ii in seq(standata$N_test)) {
+      oo[ii] <- rhurdle(1, 
+                        theta = post$theta_test[gg, ii], 
+                        lambda = post$lambda_test[gg, ii])
+    }
+    pre.p[[jj]] <- oo
   }
-  pre.p[[jj]] <- oo
-}
-pre.nb <- list()
-for(jj in seq(nsim)) {
-  gg <- grab[jj]
-  oo <- c()
-  for(ii in seq(standata$N_test)) {
-    oo[ii] <- roverhurdle(1, 
-                          theta = post2$theta_test[gg, ii], 
-                          mu = post2$lambda_test[gg, ii],
-                          omega = post2$phi[gg])
+  pre.nb <- list()
+  for(jj in seq(nsim)) {
+    gg <- grab[jj]
+    oo <- c()
+    for(ii in seq(standata$N_test)) {
+      oo[ii] <- roverhurdle(1, 
+                            theta = post2$theta_test[gg, ii], 
+                            mu = post2$lambda_test[gg, ii],
+                            omega = post2$phi[gg])
+    }
+    pre.nb[[jj]] <- oo
   }
-  pre.nb[[jj]] <- oo
+  po.test <- series.checks(standata$y_test, pre.p)
+  nb.test <- series.checks(standata$y_test, pre.nb)
+
+  out[[kk]] <- list(posteriors = list(post, post2),
+                    loo = list(postloo, post2loo), 
+                    waic = list(postwaic, post2waic),
+                    po.check = po.check, nb.check = nb.check,
+                    po.vis = po.vis, nb.vis = nb.vis,
+                    po.test = po.test, nb.test = nb.test)
 }
-po.test <- series.checks(standata$y_test, pre.p)
-nb.test <- series.checks(standata$y_test, pre.nb)
+names(out) <- shelly
