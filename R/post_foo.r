@@ -1,7 +1,12 @@
 # internal checks
-series.checks <- function(y, ppc) {
-  # point estimates
+series.checks <- function(y, ppc, lw = NULL) {
   ppc <- Reduce(rbind, ppc)
+
+  # density
+  ppc.dens <- ppc_dens_overlay(y, ppc[1:50, ])
+  ppc.hist <- ppc_hist(y, ppc[1:5, ])
+  
+  # point estimates
   ppc.mean <- ppc_stat(y, ppc, stat = 'mean')
   ppc.sd <- ppc_stat(y, ppc, stat = 'sd')
   ppc.max <- ppc_stat(y, ppc, stat = 'max')
@@ -20,6 +25,8 @@ series.checks <- function(y, ppc) {
   # rootograms because i find them easy to read
   root.gg <- ppc_rootogram(y, ppc, style = 'hanging', prob = 0.8)
 
+
+
   # all the plots
   out <- list(mean = ppc.mean, 
               sd = ppc.sd, 
@@ -31,6 +38,13 @@ series.checks <- function(y, ppc) {
               avgerr = ppc.avgerr, 
               ecdf = ppc.ecdf, 
               root = root.gg)
+  if(!is.null(lw)) {
+    loo.pit <- ppc_loo_pit(y, ppc, lw = lw, compare = 'normal')
+    #loo.int <- ppc_loo_intervals(y, ppc, lw = lw)
+    #loo.rib <- ppc_loo_ribbon(y, ppc, lw = lw)
+    out$loo.pit <- loo.pit
+  }
+  
   out
 }
 

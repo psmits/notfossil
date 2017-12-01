@@ -24,14 +24,15 @@ source('post_foo.r')
 # set up data
 nsim <- 1000
 grab <- sample(4000, nsim)
-shelly <- c('Brachiopoda', 'Arthropoda')
+shelly <- c('Brachiopoda', 'Arthropoda', 'Mollusca')
 
 out <- list()
 for(kk in seq(length(shelly))) {
 
-  load(paste0('../data/data_dump/unit_image_', shelly[kk], '.data.R'))
+  load(paste0('../data/data_dump/unit_image_', shelly[kk], '.rdata'))
 
-  files <- list.files('../data/mcmc_out', pattern = shelly[kk], full.names = TRUE)
+  files <- list.files('../data/mcmc_out', pattern = shelly[kk], 
+                      full.names = TRUE)
 
   # pois
   fit <- read_stan_csv(files[5:8])
@@ -85,8 +86,12 @@ for(kk in seq(length(shelly))) {
   }
 
   # internal checks
-  po.check <- series.checks(standata$y_train, ppc.p)
-  nb.check <- series.checks(standata$y_train, ppc.nb)
+  psis <- psislw(-extract_log_lik(fit), cores = 2)
+  lw = psis$lw_smooth[grab, ]
+  psis2 <- psislw(-extract_log_lik(fit2), cores = 2)
+  lw2 = psis2$lw_smooth[grab, ]
+  po.check <- series.checks(standata$y_train, ppc.p, lw)
+  nb.check <- series.checks(standata$y_train, ppc.nb, lw2)
 
 
   # visualize regression coefs
@@ -122,11 +127,66 @@ for(kk in seq(length(shelly))) {
   po.test <- series.checks(standata$y_test, pre.p)
   nb.test <- series.checks(standata$y_test, pre.nb)
 
-  out[[kk]] <- list(posteriors = list(post, post2),
-                    loo = list(postloo, post2loo), 
-                    waic = list(postwaic, post2waic),
+  out[[kk]] <- list(data = standata,
+                    posteriors = list(po = post, nb = post2),
+                    loo = list(po = postloo, nb = post2loo), 
+                    waic = list(po = postwaic, nb = post2waic),
                     po.check = po.check, nb.check = nb.check,
                     po.vis = po.vis, nb.vis = nb.vis,
                     po.test = po.test, nb.test = nb.test)
 }
 names(out) <- shelly
+
+pdf(file = '../doc/figure/ppc_mean.pdf', height = 10, width = 8)
+bayesplot_grid(out$Arthropoda$po.check$mean, out$Arthropoda$nb.check$mean,
+               out$Brachiopoda$po.check$mean, out$Brachiopoda$nb.check$mean,
+               out$Mollusca$po.check$mean, out$Mollusca$nb.check$mean,
+               grid_args = list(nrow = 3, ncol = 2),
+               titles = c('Arth_po', 'Arth_nb', 'Brach_po', 'Brach_nb',
+                          'Mol_po', 'Mol_nb'))
+dev.off()
+
+pdf(file = '../doc/figure/ppc_sd.pdf', height = 10, width = 8)
+bayesplot_grid(out$Arthropoda$po.check$sd, out$Arthropoda$nb.check$sd,
+               out$Brachiopoda$po.check$sd, out$Brachiopoda$nb.check$sd,
+               out$Mollusca$po.check$sd, out$Mollusca$nb.check$sd,
+               grid_args = list(nrow = 3, ncol = 2),
+               titles = c('Arth_po', 'Arth_nb', 'Brach_po', 'Brach_nb',
+                          'Mol_po', 'Mol_nb'))
+dev.off()
+
+pdf(file = '../doc/figure/ppc_ecdf.pdf', height = 10, width = 8)
+bayesplot_grid(out$Arthropoda$po.check$ecdf, out$Arthropoda$nb.check$ecdf,
+               out$Brachiopoda$po.check$ecdf, out$Brachiopoda$nb.check$ecdf,
+               out$Mollusca$po.check$ecdf, out$Mollusca$nb.check$ecdf,
+               grid_args = list(nrow = 3, ncol = 2),
+               titles = c('Arth_po', 'Arth_nb', 'Brach_po', 'Brach_nb',
+                          'Mol_po', 'Mol_nb'))
+dev.off()
+
+pdf(file = '../doc/figure/ppc_root.pdf', height = 10, width = 8)
+bayesplot_grid(out$Arthropoda$po.check$root, out$Arthropoda$nb.check$root,
+               out$Brachiopoda$po.check$root, out$Brachiopoda$nb.check$root,
+               out$Mollusca$po.check$root, out$Mollusca$nb.check$root,
+               grid_args = list(nrow = 3, ncol = 2),
+               titles = c('Arth_po', 'Arth_nb', 'Brach_po', 'Brach_nb',
+                          'Mol_po', 'Mol_nb'))
+dev.off()
+
+pdf(file = '../doc/figure/ppc_avgerr.pdf', height = 10, width = 8)
+bayesplot_grid(out$Arthropoda$po.check$avgerr, out$Arthropoda$nb.check$avgerr,
+               out$Brachiopoda$po.check$avgerr, out$Brachiopoda$nb.check$avgerr,
+               out$Mollusca$po.check$avgerr, out$Mollusca$nb.check$avgerr,
+               grid_args = list(nrow = 3, ncol = 2),
+               titles = c('Arth_po', 'Arth_nb', 'Brach_po', 'Brach_nb',
+                          'Mol_po', 'Mol_nb'))
+dev.off()
+
+pdf(file = '../doc/figure/ppc_avgerr.pdf', height = 10, width = 8)
+bayesplot_grid(out$Arthropoda$po.check$loo.pit, out$Arthropoda$nb.check$loo.pit,
+               out$Brachiopoda$po.check$loo.pit, out$Brachiopoda$nb.check$loo.pit,
+               out$Mollusca$po.check$loo.pit, out$Mollusca$nb.check$loo.pit,
+               grid_args = list(nrow = 3, ncol = 2),
+               titles = c('Arth_po', 'Arth_nb', 'Brach_po', 'Brach_nb',
+                          'Mol_po', 'Mol_nb'))
+dev.off()

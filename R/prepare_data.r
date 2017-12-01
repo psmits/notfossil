@@ -24,13 +24,13 @@ source('download_scrap.r')  # just macrostrat
 # clean data
 #shelly <- c('Arthropoda', 'Brachiopoda', 'Mollusca', 'Echinodermata', 
 #            'Hemichordata', 'Bryozoa', 'Cnidaria')
-shelly <- c('Brachiopoda', 'Arthropoda')
+shelly <- c('Brachiopoda', 'Arthropoda', 'Mollusca')
 ord <- c(485.4, 443.8)
 mid <- ord[1] - abs((diff(ord) / 4) * 3)
 bracket <- c(ord[1], mid, ord[2])
 
-for (ii in seq(length(shelly))) {
-  foss.info <- process.fossil(fossil.ord, shelly = shelly)  # grabs PBDB information
+for (kk in seq(length(shelly))) {
+  foss.info <- process.fossil(fossil.ord, shelly = shelly[kk])  # grabs PBDB information
   unit.info <- process.strat(strat.ord, bracket = bracket)  # relevant properties of the units
 
   # there area a few misaligns
@@ -50,7 +50,7 @@ for (ii in seq(length(shelly))) {
   by.phyl <- split(by.phyl, by.phyl$phyl)
 
   # response matrix!
-  ymat <- matrix(0, nrow = length(unit.info$unit.id), ncol = length(shelly))
+  ymat <- matrix(0, nrow = length(unit.info$unit.id), ncol = length(shelly[kk]))
   for(ii in seq(ncol(ymat))) {
     mm <- match(by.phyl[[ii]]$unit, unit.info$unit.id)
     ymat[mm, ii] <- by.phyl[[ii]]$count
@@ -159,11 +159,11 @@ for (ii in seq(length(shelly))) {
 
   # export the data
   # for stan
-  temp.name <- paste0('../data/data_dump/unit_data_', shelly[ii], '.data.R')
+  temp.name <- paste0('../data/data_dump/unit_data_', shelly[kk], '.data.R')
   with(standata, {stan_rdump(list = alply(names(standata), 1), 
                              file = temp.name)})
   # in less manipuated form
-  temp.name <- paste0('../data/data_dump/unit_image_', shelly[ii], '.rdata')
+  temp.name <- paste0('../data/data_dump/unit_image_', shelly[kk], '.rdata')
   save(standata, unit.info, foss.info, 
        file = temp.name)
 

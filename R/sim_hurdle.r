@@ -51,6 +51,24 @@ roverhurdle <- function(n, theta, mu, omega) {
 }
 
 
+# predict rhurdle
+predict.hurdle <- function(theta, lambda) {
+  ppc.p <- list()
+  for(jj in seq(nsim)) {
+    gg <- grab[jj]
+    oo <- c()
+    for(ii in seq(standata$N_train)) {
+      oo[ii] <- rhurdle(1, 
+                        theta = post$theta[gg, ii], 
+                        lambda = post$lambda_est[gg, ii])
+    }
+    ppc.p[[jj]] <- oo
+  }
+}
+
+
+
+
 ## hurdle with poisson
 #
 #n <- 1000
