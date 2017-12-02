@@ -78,7 +78,8 @@ post.vis <- function(post, unit.info) {
 
 
   # back transform the compositional variables
-  inv.the <- alply(post$beta_the[, 1:18], 1, function(x) ilrInv(x, orig = unit.info$lithology))
+  gr <- ncol(unit.info$lithology) - 1
+  inv.the <- alply(post$beta_the[, 1:gr], 1, function(x) ilrInv(x, orig = unit.info$lithology))
   the.comp.max <- table(laply(inv.the, which.max))
   inv.the.m <- melt(Reduce(cbind, inv.the))[, c(1, 3)]
   inv.the.m$Var1 <- mapvalues(inv.the.m$Var1, 
@@ -91,7 +92,7 @@ post.vis <- function(post, unit.info) {
   inv.the.gg <- inv.the.gg + labs(x = 'estimate (composition)', y = 'predictor of theta')
 
 
-  inv.lam <- alply(post$beta_lam[, 1:18], 1, function(x) ilrInv(x, orig = unit.info$lithology))
+  inv.lam <- alply(post$beta_lam[, 1:gr], 1, function(x) ilrInv(x, orig = unit.info$lithology))
   lam.comp.max <- table(laply(inv.lam, which.max))
   inv.lam.m <- melt(Reduce(cbind, inv.lam))[, c(1, 3)]
   inv.lam.m$Var1 <- mapvalues(inv.lam.m$Var1, 
