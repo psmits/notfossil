@@ -26,7 +26,8 @@ source('download_scrap.r')  # just macrostrat
 #            'Hemichordata', 'Bryozoa', 'Cnidaria')
 shelly <- c('Brachiopoda', 'Arthropoda', 'Mollusca')
 ord <- c(485.4, 443.8)
-mid <- ord[1] - abs((diff(ord) / 4) * 3)
+#mid <- ord[1] - abs((diff(ord) / 4) * 3)
+mid <- ord[1] - abs((diff(ord) / 10) * 9)
 bracket <- c(ord[1], mid, ord[2])
 
 for (kk in seq(length(shelly))) {
