@@ -17,9 +17,9 @@ library(ggridges)
 library(bayesplot)
 
 # helpful functions
-source('stan_utility.R')
-source('sim_hurdle.r')
-source('post_foo.r')
+source('../R/stan_utility.R')
+source('../R/sim_hurdle.r')
+source('../R/post_foo.r')
 
 # set up data
 shelly <- c('Brachiopoda', 'Arthropoda', 'Mollusca')
@@ -114,42 +114,52 @@ dev.off()
 
 
 # results of predicting the test set
-pdf(file = '../doc/figure/pred_mean.pdf', height = 10, width = 6)
-bayesplot_grid(out$Arthropoda$nb.test$mean, 
-               out$Brachiopoda$nb.test$mean,
-               out$Mollusca$nb.test$mean,
-               grid_args = list(ncol = 1),
-               titles = c('Arth_predmean', 'Brach_predmean', 'Mol_predmean'))
+pdf(file = '../doc/figure/pred_mean.pdf', height = 10, width = 8)
+bayesplot_grid(out$Arthropoda$po.test$mean, out$Arthropoda$nb.test$mean, 
+               out$Brachiopoda$po.test$mean, out$Brachiopoda$nb.test$mean,
+               out$Mollusca$po.test$mean, out$Mollusca$nb.test$mean,
+               grid_args = list(ncol = 2),
+               titles = c('Arth_po_predmean', 'Arth_nb_predmean', 
+                          'Brach_po_predmean', 'Brach_nb_predmean', 
+                          'Mol_po_predmean', 'Mol_nb_predmean'))
 dev.off()
 
-pdf(file = '../doc/figure/pred_sd', height = 10, width = 6)
-bayesplot_grid(out$Arthropoda$nb.test$sd, 
-               out$Brachiopoda$nb.test$sd,
-               out$Mollusca$nb.test$sd,
-               grid_args = list(ncol = 1),
-               titles = c('Arth_predsd', 'Brach_predsd', 'Mol_predsd'))
+pdf(file = '../doc/figure/pred_sd', height = 10, width = 8)
+bayesplot_grid(out$Arthropoda$po.test$sd, out$Arthropoda$nb.test$sd, 
+               out$Brachiopoda$po.test$sd, out$Brachiopoda$nb.test$sd,
+               out$Mollusca$po.test$sd, out$Mollusca$nb.test$sd,
+               grid_args = list(ncol = 2),
+               titles = c('Arth_po_predsd', 'Arth_nb_predsd', 
+                          'Brach_po_predsd', 'Brach_nb_predsd', 
+                          'Mol_po_predsd', 'Mol_nb_predsd'))
 dev.off()
 
-pdf(file = '../doc/figure/pred_root', height = 10, width = 6)
-bayesplot_grid(out$Arthropoda$nb.test$root, 
-               out$Brachiopoda$nb.test$root,
-               out$Mollusca$nb.test$root,
-               grid_args = list(ncol = 1),
-               titles = c('Arth_predroot', 'Brach_predroot', 'Mol_predroot'))
+pdf(file = '../doc/figure/pred_root', height = 10, width = 8)
+bayesplot_grid(out$Arthropoda$po.test$root, out$Arthropoda$nb.test$root, 
+               out$Brachiopoda$po.test$root, out$Brachiopoda$nb.test$root,
+               out$Mollusca$po.test$root, out$Mollusca$nb.test$root,
+               grid_args = list(ncol = 2),
+               titles = c('Arth_po_predroot', 'Arth_nb_predroot', 
+                          'Brach_po_predroot', 'Brach_nb_predroot', 
+                          'Mol_po_predroot', 'Mol_nb_predroot'))
 dev.off()
 
-pdf(file = '../doc/figure/pred_ecdf', height = 10, width = 6)
-bayesplot_grid(out$Arthropoda$nb.test$ecdf, 
-               out$Brachiopoda$nb.test$ecdf,
-               out$Mollusca$nb.test$ecdf,
-               grid_args = list(ncol = 1),
-               titles = c('Arth_predecdf', 'Brach_predecdf', 'Mol_predecdf'))
+pdf(file = '../doc/figure/pred_ecdf', height = 10, width = 8)
+bayesplot_grid(out$Arthropoda$po.test$ecdf, out$Arthropoda$nb.test$ecdf, 
+               out$Brachiopoda$po.test$ecdf, out$Brachiopoda$nb.test$ecdf,
+               out$Mollusca$po.test$ecdf, out$Mollusca$nb.test$ecdf,
+               grid_args = list(ncol = 2),
+               titles = c('Arth_po_predecdf', 'Arth_nb_predecdf', 
+                          'Brach_po_predecdf', 'Brach_nb_predecdf', 
+                          'Mol_po_predecdf', 'Mol_nb_predecdf'))
 dev.off()
 
-pdf(file = '../doc/figure/pred_avgerr', height = 10, width = 6)
-bayesplot_grid(out$Arthropoda$nb.test$avgerr, 
-               out$Brachiopoda$nb.test$avgerr,
-               out$Mollusca$nb.test$avgerr,
-               grid_args = list(ncol = 1),
-               titles = c('Arth_predavgerr', 'Brach_predavgerr', 'Mol_pred'))
+pdf(file = '../doc/figure/pred_avgerr', height = 10, width = 8)
+bayesplot_grid(out$Arthropoda$po.test$avgerr, out$Arthropoda$nb.test$avgerr, 
+               out$Brachiopoda$po.test$avgerr, out$Brachiopoda$nb.test$avgerr,
+               out$Mollusca$po.test$avgerr, out$Mollusca$nb.test$avgerr,
+               grid_args = list(ncol = 2),
+               titles = c('Arth_po_predavgerr', 'Arth_nb_predavgerr', 
+                          'Brach_po_predavgerr', 'Brach_nb_predavgerr', 
+                          'Mol_po_predavgerr', 'Mol_nb_predavgerr'))
 dev.off()

@@ -1,4 +1,4 @@
-source('fossil_functions.r')
+source('../R/fossil_functions.r')
 
 process.fossil <- function(fossil.ord, shelly) {
 

@@ -1,4 +1,4 @@
-source('rock_functions.r')
+source('../R/rock_functions.r')
 
 process.strat <- function(strat.ord, bracket = c(485.4, 454.2, 443.8)) {
   # fossils in those rocks

@@ -11,23 +11,24 @@ library(caret)
 #library(glmnet)
 #library(rpart)
 
-source('fossil_functions.r')
-source('fossil_mung.r')
-source('rock_functions.r')
-source('rock_mung.r')
+source('../R/fossil_functions.r')
+source('../R/fossil_mung.r')
+source('../R/rock_functions.r')
+source('../R/rock_mung.r')
 
 # bring in data
 #   fossil.ord # fossil occurrences in the ordovician
 #   strat.ord # fossil occurrences in the ordovician
-source('download_scrap.r')  # just macrostrat
+source('../R/download_scrap.r')  # just macrostrat
 
 # clean data
 #shelly <- c('Arthropoda', 'Brachiopoda', 'Mollusca', 'Echinodermata', 
 #            'Hemichordata', 'Bryozoa', 'Cnidaria')
 shelly <- c('Brachiopoda', 'Arthropoda', 'Mollusca')
-ord <- c(485.4, 443.8)
+ord <- c(460.4, 443.8)
 #mid <- ord[1] - abs((diff(ord) / 4) * 3)
-mid <- ord[1] - abs((diff(ord) / 10) * 9)
+#mid <- ord[1] - abs((diff(ord) / 10) * 9)
+mid <- 445.6
 bracket <- c(ord[1], mid, ord[2])
 
 for (kk in seq(length(shelly))) {
