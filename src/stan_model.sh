@@ -86,3 +86,102 @@ do
   done
   wait
 done
+FILES=../data/data_dump/unit_data_Arthropoda_*.data.R
+let COT=0
+for f in $FILES;
+do
+  let COT=COT+1
+  for i in `seq 1 4`;
+  do
+    ../stan/hurdle_train sample \
+      adapt delta=0.95 \
+      num_samples=1000 num_warmup=1000 \
+      algorithm=hmc engine=nuts max_depth=15 \
+      id=$i \
+      data file=$f \
+      output file=../data/mcmc_out/hurdle_train_${COT}_${i}_Arthropoda.csv &
+  done
+  wait
+done
+let COT=0
+for f in $FILES;
+do
+  let COT=COT+1
+  for i in `seq 1 4`;
+  do
+    ../stan/hurdle_over_train sample \
+      adapt delta=0.95 \
+      num_samples=2000 num_warmup=2000 thin=2 \
+      algorithm=hmc engine=nuts max_depth=15 \
+      id=$i \
+      data file=$f \
+      output file=../data/mcmc_out/hurdle_over_train_${COT}_${i}_Arthropoda.csv &
+  done
+  wait
+done
+FILES=../data/data_dump/unit_data_Brachiopoda.data.R
+let COT=0
+for f in $FILES;
+do
+  let COT=COT+1
+  for i in `seq 1 4`;
+  do
+    ../stan/hurdle_train sample \
+      adapt delta=0.95 \
+      num_samples=1000 num_warmup=1000 \
+      algorithm=hmc engine=nuts max_depth=15 \
+      id=$i \
+      data file=$f \
+      output file=../data/mcmc_out/hurdle_train_${COT}_${i}_Brachiopoda.csv &
+  done
+  wait
+done
+let COT=0
+for f in $FILES;
+do
+  let COT=COT+1
+  for i in `seq 1 4`;
+  do
+    ../stan/hurdle_over_train sample \
+      adapt delta=0.95 \
+      num_samples=2000 num_warmup=2000 thin=2 \
+      algorithm=hmc engine=nuts max_depth=15 \
+      id=$i \
+      data file=$f \
+      output file=../data/mcmc_out/hurdle_over_train_${COT}_${i}_Brachiopoda.csv &
+  done
+  wait
+done
+FILES=../data/data_dump/unit_data_Mollusca.data.R
+let COT=0
+for f in $FILES;
+do
+  let COT=COT+1
+  for i in `seq 1 4`;
+  do
+    ../stan/hurdle_train sample \
+      adapt delta=0.95 \
+      num_samples=1000 num_warmup=1000 \
+      algorithm=hmc engine=nuts max_depth=15 \
+      id=$i \
+      data file=$f \
+      output file=../data/mcmc_out/hurdle_train_${COT}_${i}_Mollusca.csv &
+  done
+  wait
+done
+let COT=0
+for f in $FILES;
+do
+  let COT=COT+1
+  for i in `seq 1 4`;
+  do
+    ../stan/hurdle_over_train sample \
+      adapt delta=0.95 \
+      num_samples=2000 num_warmup=2000 thin=2 \
+      algorithm=hmc engine=nuts max_depth=15 \
+      id=$i \
+      data file=$f \
+      output file=../data/mcmc_out/hurdle_over_train_${COT}_${i}_Mollusca.csv &
+  done
+  wait
+done
