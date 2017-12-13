@@ -217,13 +217,14 @@ export.stanfold <- function(fossil.ord, strat.ord, bracket, shelly, kfold) {
     standata$zi_train <- inc * 1
     standata$ynz_train <- standata$y_train[!inc]
     
-    standata$Xnz_train <- standata$X_train[!inc]
+    standata$Xnz_train <- standata$X_train[!inc, ]
     
     standata$Nz_train <- sum(inc)
     standata$Nnz_train <- sum(!inc)
     
     standata$N_train <- length(standata$y_train)
     standata$N_test<- length(tester)
+    standata$K <- ncol(standata$X_train)
   
     temp.name <- paste0('../data/data_dump/unit_data_', shelly, 
                         '_fold', ff, '.data.R')

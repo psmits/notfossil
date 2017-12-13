@@ -114,15 +114,15 @@ post.vis <- function(post, unit.info) {
 
 
 
-
+# analysis of full dataset
 analyze.posterior <- function(shelly, nsim, grab) {
   out <- list()
   for(kk in seq(length(shelly))) {
 
     load(paste0('../data/data_dump/unit_image_', shelly[kk], '.rdata'))
 
-    files <- list.files('../data/mcmc_out', pattern = shelly[kk], 
-                        full.names = TRUE)
+    pat <- paste0('train\\_[0-9]\\_', shelly[kk])
+    files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
 
     # pois
     fit <- read_stan_csv(files[5:8])

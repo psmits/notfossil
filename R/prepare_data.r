@@ -33,7 +33,7 @@ ord <- c(460.4, 443.8)
 mid <- 445.6
 bracket <- c(ord[1], mid, ord[2])
 
-RN <- 1
+#RN <- 1
 KF <- 5
 
 

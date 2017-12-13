@@ -26,8 +26,11 @@ shelly <- c('Brachiopoda', 'Arthropoda', 'Mollusca')
 nsim <- 1000
 grab <- sample(4000, nsim)
 
-out <- analyze.posterior(shelly, nsim, grab)
+#pat <- paste0('train\\_fold[0-9]\\_[0-9]\\_', shelly[1])
 
+
+# analysis of posterior estimated from full dataset
+out <- analyze.posterior(shelly, nsim, grab)
 
 # print out some posterior predictive checks
 pdf(file = '../doc/figure/ppc_mean.pdf', height = 10, width = 8)
@@ -35,8 +38,9 @@ bayesplot_grid(out$Arthropoda$po.check$mean, out$Arthropoda$nb.check$mean,
                out$Brachiopoda$po.check$mean, out$Brachiopoda$nb.check$mean,
                out$Mollusca$po.check$mean, out$Mollusca$nb.check$mean,
                grid_args = list(ncol = 2),
-               titles = c('Arth_po', 'Arth_nb', 'Brach_po', 'Brach_nb',
-                          'Mol_po', 'Mol_nb'))
+               titles = c('Arth_po_mean', 'Arth_nb_mean', 
+                          'Brach_po_mean', 'Brach_nb_mean',
+                          'Mol_po_mean', 'Mol_nb_mean'))
 dev.off()
 
 pdf(file = '../doc/figure/ppc_sd.pdf', height = 10, width = 8)
@@ -44,8 +48,9 @@ bayesplot_grid(out$Arthropoda$po.check$sd, out$Arthropoda$nb.check$sd,
                out$Brachiopoda$po.check$sd, out$Brachiopoda$nb.check$sd,
                out$Mollusca$po.check$sd, out$Mollusca$nb.check$sd,
                grid_args = list(ncol = 2),
-               titles = c('Arth_po', 'Arth_nb', 'Brach_po', 'Brach_nb',
-                          'Mol_po', 'Mol_nb'))
+               titles = c('Arth_po_sd', 'Arth_nb_sd', 
+                          'Brach_po_sd', 'Brach_nb_sd',
+                          'Mol_po_sd', 'Mol_nb_sd'))
 dev.off()
 
 pdf(file = '../doc/figure/ppc_ecdf.pdf', height = 10, width = 8)
@@ -53,8 +58,9 @@ bayesplot_grid(out$Arthropoda$po.check$ecdf, out$Arthropoda$nb.check$ecdf,
                out$Brachiopoda$po.check$ecdf, out$Brachiopoda$nb.check$ecdf,
                out$Mollusca$po.check$ecdf, out$Mollusca$nb.check$ecdf,
                grid_args = list(ncol = 2),
-               titles = c('Arth_po', 'Arth_nb', 'Brach_po', 'Brach_nb',
-                          'Mol_po', 'Mol_nb'))
+               titles = c('Arth_po_ecdf', 'Arth_nb_ecdf', 
+                          'Brach_po_ecdf', 'Brach_nb_ecdf',
+                          'Mol_po_ecdf', 'Mol_nb_ecdf'))
 dev.off()
 
 pdf(file = '../doc/figure/ppc_root.pdf', height = 10, width = 8)
@@ -62,8 +68,9 @@ bayesplot_grid(out$Arthropoda$po.check$root, out$Arthropoda$nb.check$root,
                out$Brachiopoda$po.check$root, out$Brachiopoda$nb.check$root,
                out$Mollusca$po.check$root, out$Mollusca$nb.check$root,
                grid_args = list(ncol = 2),
-               titles = c('Arth_po', 'Arth_nb', 'Brach_po', 'Brach_nb',
-                          'Mol_po', 'Mol_nb'))
+               titles = c('Arth_po_root', 'Arth_nb_root', 
+                          'Brach_po_root', 'Brach_nb_root',
+                          'Mol_po_root', 'Mol_nb_root'))
 dev.off()
 
 pdf(file = '../doc/figure/ppc_avgerr.pdf', height = 10, width = 8)
@@ -71,8 +78,9 @@ bayesplot_grid(out$Arthropoda$po.check$avgerr, out$Arthropoda$nb.check$avgerr,
                out$Brachiopoda$po.check$avgerr, out$Brachiopoda$nb.check$avgerr,
                out$Mollusca$po.check$avgerr, out$Mollusca$nb.check$avgerr,
                grid_args = list(ncol = 2),
-               titles = c('Arth_po', 'Arth_nb', 'Brach_po', 'Brach_nb',
-                          'Mol_po', 'Mol_nb'))
+               titles = c('Arth_po_avgerr', 'Arth_nb_avgerr', 
+                          'Brach_po_avgerr', 'Brach_nb_avgerr',
+                          'Mol_po_avgerr', 'Mol_nb_avgerr'))
 dev.off()
 
 pdf(file = '../doc/figure/mcmc_loopit.pdf', height = 10, width = 8)
@@ -80,8 +88,9 @@ bayesplot_grid(out$Arthropoda$po.check$loo.pit, out$Arthropoda$nb.check$loo.pit,
                out$Brachiopoda$po.check$loo.pit, out$Brachiopoda$nb.check$loo.pit,
                out$Mollusca$po.check$loo.pit, out$Mollusca$nb.check$loo.pit,
                grid_args = list(ncol = 2),
-               titles = c('Arth_po', 'Arth_nb', 'Brach_po', 'Brach_nb',
-                          'Mol_po', 'Mol_nb'))
+               titles = c('Arth_po_loopit', 'Arth_nb_loopit', 
+                          'Brach_po_loopit', 'Brach_nb_loopit',
+                          'Mol_po_loopit', 'Mol_nb_loopit'))
 dev.off()
 
 
@@ -134,16 +143,6 @@ bayesplot_grid(out$Arthropoda$po.test$sd, out$Arthropoda$nb.test$sd,
                           'Mol_po_predsd', 'Mol_nb_predsd'))
 dev.off()
 
-pdf(file = '../doc/figure/pred_root', height = 10, width = 8)
-bayesplot_grid(out$Arthropoda$po.test$root, out$Arthropoda$nb.test$root, 
-               out$Brachiopoda$po.test$root, out$Brachiopoda$nb.test$root,
-               out$Mollusca$po.test$root, out$Mollusca$nb.test$root,
-               grid_args = list(ncol = 2),
-               titles = c('Arth_po_predroot', 'Arth_nb_predroot', 
-                          'Brach_po_predroot', 'Brach_nb_predroot', 
-                          'Mol_po_predroot', 'Mol_nb_predroot'))
-dev.off()
-
 pdf(file = '../doc/figure/pred_ecdf', height = 10, width = 8)
 bayesplot_grid(out$Arthropoda$po.test$ecdf, out$Arthropoda$nb.test$ecdf, 
                out$Brachiopoda$po.test$ecdf, out$Brachiopoda$nb.test$ecdf,
@@ -152,6 +151,16 @@ bayesplot_grid(out$Arthropoda$po.test$ecdf, out$Arthropoda$nb.test$ecdf,
                titles = c('Arth_po_predecdf', 'Arth_nb_predecdf', 
                           'Brach_po_predecdf', 'Brach_nb_predecdf', 
                           'Mol_po_predecdf', 'Mol_nb_predecdf'))
+dev.off()
+
+pdf(file = '../doc/figure/pred_root', height = 10, width = 8)
+bayesplot_grid(out$Arthropoda$po.test$root, out$Arthropoda$nb.test$root, 
+               out$Brachiopoda$po.test$root, out$Brachiopoda$nb.test$root,
+               out$Mollusca$po.test$root, out$Mollusca$nb.test$root,
+               grid_args = list(ncol = 2),
+               titles = c('Arth_po_predroot', 'Arth_nb_predroot', 
+                          'Brach_po_predroot', 'Brach_nb_predroot', 
+                          'Mol_po_predroot', 'Mol_nb_predroot'))
 dev.off()
 
 pdf(file = '../doc/figure/pred_avgerr', height = 10, width = 8)
