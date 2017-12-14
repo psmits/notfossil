@@ -228,3 +228,73 @@ analyze.posterior <- function(shelly, nsim, grab) {
   names(out) <- shelly
   out
 }
+
+
+
+
+
+
+
+
+analyze.cv <- function(shelly, nsim, grab, kfold) {
+  #
+  targets <- list()
+  for(kk in seq(kfold)) {
+    pat <- paste0('../data/data_dump/unit_image_', shelly, '_fold', kk, '.rdata')
+    load(pat)
+    targets[[kk]] <- list(y = standata$y_test, N = standata$N_test)
+  }
+
+  pat <- paste0('train\\_fold[0-9]\\_[0-9]\\_', shelly)
+  files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
+  bymodel <- str_detect(files, pattern = 'over_train')
+  pomodel <- files[!bymodel]
+  nbmodel <- files[bymodel]
+  # k-folds exist
+  pofold <- split(pomodel, rep(seq(kfold), each = 4))
+  nbfold <- split(nbmodel, rep(seq(kfold), each = 4))
+
+  pofit <- Map(read_stan_csv, pofold)
+  popost <- Map(function(x) rstan::extract(x, permuted = TRUE), pofit)
+  nbfit <- Map(read_stan_csv, nbfold)
+  nbpost <- Map(function(x) rstan::extract(x, permuted = TRUE), nbfit)
+
+
+  # estimate RMSE for each fold
+  # dist of 1000 RMSE for each fold
+  # average across folds
+  pormse <- list()
+  for(kk in seq(kfold)) {
+    rmse <- list()
+    for(jj in seq(nsim)) {
+      gg <- grab[jj]
+      oo <- c()
+      for(ii in seq(targets[[kk]]$N)) {
+        oo[ii] <- rhurdle(1, 
+                          theta = popost[[kk]]$theta_test[gg, ii], 
+                          lambda = popost[[kk]]$lambda_test[gg, ii])
+      }
+      rmse[[jj]] <- sqrt(mean((oo - targets[[kk]]$y)^2))
+    }
+    pormse[[kk]] <- rmse
+  }
+  nbrmse <- list()
+  for(kk in seq(kfold)) {
+    rmse <- list()
+    for(jj in seq(nsim)) {
+      gg <- grab[jj]
+      oo <- c()
+      for(ii in seq(targets[[kk]]$N)) {
+        oo[ii] <- roverhurdle(1, 
+                              theta = nbpost[[kk]]$theta_test[gg, ii], 
+                              mu = nbpost[[kk]]$lambda_test[gg, ii],
+                              omega = nbpost[[kk]]$phi[gg])
+      }
+      rmse[[jj]] <- sqrt(mean((oo - targets[[kk]]$y)^2))
+    }
+    nbrmse[[kk]] <- rmse
+  }
+
+  out <- list(poisson = pormse, negbin = nbrmse)
+  out
+}

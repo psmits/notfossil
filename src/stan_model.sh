@@ -1,4 +1,4 @@
-##!/bin/bash
+#!/bin/bash
 #FILES=../data/data_dump/unit_data_Arthropoda.data.R
 #for f in $FILES;
 #do

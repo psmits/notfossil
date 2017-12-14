@@ -1,6 +1,7 @@
 # manipulation
 library(reshape2)
 library(plyr)
+library(stringr)
 
 # analysis
 library(compositions)
@@ -25,8 +26,12 @@ source('../R/post_foo.r')
 shelly <- c('Brachiopoda', 'Arthropoda', 'Mollusca')
 nsim <- 1000
 grab <- sample(4000, nsim)
+kfold <- 5
 
-#pat <- paste0('train\\_fold[0-9]\\_[0-9]\\_', shelly[1])
+
+
+
+
 
 
 # analysis of posterior estimated from full dataset

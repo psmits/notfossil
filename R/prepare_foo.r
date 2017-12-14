@@ -230,5 +230,9 @@ export.stanfold <- function(fossil.ord, strat.ord, bracket, shelly, kfold) {
                         '_fold', ff, '.data.R')
     with(standata, {stan_rdump(list = alply(names(standata), 1), 
                                file = temp.name)})
+    temp.name <- paste0('../data/data_dump/unit_image_', shelly, 
+                        '_fold', ff, '.rdata')
+    save(standata, unit.info, foss.info, flds,
+         file = temp.name)
   }
 }
