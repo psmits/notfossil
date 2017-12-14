@@ -29,9 +29,8 @@ grab <- sample(4000, nsim)
 kfold <- 5
 
 
-
-
-
+# cross-validation stuff
+errorest <- analyze.cv(shelly, nsim, grab, kfold)
 
 
 # analysis of posterior estimated from full dataset
