@@ -124,7 +124,7 @@ export.standata <- function(fossil.ord, strat.ord, bracket, shelly) {
   temp.name <- paste0('../data/data_dump/unit_data_', shelly, '.data.R')
   with(standata, {stan_rdump(list = alply(names(standata), 1), 
                              file = temp.name)})
- 
+
   # in less manipuated form
   temp.name <- paste0('../data/data_dump/unit_image_', shelly, '.rdata')
   save(standata, unit.info, foss.info, 
@@ -135,9 +135,12 @@ export.standata <- function(fossil.ord, strat.ord, bracket, shelly) {
 
 
 # k-fold datasets
-export.stanfold <- function(fossil.ord, strat.ord, bracket, shelly, kfold) {
-  foss.info <- process.fossil(fossil.ord, shelly = shelly)  # grabs PBDB information
-  unit.info <- process.strat(strat.ord, bracket = bracket)  # relevant properties of the units
+export.stanfold <- function(fossil.ord, strat.ord, bracket, shelly, 
+                            kfold, rounds) {
+  # grabs PBDB information
+  foss.info <- process.fossil(fossil.ord, shelly = shelly)  
+  # relevant properties of the units
+  unit.info <- process.strat(strat.ord, bracket = bracket)
 
   # there area a few misaligns
   match.match <- foss.info$unit %in% unit.info$unit.id
@@ -170,69 +173,72 @@ export.stanfold <- function(fossil.ord, strat.ord, bracket, shelly, kfold) {
 
   thick <- log1p(unit.info$thickness$high)
   colar <- log1p(unit.info$column.area)
- 
-  # KF-folds
-  ntr <- length(u.count)
-  flds <- createFolds(u.count, k = kfold, returnTrain = TRUE)
-  for(ff in seq(kfold)) {
-    tester <- which(!(seq(ntr) %in% flds[[ff]]))
-    
-    # isolate the train set (4/5th of data)
-    standata$y_train <- u.count[flds[[ff]]]
-    standata$y_test <- u.count[tester]
-    
-    thick.m <- mean(thick[flds[[ff]]])
-    thick.s <- sd(thick[flds[[ff]]])
-    thick.train <- thick[flds[[ff]]]
-    thick.train <- (thick.train - thick.m) / (2 * thick.s)
-    thick.test <- thick[tester]
-    thick.test <- (thick.test - thick.m) / (2 * thick.s)
 
-    colar.m <- mean(colar[flds[[ff]]])
-    colar.s <- sd(colar[flds[[ff]]])
-    colar.train <- colar[flds[[ff]]]
-    colar.train <- (colar.train - colar.m) / (2 * colar.s)
-    colar.test <- colar[tester]
-    colar.test <- (colar.test - colar.m) / (2 * colar.s)
+  # X rounds
+  for(rr in seq(rounds)) {
+    # KF-folds
+    ntr <- length(u.count)
+    flds <- createFolds(u.count, k = kfold, returnTrain = TRUE)
+    for(ff in seq(kfold)) {
+      tester <- which(!(seq(ntr) %in% flds[[ff]]))
 
-    lith.train <- unit.info$lithology[flds[[ff]], ]
-    lith.test <- unit.info$lithology[tester, ]
-    
-    X_train <- cbind(ilr(lith.train),
-                     thick.train,
-                     colar.train,
-                     unit.info$contact$above[flds[[ff]]],
-                     unit.info$contact$below[flds[[ff]]],
-                     unit.info$subsurface[flds[[ff]]])
-    X_test <- cbind(ilr(lith.test),
-                    thick.test,
-                    colar.test,
-                     unit.info$contact$above[tester],
-                     unit.info$contact$below[tester], 
-                     unit.info$subsurface[tester])
-    standata$X_train <- X_train
-    standata$X_test <- X_test
-    
-    inc <- standata$y_train == 0
-    standata$zi_train <- inc * 1
-    standata$ynz_train <- standata$y_train[!inc]
-    
-    standata$Xnz_train <- standata$X_train[!inc, ]
-    
-    standata$Nz_train <- sum(inc)
-    standata$Nnz_train <- sum(!inc)
-    
-    standata$N_train <- length(standata$y_train)
-    standata$N_test<- length(tester)
-    standata$K <- ncol(standata$X_train)
-  
-    temp.name <- paste0('../data/data_dump/unit_data_', shelly, 
-                        '_fold', ff, '.data.R')
-    with(standata, {stan_rdump(list = alply(names(standata), 1), 
-                               file = temp.name)})
-    temp.name <- paste0('../data/data_dump/unit_image_', shelly, 
-                        '_fold', ff, '.rdata')
-    save(standata, unit.info, foss.info, flds,
-         file = temp.name)
+      # isolate the train set (4/5th of data)
+      standata$y_train <- u.count[flds[[ff]]]
+      standata$y_test <- u.count[tester]
+
+      thick.m <- mean(thick[flds[[ff]]])
+      thick.s <- sd(thick[flds[[ff]]])
+      thick.train <- thick[flds[[ff]]]
+      thick.train <- (thick.train - thick.m) / (2 * thick.s)
+      thick.test <- thick[tester]
+      thick.test <- (thick.test - thick.m) / (2 * thick.s)
+
+      colar.m <- mean(colar[flds[[ff]]])
+      colar.s <- sd(colar[flds[[ff]]])
+      colar.train <- colar[flds[[ff]]]
+      colar.train <- (colar.train - colar.m) / (2 * colar.s)
+      colar.test <- colar[tester]
+      colar.test <- (colar.test - colar.m) / (2 * colar.s)
+
+      lith.train <- unit.info$lithology[flds[[ff]], ]
+      lith.test <- unit.info$lithology[tester, ]
+
+      X_train <- cbind(ilr(lith.train),
+                       thick.train,
+                       colar.train,
+                       unit.info$contact$above[flds[[ff]]],
+                       unit.info$contact$below[flds[[ff]]],
+                       unit.info$subsurface[flds[[ff]]])
+      X_test <- cbind(ilr(lith.test),
+                      thick.test,
+                      colar.test,
+                      unit.info$contact$above[tester],
+                      unit.info$contact$below[tester], 
+                      unit.info$subsurface[tester])
+      standata$X_train <- X_train
+      standata$X_test <- X_test
+
+      inc <- standata$y_train == 0
+      standata$zi_train <- inc * 1
+      standata$ynz_train <- standata$y_train[!inc]
+
+      standata$Xnz_train <- standata$X_train[!inc, ]
+
+      standata$Nz_train <- sum(inc)
+      standata$Nnz_train <- sum(!inc)
+
+      standata$N_train <- length(standata$y_train)
+      standata$N_test<- length(tester)
+      standata$K <- ncol(standata$X_train)
+
+      temp.name <- paste0('../data/data_dump/unit_data_', shelly, 
+                          '_fold', ff, '_round', rr, '.data.R')
+      with(standata, {stan_rdump(list = alply(names(standata), 1), 
+                                 file = temp.name)})
+      temp.name <- paste0('../data/data_dump/unit_image_', shelly, 
+                          '_fold', ff, 'round', rr, '.rdata')
+      save(standata, unit.info, foss.info, flds,
+           file = temp.name)
+    }
   }
 }
