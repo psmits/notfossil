@@ -267,7 +267,7 @@ analyze.cv <- function(shelly, nsim, grab, kfold) {
     # average across folds
     pormse <- list()
     for(kk in seq(kfold)) {
-      rmse <- list()
+      rmse <- c()
       for(jj in seq(nsim)) {
         gg <- grab[jj]
         oo <- c()
@@ -276,13 +276,13 @@ analyze.cv <- function(shelly, nsim, grab, kfold) {
                             theta = popost[[kk]]$theta_test[gg, ii], 
                             lambda = popost[[kk]]$lambda_test[gg, ii])
         }
-        rmse[[jj]] <- sqrt(mean((oo - targets[[kk]]$y)^2))
+        rmse[jj] <- sqrt(mean((targets[[kk]]$y - oo)^2))
       }
       pormse[[kk]] <- rmse
     }
     nbrmse <- list()
     for(kk in seq(kfold)) {
-      rmse <- list()
+      rmse <- c()
       for(jj in seq(nsim)) {
         gg <- grab[jj]
         oo <- c()
@@ -292,12 +292,12 @@ analyze.cv <- function(shelly, nsim, grab, kfold) {
                                 mu = nbpost[[kk]]$lambda_test[gg, ii],
                                 omega = nbpost[[kk]]$phi[gg])
         }
-        rmse[[jj]] <- sqrt(mean((oo - targets[[kk]]$y)^2))
+        rmse[jj] <- sqrt(mean((targets[[kk]]$y - oo)^2))
       }
       nbrmse[[kk]] <- rmse
     }
 
-    out[[mm]] <- list(poisson = pormse, negbin = nbrmse)
+    out[[mm]] <- list(pois = pormse, ngbn = nbrmse)
   }
   names(out) <- shelly
   out
