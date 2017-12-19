@@ -25,6 +25,8 @@ series.checks <- function(y, ppc, lw = NULL) {
   # rootograms because i find them easy to read
   root.gg <- ppc_rootogram(y, ppc, style = 'hanging', prob = 0.8)
 
+  rmse <- apply(ppc, 2, function(x) sqrt(mean((y - x)^2)))
+
 
 
   # all the plots
@@ -37,7 +39,8 @@ series.checks <- function(y, ppc, lw = NULL) {
               err = ppc.err, 
               avgerr = ppc.avgerr, 
               ecdf = ppc.ecdf, 
-              root = root.gg)
+              root = root.gg,
+              rmse = rmse)
   if(!is.null(lw)) {
     loo.pit <- ppc_loo_pit(y, ppc, lw = lw, compare = 'normal')
     #loo.int <- ppc_loo_intervals(y, ppc, lw = lw)
@@ -238,11 +241,13 @@ analyze.posterior <- function(shelly, nsim, grab) {
 
 analyze.cv <- function(shelly, nsim, grab, kfold) {
   #
+  #for(rr in seq(rnds)) {
   out <- list()
   for(mm in seq(length(shelly))) {
     targets <- list()
     for(kk in seq(kfold)) {
-      pat <- paste0('../data/data_dump/unit_image_', shelly[mm], '_fold', kk, '.rdata')
+      pat <- paste0('../data/data_dump/unit_image_', shelly[mm], 
+                    '_fold', kk, '.rdata')
       load(pat)
       targets[[kk]] <- list(y = standata$y_test, N = standata$N_test)
     }

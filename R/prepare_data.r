@@ -33,11 +33,11 @@ ord <- c(460.4, 443.8)
 mid <- 445.6
 bracket <- c(ord[1], mid, ord[2])
 
-#RN <- 1
+RN <- 10 
 KF <- 5
 
 
 for (kk in seq(length(shelly))) {
   export.standata(fossil.ord, strat.ord, bracket, shelly[kk])
-  export.stanfold(fossil.ord, strat.ord, bracket, shelly[kk], kfold = KF)
+  export.stanfold(fossil.ord, strat.ord, bracket, shelly[kk], kfold = KF, rnds = RN)
 }

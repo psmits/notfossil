@@ -136,7 +136,7 @@ export.standata <- function(fossil.ord, strat.ord, bracket, shelly) {
 
 # k-fold datasets
 export.stanfold <- function(fossil.ord, strat.ord, bracket, shelly, 
-                            kfold, rounds) {
+                            kfold, rnds) {
   # grabs PBDB information
   foss.info <- process.fossil(fossil.ord, shelly = shelly)  
   # relevant properties of the units
@@ -174,10 +174,9 @@ export.stanfold <- function(fossil.ord, strat.ord, bracket, shelly,
   thick <- log1p(unit.info$thickness$high)
   colar <- log1p(unit.info$column.area)
 
-  # X rounds
-  for(rr in seq(rounds)) {
-    # KF-folds
-    ntr <- length(u.count)
+  # KF-folds
+  ntr <- length(u.count)
+  for(rr in seq(rnds)) {
     flds <- createFolds(u.count, k = kfold, returnTrain = TRUE)
     for(ff in seq(kfold)) {
       tester <- which(!(seq(ntr) %in% flds[[ff]]))
@@ -232,11 +231,11 @@ export.stanfold <- function(fossil.ord, strat.ord, bracket, shelly,
       standata$K <- ncol(standata$X_train)
 
       temp.name <- paste0('../data/data_dump/unit_data_', shelly, 
-                          '_fold', ff, '_round', rr, '.data.R')
+                          '_fold', ff, '_rnds', rr, '.data.R')
       with(standata, {stan_rdump(list = alply(names(standata), 1), 
                                  file = temp.name)})
       temp.name <- paste0('../data/data_dump/unit_image_', shelly, 
-                          '_fold', ff, 'round', rr, '.rdata')
+                          '_fold', ff, '_rnds', rr, '.rdata')
       save(standata, unit.info, foss.info, flds,
            file = temp.name)
     }

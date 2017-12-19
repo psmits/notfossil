@@ -31,12 +31,6 @@ kfold <- 5
 
 # cross-validation stuff
 errorest <- analyze.cv(shelly, nsim, grab, kfold)
-llply(errorest$Brachiopoda$pois, summary)
-llply(errorest$Brachiopoda$ngbn, summary)
-llply(errorest$Arthropoda$pois, summary)
-llply(errorest$Arthropoda$ngbn, summary)
-llply(errorest$Mollusca$pois, summary)
-llply(errorest$Mollusca$ngbn, summary)
 
 
 # analysis of posterior estimated from full dataset
