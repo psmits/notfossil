@@ -93,7 +93,7 @@ do
   wait
 done
 # cross-validation stuff
-for k in `seq 1 10`;
+for k in `seq 1 5`;
 do
   for f in `seq 1 5`;
   do

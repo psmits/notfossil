@@ -31,7 +31,15 @@ process.fossil <- function(fossil.ord, shelly) {
   #fossils$collection_type
   #fossils$collection_coverage
 
-  fossils <- fossils[fossils$phylum %in% shelly, ]
+  # grab only the taxonomic group of interest
+  if (any(fossils$phylum %in% shelly)) {
+    # most of the time want entire phylum e.g. Brachiopoda, Mollusca
+    fossils <- fossils[fossils$phylum %in% shelly, ]
+  } else if (any(fossils$class %in% shelly)) {
+    # sometimes just want from specific class 
+    # e.g. Trilobita, Bivalvia, Gastropoda
+    fossils <- fossils[fossils$class %in% shelly, ]
+  }
 
   # curiosity: how many non-zero ids
   taxonomy <- c('phylum', 'class', 'order', 'family', 'genus')
