@@ -1,0 +1,54 @@
+\documentclass[12pt,letterpaper]{article}
+
+\usepackage{amsmath, amsthm, amsfonts, amssymb}
+\usepackage{microtype, parskip, graphicx}
+\usepackage{multirow, morefloats, rotating}
+\usepackage{caption, subcaption}
+\usepackage{lineno}
+
+\title{Report on Fossil/Not Fossil}
+
+
+\begin{document}
+\maketitle
+
+\section{Set-Up}
+
+We want to predict the expected diversity of a Macrostrat geological unit. We are focused on the diversity of individual biological classes. Geological units are described in terms of their lithological descriptions, areal extent, location, ``connectedness'' (units above/below), and other values. Lithological description is a compositional variable and thus has annoying properties which can prove difficult to interpret. 
+
+The dataset is split into two sets: the late Ordovician (460.4--445.6) and the Hirnantian (445.6--443.8); the former is the training dataset while the latter is the testing dataset.
+
+
+\section{Model}
+
+The basics of the models used in this analysis is a hurdle model which is a mixture of a Bernoulli distribution and either a Poisson or Negative-Binomial distribution. The Bernoulli aspect describes the probability of observing 0 species in a geological unit, while the Poisson or Negative-Binomial describes the expected number of species present in that geological unit if there are more than 0.
+
+Both parts of the mixture are modeled as regressions with all of the geological unit covariates as predictors.
+
+The models are fit to the training dataset and the results of which are used to predict the diversity of the Hirnantian geological units. The approximate expected out-of-sample predictions were evaluated through 5 rounds of 5-fold cross-validation.
+
+The models are fit in a fully Bayesian context using the Stan probabilistic programming language. Model fit for the complete training dataset is evaluated through a series of posterior predictive checks.
+
+
+\section{Results}
+
+\subsection{Full data posterior predictive checks}
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\textwidth,height=0.4\textheight,keepaspectratio=true]{figure/}
+  \caption{}
+  \label{fig:}
+\end{figure}
+
+
+\subsection{K-fold cross-validation results}
+
+
+\subsection{Regression coefficients}
+
+
+\subsection{Preditive results}
+
+
+
+\end{document}

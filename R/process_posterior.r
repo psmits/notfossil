@@ -26,11 +26,7 @@ source('../R/post_foo.r')
 shelly <- c('Brachiopoda', 'Arthropoda', 'Mollusca')
 nsim <- 1000
 grab <- sample(4000, nsim)
-kfold <- 5
 
-
-# cross-validation stuff
-errorest <- analyze.cv(shelly, nsim, grab, kfold)
 
 
 # analysis of posterior estimated from full dataset

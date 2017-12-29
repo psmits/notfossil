@@ -239,70 +239,89 @@ analyze.posterior <- function(shelly, nsim, grab) {
 
 
 
-analyze.cv <- function(shelly, nsim, grab, kfold) {
-  #
-  #for(rr in seq(rnds)) {
+analyze.cv <- function(shelly, nsim, grab, kfold, rnds, dis) {
   out <- list()
   for(mm in seq(length(shelly))) {
     targets <- list()
-    for(kk in seq(kfold)) {
-      pat <- paste0('../data/data_dump/unit_image_', shelly[mm], 
-                    '_fold', kk, '.rdata')
-      load(pat)
-      targets[[kk]] <- list(y = standata$y_test, N = standata$N_test)
+    for(rr in seq(rnds)) {
+      ttg <- list()
+      for(kk in seq(kfold)) {
+        pat <- paste0('../data/data_dump/unit_image_', shelly[mm], 
+                      '_fold', kk, '_rnds', rr, '.rdata')
+        load(pat)
+        ttg[[kk]] <- list(y = standata$y_test, N = standata$N_test)
+      }
+      targets[[rr]] <- ttg
     }
 
-    pat <- paste0('train\\_fold[0-9]\\_[0-9]\\_', shelly[mm])
+    pat <- paste0('train\\_', shelly[mm], '\\_fold[0-9]\\_rnds[0-9]\\_[0-9]')
     files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
     bymodel <- str_detect(files, pattern = 'over_train')
     pomodel <- files[!bymodel]
     nbmodel <- files[bymodel]
     # k-folds exist
-    pofold <- split(pomodel, rep(seq(kfold), each = 4))
-    nbfold <- split(nbmodel, rep(seq(kfold), each = 4))
+    pofold <- split(pomodel, rep(seq(rnds * kfold), each = 4))
+    nbfold <- split(nbmodel, rep(seq(rnds * kfold), each = 4))
 
-    pofit <- Map(read_stan_csv, pofold)
-    popost <- Map(function(x) rstan::extract(x, permuted = TRUE), pofit)
-    nbfit <- Map(read_stan_csv, nbfold)
-    nbpost <- Map(function(x) rstan::extract(x, permuted = TRUE), nbfit)
-
-
-    # estimate RMSE for each fold
-    # dist of 1000 RMSE for each fold
-    # average across folds
-    pormse <- list()
-    for(kk in seq(kfold)) {
-      rmse <- c()
-      for(jj in seq(nsim)) {
-        gg <- grab[jj]
-        oo <- c()
-        for(ii in seq(targets[[kk]]$N)) {
-          oo[ii] <- rhurdle(1, 
-                            theta = popost[[kk]]$theta_test[gg, ii], 
-                            lambda = popost[[kk]]$lambda_test[gg, ii])
+    if (dis == 'pois') {
+      pofit <- Map(read_stan_csv, pofold)
+      popost <- Map(function(x) rstan::extract(x, permuted = TRUE), pofit)
+      powr <- list()
+      for(rr in seq(rnds)) {
+        powr[[rr]] <- popost[seq(from = rr, to = rr + 20, by = 5)]
+      } 
+      # estimate RMSE for each fold
+      # dist of 1000 RMSE for each fold
+      # average across folds
+      pormse <- list()
+      for(rr in seq(rnds)) {
+        rmse <- list()
+        for(kk in seq(kfold)) {
+          rmse1 <- c()
+          for(jj in seq(nsim)) {
+            gg <- grab[jj]
+            oo <- c()
+            for(ii in seq(targets[[rr]][[kk]]$N)) {
+              oo[ii] <- rhurdle(1, 
+                                theta = powr[[rr]][[kk]]$theta_test[gg, ii], 
+                                lambda = powr[[rr]][[kk]]$lambda_test[gg, ii])
+            }
+            rmse1[jj] <- sqrt(mean((targets[[rr]][[kk]]$y - oo)^2))
+          }
+          rmse[[kk]] <- rmse1
         }
-        rmse[jj] <- sqrt(mean((targets[[kk]]$y - oo)^2))
+        pormse[[rr]] <- rmse
       }
-      pormse[[kk]] <- rmse
-    }
-    nbrmse <- list()
-    for(kk in seq(kfold)) {
-      rmse <- c()
-      for(jj in seq(nsim)) {
-        gg <- grab[jj]
-        oo <- c()
-        for(ii in seq(targets[[kk]]$N)) {
-          oo[ii] <- roverhurdle(1, 
-                                theta = nbpost[[kk]]$theta_test[gg, ii], 
-                                mu = nbpost[[kk]]$lambda_test[gg, ii],
-                                omega = nbpost[[kk]]$phi[gg])
+      out[[mm]] <- pormse
+    } else if (dis == 'ngbn') {
+      nbfit <- Map(read_stan_csv, nbfold)
+      nbpost <- Map(function(x) rstan::extract(x, permuted = TRUE), nbfit)
+      nbwr <- list()
+      for(rr in seq(rnds)) {
+        nbwr[[rr]] <- nbpost[seq(from = rr, to = rr + 20, by = 5)]
+      }
+      nbrmse <- list()
+      for(rr in seq(rnds)) {
+        rmse <- list()
+        for(kk in seq(kfold)) {
+          rmse1 <- c()
+          for(jj in seq(nsim)) {
+            gg <- grab[jj]
+            oo <- c()
+            for(ii in seq(targets[[rr]][[kk]]$N)) {
+              oo[ii] <- roverhurdle(1, 
+                                    theta = nbwr[[rr]][[kk]]$theta_test[gg, ii], 
+                                    mu = nbwr[[rr]][[kk]]$lambda_test[gg, ii],
+                                    omega = nbwr[[rr]][[kk]]$phi[gg])
+            }
+            rmse1[jj] <- sqrt(mean((targets[[rr]][[kk]]$y - oo)^2))
+          }
+          rmse[[kk]] <- rmse1
         }
-        rmse[jj] <- sqrt(mean((targets[[kk]]$y - oo)^2))
+        nbrmse[[rr]] <- rmse
       }
-      nbrmse[[kk]] <- rmse
+      out[[mm]] <- nbrmse
     }
-
-    out[[mm]] <- list(pois = pormse, ngbn = nbrmse)
   }
   names(out) <- shelly
   out
