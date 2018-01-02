@@ -26,8 +26,8 @@ source('../R/download_scrap.r')  # just macrostrat
 # clean data
 #shelly <- c('Arthropoda', 'Brachiopoda', 'Mollusca', 'Echinodermata', 
 #            'Hemichordata', 'Bryozoa', 'Cnidaria')
-#shelly <- c('Brachiopoda', 'Trilobita', 'Bivalvia', 'Gastropoda')
-shelly <- c('Brachiopoda', 'Arthropoda', 'Mollusca')
+shelly <- c('Brachiopoda', 'Trilobita', 'Bivalvia', 'Gastropoda')
+#shelly <- c('Brachiopoda', 'Arthropoda', 'Mollusca')
 ord <- c(460.4, 443.8)
 #mid <- ord[1] - abs((diff(ord) / 4) * 3)
 #mid <- ord[1] - abs((diff(ord) / 10) * 9)
