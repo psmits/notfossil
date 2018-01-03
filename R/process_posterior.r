@@ -31,7 +31,8 @@ theme_update(axis.text = element_text(size = 10),
              strip.text = element_text(size = 8))
 
 # set up data
-shelly <- c('Brachiopoda', 'Arthropoda', 'Mollusca')
+shelly <- c('Brachiopoda', 'Trilobita', 'Bivalvia', 'Gastropoda')
+#shelly <- c('Brachiopoda', 'Arthropoda', 'Mollusca')
 nsim <- 1000
 grab <- sample(4000, nsim)
 
