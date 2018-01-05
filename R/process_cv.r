@@ -31,7 +31,8 @@ theme_update(axis.text = element_text(size = 10),
              strip.text = element_text(size = 8))
 
 # set up data
-shelly <- c('Brachiopoda', 'Arthropoda', 'Mollusca')
+shelly <- c('Brachiopoda', 'Trilobita', 'Bivalvia', 'Gastropoda')
+#shelly <- c('Brachiopoda', 'Arthropoda', 'Mollusca')
 nsim <- 1000
 grab <- sample(4000, nsim)
 kfold <- 5
@@ -40,14 +41,19 @@ rnds <- 5
 
 # cross-validation stuff
 # memory intensive so split by model type in hopes of using less RAM
-errorest.po <- analyze.cv(shelly, nsim, grab, kfold, rnds, 'pois')
-errorest.po <- llply(errorest.po, function(x) {
-                       names(x) <- c('rd1', 'rd2', 'rd3', 'rd4', 'rd5')
-                       x})
-errorest.nb <- analyze.cv(shelly, nsim, grab, kfold, rnds, 'ngbn')
-errorest.nb <- llply(errorest.nb, function(x) {
-                       names(x) <- c('rd1', 'rd2', 'rd3', 'rd4', 'rd5')
-                       x})
+
+errorest.po <- errorest.nb <- list()
+for(ii in seq(length(shelly))) {
+  errorest.po[ii] <- analyze.cv(shelly[ii], nsim, grab, kfold, rnds, 'pois')
+  errorest.po[ii] <- llply(errorest.po[ii], function(x) {
+                             names(x) <- c('rd1', 'rd2', 'rd3', 'rd4', 'rd5')
+                             x})
+  errorest.nb[ii] <- analyze.cv(shelly[ii], nsim, grab, kfold, rnds, 'ngbn')
+  errorest.nb[ii] <- llply(errorest.nb[ii], function(x) {
+                             names(x) <- c('rd1', 'rd2', 'rd3', 'rd4', 'rd5')
+                             x})
+}
+names(errorest.po) <- names(erroest.nb) <- shelly
 
 # print out some cross-validation graphs
 errorest <- list(pois = errorest.po, negbin = errorest.nb)
@@ -56,7 +62,7 @@ names(erest) <- c('value', 'fold', 'round', 'taxa', 'model')
 
 ergg <- ggplot(erest, aes(x = value))
 ergg <- ergg + geom_histogram()
-ergg <- ergg + facet_grid(model~ taxa, scales = 'free_x', shrink = TRUE)
+ergg <- ergg + facet_grid(model ~ taxa, scales = 'free_x', shrink = TRUE)
 ergg <- ergg + labs(x = 'RMSE')
-ggsave(filename = '../doc/figure/cv_rmse.pdf', plot = ergg,
-       height = 6, width = 8)
+#ggsave(filename = '../doc/figure/cv_rmse.pdf', plot = ergg,
+#       height = 6, width = 8)
