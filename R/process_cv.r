@@ -53,7 +53,7 @@ for(ii in seq(length(shelly))) {
                              names(x) <- c('rd1', 'rd2', 'rd3', 'rd4', 'rd5')
                              x})
 }
-names(errorest.po) <- names(erroest.nb) <- shelly
+names(errorest.po) <- names(errorest.nb) <- shelly
 
 # print out some cross-validation graphs
 errorest <- list(pois = errorest.po, negbin = errorest.nb)
@@ -61,8 +61,8 @@ erest <- melt(errorest)
 names(erest) <- c('value', 'fold', 'round', 'taxa', 'model')
 
 ergg <- ggplot(erest, aes(x = value))
-ergg <- ergg + geom_histogram()
+ergg <- ergg + geom_histogram(bins = 50)
 ergg <- ergg + facet_grid(model ~ taxa, scales = 'free_x', shrink = TRUE)
 ergg <- ergg + labs(x = 'RMSE')
-#ggsave(filename = '../doc/figure/cv_rmse.pdf', plot = ergg,
-#       height = 6, width = 8)
+ggsave(filename = '../doc/figure/cv_rmse.pdf', plot = ergg,
+       height = 6, width = 8)
