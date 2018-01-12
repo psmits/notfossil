@@ -27,8 +27,6 @@ series.checks <- function(y, ppc, lw = NULL) {
 
   rmse <- apply(ppc, 2, function(x) sqrt(mean((y - x)^2)))
 
-
-
   # all the plots
   out <- list(mean = ppc.mean, 
               sd = ppc.sd, 

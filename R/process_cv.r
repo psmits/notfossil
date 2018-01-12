@@ -16,6 +16,7 @@ library(scales)
 library(grid)
 library(ggridges)
 library(bayesplot)
+library(xtable)
 
 # helpful functions
 source('../R/stan_utility.R')
@@ -54,12 +55,35 @@ for(ii in seq(length(shelly))) {
                              x})
 }
 names(errorest.po) <- names(errorest.nb) <- shelly
-
-# print out some cross-validation graphs
 errorest <- list(pois = errorest.po, negbin = errorest.nb)
 erest <- melt(errorest)
 names(erest) <- c('value', 'fold', 'round', 'taxa', 'model')
 
+
+# median rmse for each fold by round
+rmse.fold <- llply(errorest, function(x) 
+                   laply(x, function(y)
+                         laply(y, function(z) median(laply(z, median)))))
+# overall median rmse
+rmse.mean <- llply(rmse.fold, function(x) apply(x, 1, mean)) 
+# sd of median rmse
+rmse.sd <- llply(rmse.fold, function(x) apply(x, 1, sd))  
+
+rmt <- melt(list(mean = rmse.mean, sd = rmse.sd))
+rmt$taxon <- rep(shelly, times = 4)
+rmt <- dcast(rmt, taxon ~ L2 + L1)
+rmt <- rmt[, c(1, 4, 5, 2, 3)]
+names(rmt) <- c('Taxonomic group', 
+                'Poisson Model Mean CV RMSE', 'Poisson Model SD CV RMSE',
+                'NegBin Model Mean CV RMSE', 'NegBin Model SD CV RMSE')
+rmt.tab <- xtable(rmt, label = 'tab:cv_rmse', align = 'lrllll')
+print.xtable(x = rmt.tab, type = 'latex', file = '../doc/cv_rmse_raw.tex',
+             include.rownames = FALSE)
+
+
+
+# plot of CV results
+# print out some cross-validation graphs
 ergg <- ggplot(erest, aes(x = value))
 ergg <- ergg + geom_histogram(bins = 50)
 ergg <- ergg + facet_grid(model ~ taxa, scales = 'free_x', shrink = TRUE)

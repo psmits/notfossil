@@ -265,3 +265,18 @@ gg <- bayesplot_grid(out$Brachiopoda$po.test$avgerr,
                                 'Gas_po_predavgerr', 'Gas_nb_predavgerr'))
 ggsave(filename = '../doc/figure/pred_avgerr.pdf', plot = gg,
        height = 10, width = 8)
+
+
+# RMSE from the Hirnantian
+rmse.tab <- data.frame(shelly,
+                       laply(out, function(x) mean(x$po.test$rmse)), 
+                       laply(out, function(x) sd(x$po.test$rmse)), 
+                       laply(out, function(x) mean(x$nb.test$rmse)),
+                       laply(out, function(x) sd(x$nb.test$rmse)))
+rmse.tab <- rmse.tab[order(rmse.tab[, 1]), ]
+names(rmse.tab) <- c('Taxonomic group', 
+                     'Poisson Model Mean CV RMSE', 'Poisson Model SD CV RMSE',
+                     'NegBin Model Mean CV RMSE', 'NegBin Model SD CV RMSE')
+rmse.tab <- xtable(rmse.tab, label = 'tab:test_rmse', align = 'lrllll')
+print.xtable(x = rmse.tab, type = 'latex', file = '../doc/test_rmse_raw.tex',
+             include.rownames = FALSE)
