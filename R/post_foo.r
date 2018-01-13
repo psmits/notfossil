@@ -25,7 +25,7 @@ series.checks <- function(y, ppc, lw = NULL) {
   # rootograms because i find them easy to read
   root.gg <- ppc_rootogram(y, ppc, style = 'hanging', prob = 0.8)
 
-  rmse <- apply(ppc, 2, function(x) sqrt(mean((y - x)^2)))
+  err <- apply(ppc, 2, function(x) y - x)
 
   # all the plots
   out <- list(mean = ppc.mean, 
@@ -38,7 +38,7 @@ series.checks <- function(y, ppc, lw = NULL) {
               avgerr = ppc.avgerr, 
               ecdf = ppc.ecdf, 
               root = root.gg,
-              rmse = rmse)
+              err = err)
   if(!is.null(lw)) {
     loo.pit <- ppc_loo_pit(y, ppc, lw = lw, compare = 'normal')
     #loo.int <- ppc_loo_intervals(y, ppc, lw = lw)
@@ -271,11 +271,11 @@ analyze.cv <- function(shelly, nsim, grab, kfold, rnds, dis) {
       # estimate RMSE for each fold
       # dist of 1000 RMSE for each fold
       # average across folds
-      pormse <- list()
+      poerr <- list()
       for(rr in seq(rnds)) {
-        rmse <- list()
+        err <- list()
         for(kk in seq(kfold)) {
-          rmse1 <- c()
+          err1 <- c()
           for(jj in seq(nsim)) {
             gg <- grab[jj]
             oo <- c()
@@ -284,13 +284,13 @@ analyze.cv <- function(shelly, nsim, grab, kfold, rnds, dis) {
                                 theta = powr[[rr]][[kk]]$theta_test[gg, ii], 
                                 lambda = powr[[rr]][[kk]]$lambda_test[gg, ii])
             }
-            rmse1[jj] <- sqrt(mean((targets[[rr]][[kk]]$y - oo)^2))
+            err1[jj] <- sqrt(mean((targets[[rr]][[kk]]$y - oo)^2))
           }
-          rmse[[kk]] <- rmse1
+          err[[kk]] <- err1
         }
-        pormse[[rr]] <- rmse
+        poerr[[rr]] <- err
       }
-      out[[mm]] <- pormse
+      out[[mm]] <- poerr
     } else if (dis == 'ngbn') {
       nbfit <- Map(read_stan_csv, nbfold)
       nbpost <- Map(function(x) rstan::extract(x, permuted = TRUE), nbfit)
@@ -298,11 +298,11 @@ analyze.cv <- function(shelly, nsim, grab, kfold, rnds, dis) {
       for(rr in seq(rnds)) {
         nbwr[[rr]] <- nbpost[seq(from = rr, to = rr + 20, by = 5)]
       }
-      nbrmse <- list()
+      nberr <- list()
       for(rr in seq(rnds)) {
-        rmse <- list()
+        err <- list()
         for(kk in seq(kfold)) {
-          rmse1 <- c()
+          err1 <- c()
           for(jj in seq(nsim)) {
             gg <- grab[jj]
             oo <- c()
@@ -312,13 +312,14 @@ analyze.cv <- function(shelly, nsim, grab, kfold, rnds, dis) {
                                     mu = nbwr[[rr]][[kk]]$lambda_test[gg, ii],
                                     omega = nbwr[[rr]][[kk]]$phi[gg])
             }
-            rmse1[jj] <- sqrt(mean((targets[[rr]][[kk]]$y - oo)^2))
+            err1[jj] <- targets[[rr]][[kk]]$y - oo
+            #err1[jj] <- sqrt(mean((targets[[rr]][[kk]]$y - oo)^2))
           }
-          rmse[[kk]] <- rmse1
+          err[[kk]] <- err1
         }
-        nbrmse[[rr]] <- rmse
+        nberr[[rr]] <- err
       }
-      out[[mm]] <- nbrmse
+      out[[mm]] <- nberr
     }
   }
   names(out) <- shelly

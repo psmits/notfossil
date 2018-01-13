@@ -60,24 +60,24 @@ erest <- melt(errorest)
 names(erest) <- c('value', 'fold', 'round', 'taxa', 'model')
 
 
-# median rmse for each fold by round
-rmse.fold <- llply(errorest, function(x) 
+# median err for each fold by round
+err.fold <- llply(errorest, function(x) 
                    laply(x, function(y)
                          laply(y, function(z) median(laply(z, median)))))
-# overall median rmse
-rmse.mean <- llply(rmse.fold, function(x) apply(x, 1, mean)) 
-# sd of median rmse
-rmse.sd <- llply(rmse.fold, function(x) apply(x, 1, sd))  
+# overall median err
+err.mean <- llply(err.fold, function(x) apply(x, 1, mean)) 
+# sd of median err
+err.sd <- llply(err.fold, function(x) apply(x, 1, sd))  
 
-rmt <- melt(list(mean = rmse.mean, sd = rmse.sd))
+rmt <- melt(list(mean = err.mean, sd = err.sd))
 rmt$taxon <- rep(shelly, times = 4)
 rmt <- dcast(rmt, taxon ~ L2 + L1)
 rmt <- rmt[, c(1, 4, 5, 2, 3)]
 names(rmt) <- c('Taxonomic group', 
-                'Poisson hat(RMSE)', 'Poisson SD RMSE',
-                'NegBin hat(RMSE)', 'NegBin SD RMSE')
-rmt.tab <- xtable(rmt, label = 'tab:cv_rmse', align = 'lr|llll')
-print.xtable(x = rmt.tab, type = 'latex', file = '../doc/cv_rmse_raw.tex',
+                'Poisson hat(ERR)', 'Poisson SD ERR',
+                'NegBin hat(ERR)', 'NegBin SD ERR')
+rmt.tab <- xtable(rmt, label = 'tab:cv_err', align = 'lr|llll')
+print.xtable(x = rmt.tab, type = 'latex', file = '../doc/cv_err_raw.tex',
              include.rownames = FALSE)
 
 
@@ -87,6 +87,6 @@ print.xtable(x = rmt.tab, type = 'latex', file = '../doc/cv_rmse_raw.tex',
 ergg <- ggplot(erest, aes(x = value))
 ergg <- ergg + geom_histogram(bins = 50)
 ergg <- ergg + facet_grid(model ~ taxa, scales = 'free_x', shrink = TRUE)
-ergg <- ergg + labs(x = 'RMSE')
-ggsave(filename = '../doc/figure/cv_rmse.pdf', plot = ergg,
+ergg <- ergg + labs(x = 'ERR')
+ggsave(filename = '../doc/figure/cv_err.pdf', plot = ergg,
        height = 6, width = 8)

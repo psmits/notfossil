@@ -268,18 +268,18 @@ ggsave(filename = '../doc/figure/pred_avgerr.pdf', plot = gg,
        height = 10, width = 8)
 
 
-# RMSE from the Hirnantian
-rmse.tab <- data.frame(shelly,
-                       laply(out, function(x) mean(x$po.test$rmse)), 
-                       laply(out, function(x) sd(x$po.test$rmse)), 
-                       laply(out, function(x) mean(x$nb.test$rmse)),
-                       laply(out, function(x) sd(x$nb.test$rmse)))
-rmse.tab <- rmse.tab[order(rmse.tab[, 1]), ]
-names(rmse.tab) <- c('Taxonomic group', 
-                     'Poisson hat(RMSE)', 'Poisson SD RMSE',
-                     'NegBin hat(RMSE)', 'NegBin SD RMSE')
-rmse.tab <- xtable(rmse.tab, label = 'tab:test_rmse', align = 'lr|llll')
-print.xtable(x = rmse.tab, type = 'latex', file = '../doc/test_rmse_raw.tex',
+# ERR from the Hirnantian
+err.tab <- data.frame(shelly,
+                       laply(out, function(x) mean(x$po.test$err)), 
+                       laply(out, function(x) sd(x$po.test$err)), 
+                       laply(out, function(x) mean(x$nb.test$err)),
+                       laply(out, function(x) sd(x$nb.test$err)))
+err.tab <- err.tab[order(err.tab[, 1]), ]
+names(err.tab) <- c('Taxonomic group', 
+                     'Poisson hat(ERR)', 'Poisson SD ERR',
+                     'NegBin hat(ERR)', 'NegBin SD ERR')
+err.tab <- xtable(err.tab, label = 'tab:test_err', align = 'lr|llll')
+print.xtable(x = err.tab, type = 'latex', file = '../doc/test_err_raw.tex',
              include.rownames = FALSE)
 
 
