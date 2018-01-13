@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2017.10.27)  29 DEC 2017 17:34
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2018.1.12)  12 JAN 2018 16:01
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -459,7 +459,7 @@ LaTeX Warning: No \author given.
 [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}]
-<figure/ppc_mean.pdf, id=45, pagebox=cropbox, 578.16pt x 722.7pt>
+<figure/ppc_mean.pdf, id=47, pagebox=cropbox, 578.16pt x 722.7pt>
 File: figure/ppc_mean.pdf Graphic file (type pdf)
 <use figure/ppc_mean.pdf>
 Package pdftex.def Info: figure/ppc_mean.pdf  used on input line 43. on input l
@@ -470,7 +470,7 @@ e 43.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-<figure/ppc_sd.pdf, id=46, pagebox=cropbox, 578.16pt x 722.7pt>
+<figure/ppc_sd.pdf, id=48, pagebox=cropbox, 578.16pt x 722.7pt>
 File: figure/ppc_sd.pdf Graphic file (type pdf)
 <use figure/ppc_sd.pdf>
 Package pdftex.def Info: figure/ppc_sd.pdf  used on input line 51. on input lin
@@ -480,7 +480,7 @@ e 51.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-<figure/ppc_ecdf.pdf, id=47, pagebox=cropbox, 578.16pt x 722.7pt>
+<figure/ppc_ecdf.pdf, id=49, pagebox=cropbox, 578.16pt x 722.7pt>
 File: figure/ppc_ecdf.pdf Graphic file (type pdf)
 <use figure/ppc_ecdf.pdf>
 Package pdftex.def Info: figure/ppc_ecdf.pdf  used on input line 59. on input l
@@ -490,7 +490,7 @@ e 59.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-<figure/ppc_root.pdf, id=48, pagebox=cropbox, 578.16pt x 722.7pt>
+<figure/ppc_root.pdf, id=50, pagebox=cropbox, 578.16pt x 722.7pt>
 File: figure/ppc_root.pdf Graphic file (type pdf)
 <use figure/ppc_root.pdf>
 Package pdftex.def Info: figure/ppc_root.pdf  used on input line 67. on input l
@@ -500,7 +500,7 @@ e 67.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-<figure/ppc_avgerr.pdf, id=49, pagebox=cropbox, 578.16pt x 722.7pt>
+<figure/ppc_avgerr.pdf, id=51, pagebox=cropbox, 578.16pt x 722.7pt>
 File: figure/ppc_avgerr.pdf Graphic file (type pdf)
 <use figure/ppc_avgerr.pdf>
 Package pdftex.def Info: figure/ppc_avgerr.pdf  used on input line 75. on input
@@ -510,126 +510,146 @@ e 75.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-<figure/cv_rmse.pdf, id=51, pagebox=cropbox, 578.16pt x 433.62pt>
+
+Overfull \hbox (75.35817pt too wide) in paragraph at lines 84--94
+ [][] 
+ []
+
+
+Overfull \hbox (99.53572pt too wide) in paragraph at lines 100--110
+ [][] 
+ []
+
+<figure/cv_rmse.pdf, id=54, pagebox=cropbox, 578.16pt x 433.62pt>
 File: figure/cv_rmse.pdf Graphic file (type pdf)
 <use figure/cv_rmse.pdf>
-Package pdftex.def Info: figure/cv_rmse.pdf  used on input line 87. on input li
-ne 87.
+Package pdftex.def Info: figure/cv_rmse.pdf  used on input line 120. on input l
+ine 120.
 Package pdftex.def Info: Requested size: 389.99414pt x 292.4956pt on input line
- 87.
+ 120.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-<figure/arth_coefs.pdf, id=55, pagebox=cropbox, 722.7pt x 433.62pt>
+
+Overfull \hbox (237.22044pt too wide) in paragraph at lines 129--139
+ [][] 
+ []
+
+<figure/arth_coefs.pdf, id=58, pagebox=cropbox, 722.7pt x 433.62pt>
 File: figure/arth_coefs.pdf Graphic file (type pdf)
 <use figure/arth_coefs.pdf>
-Package pdftex.def Info: figure/arth_coefs.pdf  used on input line 99. on input
- line 99.
+Package pdftex.def Info: figure/arth_coefs.pdf  used on input line 147. on inpu
+t line 147.
 Package pdftex.def Info: Requested size: 389.99855pt x 233.99913pt on input lin
-e 99.
+e 147.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-<figure/brach_coefs.pdf, id=56, pagebox=cropbox, 722.7pt x 433.62pt>
+<figure/brach_coefs.pdf, id=59, pagebox=cropbox, 722.7pt x 433.62pt>
 File: figure/brach_coefs.pdf Graphic file (type pdf)
 <use figure/brach_coefs.pdf>
-Package pdftex.def Info: figure/brach_coefs.pdf  used on input line 107. on inp
-ut line 107.
+Package pdftex.def Info: figure/brach_coefs.pdf  used on input line 155. on inp
+ut line 155.
 Package pdftex.def Info: Requested size: 389.99855pt x 233.99913pt on input lin
-e 107.
+e 155.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-<figure/mol_coefs.pdf, id=57, pagebox=cropbox, 722.7pt x 433.62pt>
+<figure/mol_coefs.pdf, id=60, pagebox=cropbox, 722.7pt x 433.62pt>
 File: figure/mol_coefs.pdf Graphic file (type pdf)
 <use figure/mol_coefs.pdf>
-Package pdftex.def Info: figure/mol_coefs.pdf  used on input line 115. on input
- line 115.
+Package pdftex.def Info: figure/mol_coefs.pdf  used on input line 163. on input
+ line 163.
 Package pdftex.def Info: Requested size: 389.99855pt x 233.99913pt on input lin
-e 115.
+e 163.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-<figure/pred_mean.pdf, id=63, pagebox=cropbox, 578.16pt x 722.7pt>
+<figure/pred_mean.pdf, id=67, pagebox=cropbox, 578.16pt x 722.7pt>
 File: figure/pred_mean.pdf Graphic file (type pdf)
 <use figure/pred_mean.pdf>
-Package pdftex.def Info: figure/pred_mean.pdf  used on input line 127. on input
- line 127.
+Package pdftex.def Info: figure/pred_mean.pdf  used on input line 175. on input
+ line 175.
 Package pdftex.def Info: Requested size: 351.04501pt x 438.80626pt on input lin
-e 127.
+e 175.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-<figure/pred_sd.pdf, id=64, pagebox=cropbox, 578.16pt x 722.7pt>
+<figure/pred_sd.pdf, id=68, pagebox=cropbox, 578.16pt x 722.7pt>
 File: figure/pred_sd.pdf Graphic file (type pdf)
 <use figure/pred_sd.pdf>
-Package pdftex.def Info: figure/pred_sd.pdf  used on input line 135. on input l
-ine 135.
+Package pdftex.def Info: figure/pred_sd.pdf  used on input line 183. on input l
+ine 183.
 Package pdftex.def Info: Requested size: 351.04501pt x 438.80626pt on input lin
-e 135.
+e 183.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-<figure/pred_ecdf.pdf, id=65, pagebox=cropbox, 578.16pt x 722.7pt>
+<figure/pred_ecdf.pdf, id=69, pagebox=cropbox, 578.16pt x 722.7pt>
 File: figure/pred_ecdf.pdf Graphic file (type pdf)
 <use figure/pred_ecdf.pdf>
-Package pdftex.def Info: figure/pred_ecdf.pdf  used on input line 143. on input
- line 143.
+Package pdftex.def Info: figure/pred_ecdf.pdf  used on input line 191. on input
+ line 191.
 Package pdftex.def Info: Requested size: 351.04501pt x 438.80626pt on input lin
-e 143.
+e 191.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-<figure/pred_root.pdf, id=66, pagebox=cropbox, 578.16pt x 722.7pt>
+<figure/pred_root.pdf, id=70, pagebox=cropbox, 578.16pt x 722.7pt>
 File: figure/pred_root.pdf Graphic file (type pdf)
 <use figure/pred_root.pdf>
-Package pdftex.def Info: figure/pred_root.pdf  used on input line 151. on input
- line 151.
+Package pdftex.def Info: figure/pred_root.pdf  used on input line 199. on input
+ line 199.
 Package pdftex.def Info: Requested size: 351.04501pt x 438.80626pt on input lin
-e 151.
+e 199.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-<figure/pred_avgerr.pdf, id=67, pagebox=cropbox, 578.16pt x 722.7pt>
+<figure/pred_avgerr.pdf, id=71, pagebox=cropbox, 578.16pt x 722.7pt>
 File: figure/pred_avgerr.pdf Graphic file (type pdf)
 <use figure/pred_avgerr.pdf>
-Package pdftex.def Info: figure/pred_avgerr.pdf  used on input line 159. on inp
-ut line 159.
+Package pdftex.def Info: figure/pred_avgerr.pdf  used on input line 207. on inp
+ut line 207.
 Package pdftex.def Info: Requested size: 351.04501pt x 438.80626pt on input lin
-e 159.
+e 207.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[2] [3 <./figure/ppc_mean.pdf>] [4 <./figure/ppc_sd.pdf>] [5 <./figure/ppc_ecdf
-.pdf>] [6 <./figure/ppc_root.pdf>] [7 <./figure/ppc_avgerr.pdf>] [8 <./figure/c
-v_rmse.pdf>] [9 <./figure/arth_coefs.pdf>] [10 <./figure/brach_coefs.pdf>]
-[11 <./figure/mol_coefs.pdf>] [12 <./figure/pred_mean.pdf>] [13 <./figure/pred_
-sd.pdf>] [14 <./figure/pred_ecdf.pdf>] [15 <./figure/pred_root.pdf>] [16 <./fig
-ure/pred_avgerr.pdf>]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 165.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 165.
+
+Overfull \hbox (233.32048pt too wide) in paragraph at lines 217--227
+ [][] 
+ []
+
+[2] [3] [4] [5] [6] [7 <./figure/ppc_mean.pdf>] [8 <./figure/ppc_sd.pdf>]
+[9 <./figure/ppc_ecdf.pdf>] [10 <./figure/ppc_root.pdf>] [11 <./figure/ppc_avge
+rr.pdf>] [12 <./figure/cv_rmse.pdf>] [13 <./figure/arth_coefs.pdf>] [14 <./figu
+re/brach_coefs.pdf>] [15 <./figure/mol_coefs.pdf>] [16 <./figure/pred_mean.pdf>
+] [17 <./figure/pred_sd.pdf>] [18 <./figure/pred_ecdf.pdf>] [19 <./figure/pred_
+root.pdf>] [20 <./figure/pred_avgerr.pdf>]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 230.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 230.
  (./report.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 165.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 165.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 230.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 230.
 Package rerunfilecheck Info: File `report.out' has not changed.
 (rerunfilecheck)             Checksum: 67047C13DC4CB1727E3BBB42707BCBDC;428.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 165.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 230.
  ) 
 Here is how much of TeX's memory you used:
- 9146 strings out of 492990
- 141999 string characters out of 6135004
- 268065 words of memory out of 5000000
- 12501 multiletter control sequences out of 15000+600000
- 8782 words of font info for 51 fonts, out of 8000000 for 9000
+ 9205 strings out of 492990
+ 142813 string characters out of 6135005
+ 275205 words of memory out of 5000000
+ 12545 multiletter control sequences out of 15000+600000
+ 13129 words of font info for 68 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 36i,6n,39p,437b,338s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 36i,10n,39p,437b,358s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></us
 r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/share
 /texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb>
-Output written on report.pdf (16 pages, 751975 bytes).
+Output written on report.pdf (20 pages, 883743 bytes).
 PDF statistics:
- 277 PDF objects out of 1000 (max. 8388607)
- 225 compressed objects within 3 object streams
- 38 named destinations out of 1000 (max. 500000)
- 8831 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 303 PDF objects out of 1000 (max. 8388607)
+ 247 compressed objects within 3 object streams
+ 46 named destinations out of 1000 (max. 500000)
+ 9855 words of extra memory for PDF output out of 10000 (max. 10000000)
 

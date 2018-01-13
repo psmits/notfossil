@@ -16,6 +16,7 @@ library(scales)
 library(grid)
 library(ggridges)
 library(bayesplot)
+library(xtable)
 
 # helpful functions
 source('../R/stan_utility.R')
@@ -275,8 +276,44 @@ rmse.tab <- data.frame(shelly,
                        laply(out, function(x) sd(x$nb.test$rmse)))
 rmse.tab <- rmse.tab[order(rmse.tab[, 1]), ]
 names(rmse.tab) <- c('Taxonomic group', 
-                     'Poisson Model Mean CV RMSE', 'Poisson Model SD CV RMSE',
-                     'NegBin Model Mean CV RMSE', 'NegBin Model SD CV RMSE')
-rmse.tab <- xtable(rmse.tab, label = 'tab:test_rmse', align = 'lrllll')
+                     'Poisson hat(RMSE)', 'Poisson SD RMSE',
+                     'NegBin hat(RMSE)', 'NegBin SD RMSE')
+rmse.tab <- xtable(rmse.tab, label = 'tab:test_rmse', align = 'lr|llll')
 print.xtable(x = rmse.tab, type = 'latex', file = '../doc/test_rmse_raw.tex',
+             include.rownames = FALSE)
+
+
+
+
+# WAIC/LOOIC table
+shel.waic <- llply(out, function(x) x$waic)
+po.waic <- melt(llply(shel.waic, function(x) x$po[c('waic', 'se_waic')]))
+po.waic <- dcast(po.waic, L1 ~ L2)
+
+nb.waic <- melt(llply(shel.waic, function(x) x$nb[c('waic', 'se_waic')]))
+nb.waic <- dcast(nb.waic, L1 ~ L2)
+
+waic.tab <- cbind(po.waic, nb.waic[, -1])
+waic.tab <- waic.tab[, c(1, 3, 2, 5, 4)]
+names(waic.tab) <- c('Taxonomic group', 
+                     'Poisson WAIC', 'Poisson SE WAIC',
+                     'NegBin WAIC', 'NegBin SE WAIC')
+waic.tab <- xtable(waic.tab, label = 'tab:waic', align = 'lr|llll')
+print.xtable(x = waic.tab, type = 'latex', file = '../doc/waic_raw.tex',
+             include.rownames = FALSE)
+
+
+shel.loo <- llply(out, function(x) x$loo)
+po.loo <- melt(llply(shel.loo, function(x) x$po[c('looic', 'se_looic')]))
+po.loo <- dcast(po.loo, L1 ~ L2)
+
+nb.loo <- melt(llply(shel.loo, function(x) x$nb[c('looic', 'se_looic')]))
+nb.loo <- dcast(nb.loo, L1 ~ L2)
+
+loo.tab <- cbind(po.loo, nb.loo[, -1])
+names(loo.tab) <- c('Taxonomic group', 
+                     'Poisson LOOIC', 'Poisson SE LOOIC',
+                     'NegBin LOOIC', 'NegBin SE LOOIC')
+loo.tab <- xtable(loo.tab, label = 'tab:loo', align = 'lr|llll')
+print.xtable(x = loo.tab, type = 'latex', file = '../doc/loo_raw.tex',
              include.rownames = FALSE)

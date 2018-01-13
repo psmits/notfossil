@@ -74,9 +74,9 @@ rmt$taxon <- rep(shelly, times = 4)
 rmt <- dcast(rmt, taxon ~ L2 + L1)
 rmt <- rmt[, c(1, 4, 5, 2, 3)]
 names(rmt) <- c('Taxonomic group', 
-                'Poisson Model Mean CV RMSE', 'Poisson Model SD CV RMSE',
-                'NegBin Model Mean CV RMSE', 'NegBin Model SD CV RMSE')
-rmt.tab <- xtable(rmt, label = 'tab:cv_rmse', align = 'lrllll')
+                'Poisson hat(RMSE)', 'Poisson SD RMSE',
+                'NegBin hat(RMSE)', 'NegBin SD RMSE')
+rmt.tab <- xtable(rmt, label = 'tab:cv_rmse', align = 'lr|llll')
 print.xtable(x = rmt.tab, type = 'latex', file = '../doc/cv_rmse_raw.tex',
              include.rownames = FALSE)
 
