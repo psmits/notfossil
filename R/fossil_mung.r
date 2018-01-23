@@ -59,8 +59,8 @@ process.fossil <- function(fossil.ord, shelly) {
   # some of the orders missing phylum/class are easy to fix
   fossils <- clean.taxon(fossils)
 
-  names(fossils)
-  fossils$genus
+  #names(fossils)
+  #fossils$genus
 
 
   by.unit <- split(fossils, fossils$unit_id)
