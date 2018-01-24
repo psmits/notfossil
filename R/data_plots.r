@@ -16,72 +16,70 @@ source('../R/fossil_mung.r')
 source('../R/download_scrap.r')  # just macrostrat
 
 # constants
-#shelly <- c('Brachiopoda', 'Trilobita', 'Bivalvia', 'Gastropoda')
-shelly <- 'Trilobita'
+shelly <- c('Brachiopoda', 'Trilobita', 'Bivalvia', 'Gastropoda')
+shelly <- shelly[1]
 ord <- c(460.4, 443.8)
 mid <- 445.6
 
-
-# have yes/no label based on taxonomy
-unit.dur <- data.frame(id = strat.ord$unit_id,
-                       start = strat.ord$b_age,
-                       stop = strat.ord$t_age)
-for(ii in seq(length(shelly))) {
-  foss.info <- process.fossil(fossil.ord, shelly = shelly[ii])
-  yesno <- (as.character(strat.ord$unit_id) %in% foss.info$unit) * 1
-  unit.dur[, ncol(unit.dur) + 1] <- yesno
-}
-
-names(unit.dur)[-(1:3)] <- shelly
-unit.dur <- unit.dur[order(unit.dur$start), ] 
-unit.dur$id <- factor(unit.dur$id, levels = unique(unit.dur$id))
-
-
-oo <- list()
-for(ii in seq(length(shelly))) {
-  tt <- which(names(unit.dur) == shelly[ii])
-  oo[[ii]] <- unit.dur[, c(1:3, tt)]
-  names(oo[[ii]]) <- c(names(unit.dur)[1:3], 'fossils')
-  oo[[ii]]$taxon <- shelly[ii]
-}
-unit.dur <- Reduce(rbind, oo)
-unit.dur$fossils <- mapvalues(unit.dur$fossils,
-                              from = 0:1,
-                              to = c('no', 'yes'))
 
 
 # fossils occurr at a specific time
 # genus id numbers
 genus.ids <- laply(fossil.ord$genus_no, function(x) str_split(x, '\\|'))
 names(genus.ids) <- fossil.ord$unit_id
-genus.ids <- genus.ids[laply(genus.ids, function(x) all(x != ''))]
-genus.uni <- sort(unique(unlist(genus.ids)))
+# genus id, unit id
+melty <- melt(genus.ids)
+names(melty) <- c('taxon_id', 'unit_id')
 
 # grab genus information from pbdb
 fossil.url <- paste0('https://paleobiodb.org/data1.2/taxa/list.txt?taxon_id=',
-                     paste0(genus.uni, collapse = ','), 
+                     paste0(melty$taxon_id, collapse = ','), 
                      '&show=full')
 taxon <- read.csv(fossil.url, stringsAsFactors = FALSE)
-taxon <- taxon[taxon$class %in% shelly, ]  # just good ones
-# goal is extract the genera that i actually see
-good.unit <- which(laply(genus.ids, function(x) any(x %in% taxon$taxon_no)))
+# what specific taxonomic group(s)
+taxon <- taxon[taxon$phylum %in% shelly | taxon$class %in% shelly, ]  # just good ones
+
+# chosen fossils in units
+melty <- melty[melty$taxon_id %in% taxon$taxon_no, ]
 
 
+# stratigraphic units
+unit.dur <- data.frame(id = strat.ord$unit_id,
+                       start = strat.ord$b_age,
+                       stop = strat.ord$t_age)
+# have fossil of interest
+unit.dur$yesno <- factor((unit.dur$id %in% melty$unit_id) * 1)  
+unit.dur <- unit.dur[order(unit.dur$start), ] 
+unit.dur$id <- factor(unit.dur$id, levels = unique(unit.dur$id))
 
 
 # get age of fossil occurrences
 # use the age data from macrostrat
-fosocc <- fossil.ord[, c('cltn_id', 'unit_id', 't_age', 'b_age')]
-fosocc$ma <- apply(fosocc[, c('t_age', 'b_age')], 1, mean)
-names(fosocc)[1:2] <- c('collec', 'id')
-fosocc <- fosocc[fosocc$id %in% good.unit, ]  # specifically have trilobites
-fosocc$id <- factor(fosocc$id, levels = levels(unit.dur$id))
-fosocc$taxon <- shelly
+uni.collec <- unique(fossil.ord$cltn_id)
+fossil.url <- paste0('https://paleobiodb.org/data1.2/colls/list.txt?coll_id=',
+                     paste0(uni.collec, collapse = ','), 
+                     '&show=full')
+collec <- read.csv(fossil.url, stringsAsFactors = FALSE)
+# collections have ages
+collec <- collec[, c('collection_no', 'max_ma', 'min_ma')]
+# calculate collection age
+collec$mid_ma <- apply(collec[, c('max_ma', 'min_ma')], 1, mean)
+
+
+# stick that back into fossil.ord
+fossil.ord$mid_ma <- NA
+for(ii in seq(nrow(fossil.ord))) {
+  mm <- collec[collec$collection_no %in% fossil.ord$cltn_id[ii], ]
+  if(nrow(mm) > 0) fossil.ord$mid_ma[ii] <- mm$mid_ma
+}
+fossil.ord$unit_id <- factor(fossil.ord$unit_id, levels = levels(unit.dur$id))
 
 
 
 
 
+
+# PBDB dates don't line up with macrostrat dates
 
 
 
@@ -95,13 +93,14 @@ fosocc$taxon <- shelly
 
 # skeleton graph
 unitgg <- ggplot(unit.dur, aes(x = start, y = id, 
-                               colour = fossils))
+                               colour = yesno))
 unitgg <- unitgg + geom_segment(aes(xend = stop, yend = id))
-unitgg <- unitgg + geom_point(data = fosocc, 
-                              mapping = aes(x = ma, y = id, colour = NULL),
+unitgg <- unitgg + geom_point(data = fossil.ord, 
+                              mapping = aes(x = mid_ma, 
+                                            y = unit_id, 
+                                            colour = NULL),
                               alpha = 0.1)
 unitgg <- unitgg + geom_vline(xintercept = mid)
-unitgg <- unitgg + facet_wrap( ~ taxon)
 unitgg <- unitgg + coord_cartesian(xlim = ord)
 unitgg <- unitgg + scale_colour_manual(values = c('skyblue', 'goldenrod'),
                                        name = 'Fossil bearing?')
