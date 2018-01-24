@@ -22,20 +22,55 @@ ord <- c(460.4, 443.8)
 mid <- 445.6
 
 
-
-# fossils occurr at a specific time
-# genus id numbers
+# by genus id
 genus.ids <- laply(fossil.ord$genus_no, function(x) str_split(x, '\\|'))
 names(genus.ids) <- fossil.ord$unit_id
-# genus id, unit id
-melty <- melt(genus.ids)
-names(melty) <- c('taxon_id', 'unit_id')
+unique.taxa <- unique(unlist(genus.ids))
+genusy <- melt(genus.ids)  # genus id, unit id
+names(genusy) <- c('taxon_id', 'unit_id')
 
 # grab genus information from pbdb
-fossil.url <- paste0('https://paleobiodb.org/data1.2/taxa/list.txt?taxon_id=',
-                     paste0(melty$taxon_id, collapse = ','), 
-                     '&show=full')
+fossil.url <- paste0('https://paleobiodb.org/data1.2/occs/list.txt?taxon_id=',
+                     paste0(unique.taxa, collapse = ','), 
+                     '&min_ma=443.8&max_ma=460.4&show=full')
 taxon <- read.csv(fossil.url, stringsAsFactors = FALSE)
+# how many taxon ids returned entries
+taxon.percent <- sum(unique.taxa %in% taxon$accepted_no) / length(unique.taxa)
+
+
+
+# do collections make sense temporally?
+# lets look just in macrostrat
+times <- strat.ord[, c('unit_id', 't_age', 'b_age')]
+ff <- fossil.ord[, c('cltn_id', 'unit_id', 't_age', 'b_age')]
+ffunit <- times[times$unit_id %in% ff$unit_id, ]
+
+exu <- ffunit[ffunit$unit_id == ff$unit_id[1], ]
+ex <- ff[ff$unit_id == ff$unit_id[1], ]
+
+# macrostrat collection age is identical to macrostrat unit age
+#   no superposition information recorded here
+macro.compare <- all(apply(ex[, c('t_age', 'b_age')], 1, function(x) 
+                           all(x == exu[, c('t_age', 'b_age')])))
+
+
+# now check if pbdb collection age is at least similar to macrostrat age
+# grab collection information from pbdb
+fossil.url <- paste0('https://paleobiodb.org/data1.2/colls/list.txt?coll_id=',
+                     paste0(fossil.ord$cltn_id, collapse = ','), 
+                     '&show=full')
+cltn <- read.csv(fossil.url, stringsAsFactors = FALSE)
+cltn.percent <- sum(fossil.ord$cltn_id %in% cltn$collection_no) /
+  length(fossil.ord$cltn_id)
+
+cc <- cltn[, c('collection_no', 'min_ma', 'max_ma')]
+ffcc <- ff[ff$cltn_id %in% cc$collection_no, ]
+
+exc <- ffcc[ffcc$cltn_id == cc$collection_no[1], ]  # based on macrostat
+ex <- cc[cc$collection_no == cc$collection_no[1], ]  # based on pbdb
+
+  
+  
 # what specific taxonomic group(s)
 taxon <- taxon[taxon$phylum %in% shelly | taxon$class %in% shelly, ]  # just good ones
 
