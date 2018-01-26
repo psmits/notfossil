@@ -19,7 +19,7 @@ source('../R/download_scrap.r')  # just macrostrat
 
 # constants
 shelly <- c('Brachiopoda', 'Trilobita', 'Bivalvia', 'Gastropoda')
-shelly <- shelly[1]
+#shelly <- shelly[1]
 ord <- c(460.4, 443.8)
 mid <- 445.6
 
@@ -36,8 +36,6 @@ fossil.ord <- read.csv(fossil.url, stringsAsFactors = FALSE)
 # cypher for which collections in what units
 cltn2unit <- fossil.ord[, c('cltn_id', 'unit_id')]
 
-
-
 # grab genus information from pbdb based on what occurres in collections
 fossil.url <- paste0('https://paleobiodb.org/data1.2/occs/list.txt?coll_id=',
                      paste0(fossil.ord$cltn_id, collapse = ','), 
@@ -46,7 +44,9 @@ taxon <- read.csv(fossil.url, stringsAsFactors = FALSE)
 
 # associate each fossil occurrence with a macrostrat unit
 taxon$unit <- cltn2unit[match(taxon$collection_no, cltn2unit[, 1]), 2]
-taxon <- taxon[taxon$phylum %in% shelly, ]  # just the taxa of interest
+
+# filter to just the taxa i want
+taxon <- taxon[taxon$phylum %in% shelly | taxon$class %in% shelly, ]
 
 # put occurrences at middle of unit
 ss <- fossil.ord[, c('unit_id', 'b_age', 't_age')]
@@ -58,12 +58,19 @@ strat.ord <- strat.ord[order(strat.ord$b_age), ]
 strat.ord$unit_id <- factor(strat.ord$unit_id, levels = unique(strat.ord$unit_id))
 taxon$unit <- factor(taxon$unit, levels = levels(strat.ord$unit_id))
 
-strat.ord$fossils <- factor((strat.ord$unit_id %in% taxon$unit))
-
 tt <- split(taxon, as.character(taxon$unit))
 tt <- llply(tt, function(x) x[!duplicated(x$genus), ])
 taxon <- Reduce(rbind, tt)
-unit.diversity <- laply(tt, nrow)
+
+
+strat.ord$fossils <- factor((strat.ord$unit_id %in% taxon$unit))
+taxon$group <- NA
+for(ii in seq(length(shelly))) {
+  taxon$group[taxon$phylum %in% shelly[ii]] <- shelly[ii]
+  taxon$group[taxon$class %in% shelly[ii]] <- shelly[ii]
+}
+
+
 
 # the plot
 unitgg <- ggplot(strat.ord, aes(x = b_age, y = unit_id, colour = fossils)) 
@@ -75,6 +82,7 @@ unitgg <- unitgg + geom_point(data = taxon,
                                             y = unit, 
                                             colour = NULL), 
                               shape = 4, alpha = 0.1, size = 1.1)
+unitgg <- unitgg + facet_wrap( ~ group)
 unitgg <- unitgg + labs(x = 'Mya', y = 'macrostrat unit')
 unitgg <- unitgg + geom_vline(xintercept = mid, 
                               linetype = 'dashed',
