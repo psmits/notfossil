@@ -23,16 +23,8 @@ shelly <- c('Brachiopoda', 'Trilobita', 'Bivalvia', 'Gastropoda')
 ord <- c(460.4, 443.8)
 mid <- 445.6
 
-# macrostrat strat data from the orodovician
-strat.ord <- read.csv('https://macrostrat.org/api/v2/units?interval_name=Ordovician&response=long&format=csv', 
-                      stringsAsFactors = FALSE)
+# mid age of unit
 strat.ord$m_age <- apply(strat.ord[, c('t_age', 'b_age')], 1, mean)
-
-# macrostrat fossil data from the orodovician
-fossil.url <- paste0('https://macrostrat.org/api/v2/fossils?unit_id=', 
-                     paste0(strat.ord$unit_id, collapse = ','), 
-                     '&response=long&format=csv') 
-fossil.ord <- read.csv(fossil.url, stringsAsFactors = FALSE)
 # cypher for which collections in what units
 cltn2unit <- fossil.ord[, c('cltn_id', 'unit_id')]
 
