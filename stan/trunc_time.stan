@@ -22,6 +22,8 @@ model {
   for(i in 2:T) 
     mu_int[i] ~ normal(mu_int[i - 1], sigma_mu);
 
+  sigma_mu ~ normal(0, 1);
+
   phi ~ normal(0, 1);
 
   for(n in 1:N) {

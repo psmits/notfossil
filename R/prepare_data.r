@@ -67,7 +67,7 @@ brks <- brks[rev(seq(nrow(brks))), ]
 out <- list()
 for(jj in seq(length(shelly))) {
   # which occurrences correspond to focal group
-  focus <- taxon[taxon$group == shelly[jj, ]]
+  focus <- taxon[taxon$group == shelly[jj], ]
   # these occurrences are in collections
   # collections are from units
   # geologic units with fossils from focal
@@ -87,5 +87,46 @@ for(jj in seq(length(shelly))) {
   mm <- match(stratfocus$unit_id, names(unitdiv))
   stratfocus$diversity <- unlist(unitdiv)[mm]
 
-  out[[jj]] <- stratfocus[, c('diversity', 'bin', 'unit_id')]
+  out[[jj]] <- stratfocus[, c('unit_id', 'col_area', 't_age', 'b_age', 
+                              'max_thick', 'min_thick', 'lith', 'environ', 
+                              'units_above', 'units_below', 'clat', 'clng', 
+                              'bin', 'diversity')]
+  out[[jj]]$taxon <- shelly[jj]
 }
+names(out) <- shelly
+
+# get the data in stan format
+# ignore covariates for now
+# each taxon group individually
+for(ii in seq(length(out))) {
+  bpod <- out[[ii]][, c('unit_id', 'bin', 'diversity')]
+
+  standata <- list()
+  standata$y <- bpod$diversity
+  standata$t <- bpod$bin
+  standata$N <- length(bpod$diversity)
+  standata$T <- max(bpod$bin)
+  temp.name <- paste0('../data/data_dump/diversity_data_', shelly[ii], '.data.R')
+  with(standata, {stan_rdump(list = alply(names(standata), 1),
+                             file = temp.name)})
+  temp.name <- paste0('../data/data_dump/diversity_image_', shelly[ii], '.rdata')
+  save(standata, file = temp.name)
+}
+
+# combined hierarchical dataset
+combo <- Reduce(rbind, out)
+
+standata <- list()
+standata$d <- as.numeric(factor(combo$taxon))
+standata$D <- max(standata$d)
+standata$u <- as.numeric(factor(combo$unit_id))
+standata$U <- max(standata$u)
+standata$y <- combo$diversity
+standata$N <- nrow(combo)
+standata$t <- combo$bin
+standata$T <- max(combo$bin)
+temp.name <- paste0('../data/data_dump/diversity_data_full.data.R')
+with(standata, {stan_rdump(list = alply(names(standata), 1),
+                           file = temp.name)})
+temp.name <- paste0('../data/data_dump/diversity_image_full.rdata')
+save(standata, file = temp.name)
