@@ -54,7 +54,7 @@ for(kk in seq(length(shelly))) {
     gg <- grab[jj]
     oo <- c()
     for(ii in seq(standata$N)) {
-      oo[ii] <- rztnbinom(1, mu = post$mu[gg], theta = post$phi[gg])
+      oo[ii] <- rztnbinom(1, mu = post$mu[gg, ii], theta = post$phi[gg])
     }
     ppc[[jj]] <- oo
   }
@@ -63,9 +63,9 @@ for(kk in seq(length(shelly))) {
   #   
   checks <- single.checks(standata$y, ppc)
   checks.time <- group.checks(standata$y, ppc, group = standata$t)
-  out[[kk]] <- list(data = standata, checks = checks, checks.time = checks.time)
+  out[[kk]] <- list(data = standata, post = post,
+                    checks = checks, checks.time = checks.time)
 }
-
 
 
 
