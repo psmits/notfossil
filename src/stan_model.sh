@@ -6,8 +6,8 @@ do
   do
     ../stan/trunc_basic sample \
       adapt delta=0.99 \
-      num_samples=1000 num_warmup=1000 \
-      algorithm=hmc engine=nuts max_depth=10 \
+      num_samples=2000 num_warmup=2000 thin=2 \
+      algorithm=hmc engine=nuts max_depth=20 \
       id=$i \
       random seed=420 \
       data file=$f \
@@ -22,8 +22,8 @@ do
   do
     ../stan/trunc_basic sample \
       adapt delta=0.99 \
-      num_samples=1000 num_warmup=1000 \
-      algorithm=hmc engine=nuts max_depth=10 \
+      num_samples=2000 num_warmup=2000 thin=2 \
+      algorithm=hmc engine=nuts max_depth=20 \
       id=$i \
       random seed=420 \
       data file=$f \
@@ -38,8 +38,8 @@ do
   do
     ../stan/trunc_basic sample \
       adapt delta=0.99 \
-      num_samples=1000 num_warmup=1000 \
-      algorithm=hmc engine=nuts max_depth=10 \
+      num_samples=2000 num_warmup=2000 thin=2 \
+      algorithm=hmc engine=nuts max_depth=20 \
       id=$i \
       random seed=420 \
       data file=$f \
@@ -54,8 +54,8 @@ do
   do
     ../stan/trunc_basic sample \
       adapt delta=0.99 \
-      num_samples=1000 num_warmup=1000 \
-      algorithm=hmc engine=nuts max_depth=10 \
+      num_samples=2000 num_warmup=2000 thin=2 \
+      algorithm=hmc engine=nuts max_depth=20 \
       id=$i \
       random seed=420 \
       data file=$f \
