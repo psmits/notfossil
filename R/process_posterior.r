@@ -39,7 +39,7 @@ grab <- sample(4000, nsim)
 
 
 # for each of the taxonomic groups
-out <- list
+out <- list()
 for(kk in seq(length(shelly))) {
   load(paste0('../data/data_dump/diversity_image_', shelly[kk], '.rdata'))
 
@@ -66,8 +66,7 @@ for(kk in seq(length(shelly))) {
   out[[kk]] <- list(data = standata, post = post,
                     checks = checks, checks.time = checks.time)
 }
-
-
+names(out) <- shelly
 
 
 

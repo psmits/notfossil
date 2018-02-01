@@ -5,7 +5,7 @@ do
   for i in `seq 1 4`;
   do
     ../stan/trunc_basic sample \
-      adapt delta=0.99 \
+      adapt delta=0.999 \
       num_samples=2000 num_warmup=2000 thin=2 \
       algorithm=hmc engine=nuts max_depth=20 \
       id=$i \
@@ -21,7 +21,7 @@ do
   for i in `seq 1 4`;
   do
     ../stan/trunc_basic sample \
-      adapt delta=0.99 \
+      adapt delta=0.999 \
       num_samples=2000 num_warmup=2000 thin=2 \
       algorithm=hmc engine=nuts max_depth=20 \
       id=$i \
@@ -37,7 +37,7 @@ do
   for i in `seq 1 4`;
   do
     ../stan/trunc_basic sample \
-      adapt delta=0.99 \
+      adapt delta=0.999 \
       num_samples=2000 num_warmup=2000 thin=2 \
       algorithm=hmc engine=nuts max_depth=20 \
       id=$i \
@@ -53,7 +53,7 @@ do
   for i in `seq 1 4`;
   do
     ../stan/trunc_basic sample \
-      adapt delta=0.99 \
+      adapt delta=0.999 \
       num_samples=2000 num_warmup=2000 thin=2 \
       algorithm=hmc engine=nuts max_depth=20 \
       id=$i \
