@@ -68,4 +68,62 @@ names(post)
 # plot by time unit
 #   observed values: mean + sd
 #   estimated values: mean + sd
+observed <- data.frame(Reduce(cbind, standata[c('y', 't', 'u', 'd')]))
+names(observed) <- c('count', 'time', 'unit', 'taxon')
+observed$taxon <- mapvalues(observed$taxon, unique(observed$taxon), shelly)
 
+bytax <- split(observed, observed$taxon)
+taxtime <- llply(bytax, function(x) split(x, x$time))
+taxtime <- llply(taxtime, function(x) 
+                 llply(x, function(y) 
+                       quantile(y$count, c(0.1, 0.5, 0.9))))
+names(taxtime) <- shelly
+taxtime <- llply(taxtime, function(x) Reduce(rbind, x))
+taxtime <- llply(taxtime, function(x) {
+                   x <- cbind(x, 1:10)
+                   x})
+taxtime <- Map(function(x, y) data.frame(x, y), taxtime, shelly)
+taxtime <- Reduce(rbind, taxtime)
+names(taxtime) <- c('low', 'med', 'hgh', 'time', 'taxon')
+
+gw <- ggplot(taxtime, aes(x = time, y = med))
+#gw <- gw + geom_point(data = observed, mapping = aes(x = time, y = count), shape = 4)
+gw <- gw + geom_pointrange(mapping = aes(ymin = low, ymax = hgh), 
+                           colour = 'blue')
+gw <- gw + facet_grid(taxon ~ .)
+
+
+# get averages from simulation
+grow <- llply(ppc, function(x) data.frame(count = x, 
+                                          time = observed$time, 
+                                          taxon = observed$taxon))
+growtax <- llply(grow, function(x) split(x, x$taxon))
+growtt <- llply(growtax, function(x) llply(x, function(y) split(y, y$time)))
+
+growtt <- llply(growtt, function(a) 
+                llply(a, function(x) 
+                      laply(x, function(y) median(y$count))))
+growtt <- llply(growtt, function(y) 
+                llply(y, function(x) data.frame(count = x, time = 1:10)))
+
+growtt <- llply(growtt, function(z) 
+                Map(function(x, y) cbind(x, taxon = y), z, shelly))
+growtt <- llply(growtt, function(x) Reduce(rbind, x))
+growtt <- Reduce(rbind, Map(function(x, y) cbind(x, sim = y), growtt, 1:nsim))
+
+# summary statistic approach median + 80% credible
+bt <- split(growtt, growtt$taxon)
+btt <- llply(bt, function(x) split(x, x$time))
+
+btt <- llply(btt, function(y) 
+             laply(y, function(x) quantile(x$count, c(0.1, 0.5, 0.9))))
+btt <- llply(btt, function(x) cbind(x, time = 1:10))
+btt <- Map(function(x, y) data.frame(x, taxon = y), btt, shelly)
+btt <- Reduce(rbind, btt)
+names(btt) <- c('low', 'med', 'hgh', 'time', 'taxon')
+
+gw <- gw + geom_pointrange(data = btt, 
+                           mapping = aes(x = time, y = med, 
+                                         ymin = low, ymax = hgh))
+gw
+# way overestimating

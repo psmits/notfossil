@@ -11,8 +11,8 @@ data {
 }
 parameters {
   vector[D] mu[T]; 
-  vector[D] taxon_series[T]; 
-  vector<lower=0>[D] sigma_mu;
+  vector[D] taxon_series; 
+  //vector<lower=0>[D] sigma_mu;
   corr_matrix[D] Omega;
   vector<lower=0>[D] tau;
 
@@ -31,14 +31,15 @@ transformed parameters {
   Sigma = quad_form_diag(Omega, tau);
 }
 model {
-  for(i in 1:D) {
-    taxon_series[1, i] ~ normal(0, 1);  // initial conditions
-    for(j in 2:T) {
-      taxon_series[j, i] ~ normal(taxon_series[j - 1, i], sigma_mu[i]);
-    }
-  }
+  taxon_series ~ normal(0, 1);
+  //for(i in 1:D) {
+  //  taxon_series[1, i] ~ normal(0, 1);  // initial conditions
+  //  for(j in 2:T) {
+  //    taxon_series[j, i] ~ normal(taxon_series[j - 1, i], sigma_mu[i]);
+  //  }
+  //}
   mu ~ multi_normal(taxon_series, Sigma);
-  sigma_mu ~ normal(0, 1);
+  //sigma_mu ~ normal(0, 1);
   
   Omega ~ lkj_corr(2);
   tau ~ normal(0, 1);
