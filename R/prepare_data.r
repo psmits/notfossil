@@ -8,8 +8,7 @@ library(geosphere)
 library(reshape2)
 library(rstan)
 library(caret)
-#library(glmnet)
-#library(rpart)
+source('../R/rock_mung.r')
 
 # bring in data
 #   fossil.ord # fossil occurrences in the ordovician
@@ -94,6 +93,14 @@ for(jj in seq(length(shelly))) {
   out[[jj]]$taxon <- shelly[jj]
 }
 names(out) <- shelly
+
+
+# break apart lithology terms
+strat <- out[[1]]
+get.lithology(strat)
+# pick up here
+# develop covariate information
+
 
 # get the data in stan format
 # ignore covariates for now

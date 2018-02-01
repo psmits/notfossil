@@ -58,4 +58,14 @@ for(jj in seq(nsim)) {
 }
 
 # posterior predictive checks
-checks <- series.checks(standata$y, ppc, group = standata$t)
+#   
+checks <- single.checks(standata$y, ppc)
+checks.time <- group.checks(standata$y, ppc, group = standata$t)
+checks.taxon <- group.checks(standata$y, ppc, group = standata$d)
+
+
+names(post)
+# plot by time unit
+#   observed values: mean + sd
+#   estimated values: mean + sd
+

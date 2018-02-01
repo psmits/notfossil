@@ -1,5 +1,8 @@
+q75 <- function(x) quantile(x, 0.75)
+q25 <- function(x) quantile(x, 0.25)
+
 # internal checks
-series.checks <- function(y, ppc, group = NULL) {
+single.checks <- function(y, ppc) {
   ppc <- Reduce(rbind, ppc)
 
   # density
@@ -12,9 +15,7 @@ series.checks <- function(y, ppc, group = NULL) {
   ppc.max <- ppc_stat(y, ppc, stat = 'max')
   #prop_zero <- function(x) mean(x == 0)
   #ppc.zero <- ppc_stat(y, ppc, stat = 'prop_zero')
-  q25 <- function(x) quantile(x, 0.25)
   ppc.q25 <- ppc_stat(y, ppc, stat = 'q25')
-  q75 <- function(x) quantile(x, 0.75)
   ppc.q75 <- ppc_stat(y, ppc, stat = 'q75')
 
   # error
@@ -25,17 +26,10 @@ series.checks <- function(y, ppc, group = NULL) {
   # rootograms because i find them easy to read
   root.gg <- ppc_rootogram(y, ppc, style = 'hanging', prob = 0.8)
 
+  # bars
+  ppc.bars <- ppc_bars(y, ppc)
 
-  # now by group
-  ppc.mean.group <- ppc_stat_grouped(y, ppc, group = group, stat = 'mean')
-  ppc.sd.group <- ppc_stat_grouped(y, ppc, group = group, stat = 'sd')
-  ppc.max.group <- ppc_stat_grouped(y, ppc, group = group, stat = 'max')
-  ppc.q25.group <- ppc_stat_grouped(y, ppc, group = group, stat = 'q25')
-  ppc.q75.group <- ppc_stat_grouped(y, ppc, group = group, stat = 'q75')
-  ppc.avgerr.group <- ppc_scatter_avg_grouped(y, ppc, group = group)
-
-
-  # all the plots
+  # output
   out <- list(mean = ppc.mean, 
               sd = ppc.sd, 
               max = ppc.max, 
@@ -46,6 +40,25 @@ series.checks <- function(y, ppc, group = NULL) {
               avgerr = ppc.avgerr, 
               ecdf = ppc.ecdf, 
               root = root.gg,
+              bar = ppc.bars)
+  out
+}
+
+# internal checks
+group.checks <- function(y, ppc, group) {
+  ppc <- Reduce(rbind, ppc)
+
+  # by group
+  ppc.bars.group <- ppc_bars_grouped(y, ppc, group = group)
+  ppc.mean.group <- ppc_stat_grouped(y, ppc, group = group, stat = 'mean')
+  ppc.sd.group <- ppc_stat_grouped(y, ppc, group = group, stat = 'sd')
+  ppc.max.group <- ppc_stat_grouped(y, ppc, group = group, stat = 'max')
+  ppc.q25.group <- ppc_stat_grouped(y, ppc, group = group, stat = 'q25')
+  ppc.q75.group <- ppc_stat_grouped(y, ppc, group = group, stat = 'q75')
+  ppc.avgerr.group <- ppc_scatter_avg_grouped(y, ppc, group = group)
+
+  # all the plots
+  out <- list(bar.group = ppc.bars.group,
               mean.group = ppc.mean.group,
               sd.group = ppc.sd.group,
               max.group = ppc.max.group,
