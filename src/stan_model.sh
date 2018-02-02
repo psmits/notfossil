@@ -9,7 +9,7 @@ do
       num_samples=2000 num_warmup=2000 thin=2 \
       algorithm=hmc engine=nuts max_depth=20 \
       id=$i \
-      random seed=420 \
+      init=0 \
       data file=$f \
       output file=../data/mcmc_out/trunc_${i}_Brachiopoda.csv &
   done
@@ -25,7 +25,7 @@ do
       num_samples=2000 num_warmup=2000 thin=2 \
       algorithm=hmc engine=nuts max_depth=20 \
       id=$i \
-      random seed=420 \
+      init=0 \
       data file=$f \
       output file=../data/mcmc_out/trunc_${i}_Trilobita.csv &
   done
@@ -41,7 +41,7 @@ do
       num_samples=2000 num_warmup=2000 thin=2 \
       algorithm=hmc engine=nuts max_depth=20 \
       id=$i \
-      random seed=420 \
+      init=0 \
       data file=$f \
       output file=../data/mcmc_out/trunc_${i}_Bivalvia.csv &
   done
@@ -57,7 +57,7 @@ do
       num_samples=2000 num_warmup=2000 thin=2 \
       algorithm=hmc engine=nuts max_depth=20 \
       id=$i \
-      random seed=420 \
+      init=0 \
       data file=$f \
       output file=../data/mcmc_out/trunc_${i}_Gastropoda.csv &
   done
