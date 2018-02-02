@@ -1,4 +1,3 @@
-# this script is called entirely for the side effects 
 # taxon variable is shelly
 library(arm)
 library(plyr)
@@ -88,6 +87,7 @@ for(jj in seq(length(shelly))) {
 
   out[[jj]] <- stratfocus[, c('unit_id', 'col_area', 't_age', 'b_age', 
                               'max_thick', 'min_thick', 'lith', 'environ', 
+                              't_plat', 't_plng', 'b_plat', 'b_plng',
                               'units_above', 'units_below', 'clat', 'clng', 
                               'bin', 'diversity')]
   out[[jj]]$taxon <- shelly[jj]
@@ -96,23 +96,49 @@ names(out) <- shelly
 
 
 # break apart lithology terms
-strat <- out[[1]]
-get.lithology(strat)
+#strat <- out[[1]]
+#lith <- get.lithology(strat)
+# macrostrat issues
 # pick up here
 # develop covariate information
+
+
 
 
 # get the data in stan format
 # ignore covariates for now
 # each taxon group individually
 for(ii in seq(length(out))) {
-  bpod <- out[[ii]][, c('unit_id', 'bin', 'diversity')]
+  bpod <- out[[ii]]
 
   standata <- list()
   standata$y <- bpod$diversity
   standata$t <- bpod$bin
   standata$N <- length(bpod$diversity)
   standata$T <- max(bpod$bin)
+
+  # make X
+  K <- 8  # all plus intercept
+  standata$K <- K
+  # initially just intercept
+  X <- matrix(1, nrow = standata$N, ncol = K)
+  X[, 2] <- arm::rescale(bpod$max_thick)
+  X[, 3] <- arm::rescale(bpod$min_thick)
+  X[, 4] <- arm::rescale(bpod$col_area)
+  X[, 5] <- ifelse(bpod$units_above != 0, 1, 0)
+  X[, 6] <- ifelse(bpod$units_above != 0, 1, 0)
+
+  topcoord <- bpod[, c('t_plng', 't_plat')]
+  botcoord <- bpod[, c('b_plng', 'b_plat')]
+  ch <- distGeo(topcoord, botcoord) / 1000  # km units
+  X[, 7] <- arm::rescale(ch)
+
+  toptemp <- ifelse(bpod$t_plat > 20 | bpod$t_plat < -2, 1, 0)
+  bottemp <- ifelse(bpod$b_plat > 20 | bpod$b_plat < -2, 1, 0)
+  X[, 8] <- bottemp
+
+  standata$X <- X
+
   temp.name <- paste0('../data/data_dump/diversity_data_', shelly[ii], '.data.R')
   with(standata, {stan_rdump(list = alply(names(standata), 1),
                              file = temp.name)})
@@ -132,6 +158,29 @@ standata$y <- combo$diversity
 standata$N <- nrow(combo)
 standata$t <- combo$bin
 standata$T <- max(combo$bin)
+
+# make X
+K <- 8  # all plus intercept
+# initially just intercept
+X <- matrix(1, nrow = standata$N, ncol = K)
+X[, 2] <- arm::rescale(combo$max_thick)
+X[, 3] <- arm::rescale(combo$min_thick)
+X[, 4] <- arm::rescale(combo$col_area)
+X[, 5] <- ifelse(combo$units_above != 0, 1, 0)
+X[, 6] <- ifelse(combo$units_above != 0, 1, 0)
+
+topcoord <- combo[, c('t_plng', 't_plat')]
+botcoord <- combo[, c('b_plng', 'b_plat')]
+ch <- distGeo(topcoord, botcoord) / 1000  # km units
+X[, 7] <- arm::rescale(ch)
+
+toptemp <- ifelse(combo$t_plat > 20 | combo$t_plat < -2, 1, 0)
+bottemp <- ifelse(combo$b_plat > 20 | combo$b_plat < -2, 1, 0)
+X[, 8] <- bottemp
+
+standata$X <- X
+
+
 temp.name <- paste0('../data/data_dump/diversity_data_full.data.R')
 with(standata, {stan_rdump(list = alply(names(standata), 1),
                            file = temp.name)})
