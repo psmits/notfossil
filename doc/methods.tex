@@ -21,7 +21,7 @@ Geological units were downloaded from Macrostrat platform CITATION
 
 
 \section{Fossil occurrences in geological units}
-Units records in Macrostrat have lists of the Paleobiology Database collections found in that unit and the associated genera from those collections. Each collection and genus in the Paleobiology Database has a unique identifier which allows programmatic matching of geological and biological information in both databases.
+Units records in Macrostrat have lists of the Paleobiology Database collections found in that unit. 
 
 % give api link
 
@@ -30,34 +30,57 @@ Paleobiology Database
 
 
 
-\section{A hurdle model of observing fossil species}
+\section{Geologic unit covariates}
 
-A common occurrence in count data is an over-abundance of zeroes than would be expected from a Poisson distribution. Two common models for increasing the probability mass of a zero count are zero-inflated CITATION and hurdle models CITATION. These models are both mixtures of a Bernoulli distribution and some other discrete probability distribution, commonly a Poisson distribution though any discrete probability distribution if possible (e.g. Negative Binomial).
 
-In this study we use a Hurdle model which is a mixture model of a Bernoulli and Poisson distributions. In this type of model the Bernoulli distribution models the probability of observing zero fossil species in a geological unit, and the Poisson distribution models the expected number of fossil species observed if at least one species is observed. Importantly, the Poisson distribution is truncated at zero which means that only non-zero values can be drawn from that part of the model. The probability mass function for a basic Hurdle model, as detailed in the Stan Modeling Language User's Guide and Reference Manual CITATION, is defined as 
+Geologic units in Macrostrat Thickness
+
+
+
+\section{Binning geologic units}
+
+
+
+\section{Modeling of the fossil diversity found in a geologic units}
+
+A natual statistical distribution for discrete data is the Poisson distribution. 
+
+Poisson parameterization makes strong assumptions about the mean-variance relationship of the data which is rarely found in life. To allow for possible overdisperssion in the data (variance greater than mean), we adopted the Negative Binomial distribution which can be derived as a mixture a Gamma and a Poisson distribution.
+
+All geologic units we're analyzing have at least one species occurrence associated with it; this explicit observation restriction means that instead of a full distribution of counts from 0 to positive infinity, we instead have a truncated distribution ranging from 1 to positive infinity.
+
+
+The probability mass function for the parameterization of the Negative Binomial distribution in terms of mean \(\mu\) and dispersion \(\phi\) is written as:
 \begin{equation}
-  p(y | \theta, \lambda)  = 
-  \begin{cases}
-    \theta & \text{if } y = 0, and \\
-    (1 - \theta) \frac{\text{Poisson}(y, \lambda)}{1 - \text{PoissonCDF}(0 | \lambda)} & y > 0
-  \end{cases}
-  \label{eq:hurdle_ex}
+  \text{Negative Binomial}(y | \mu, \phi) = \binom{y + \phi - 1}{y} \frac{\mu}{\mu + \phi}^{\mu} \frac{\phi}{\mu + \phi}^{\phi}.
 \end{equation}
-where \(\theta\) is the Bernoulli probability of observing zero fossil species in a geological unit, \(\lambda\) is the expected number of fossil species observed in a geological unit observed from a truncated Poisson distribution, PoissonCDF stands in for the cumulative distribution function for the Poisson distribution.
+We chose this parameterization of the Negative Binomial distribution because it has one of the simplest interpretations; the mean \(\mu\) is the expected species diversity observed in a geologic unit, and the amount of overdispersion is equal to the inverse of \(\phi\) scaled by the square of the mean. 
 
-This basic model can be expanded to include covariate effects and multi-level structure through the \(\theta\) and \(\lambda\) parameters. These parameters are modeled separately and have different interpretations: effects increasing \(\lambda\) indicates that covariate is associated with an enrichment of zeroes, while effects increasing \(\lambda\) means that covariate is associated with an enrichment of non-zeroes. This difference in interpretation means that, for example, regression coefficients for covariates appearing in models of both \(\theta\) and \(\lambda\) have opposite interpretations with respect their effect on the observed species counts.
+Our hierarchical/multi-level model can be characterized as a type of GLMM where the underlying distribution for our data is a zero-truncated Negative Binomial probability mass function. 
 
+The effects of the unit covariates are expressed as the regression coefficients \(\beta\) which were allowed to vary over time. The temporal structure of the covariates was modeled as a random walk prior on the matrix of time-level means \(\gamma\); a random-walk prior is a simple way of constraining the estimates for \(\beta_{t}\) given the estimate of \(\beta_{t - 1}\). Additionally, the scale parameters \(\sigma\) for each of the \(K\) coefficients are related to the rate of change over time; a low value of \(\sigma_{k}\) corresponds to little between time variance in the effect of that covariate on diversity while a large value of \(\sigma_{k}\) indicates that the effect of that covariate is inconsistent through time.
+\begin{equation}
+  \begin{aligned}
+    \mu_{i} &= \exp(X_{i} \beta_{t[i]}) \\
+    \beta_{t} &\sim \text{MVN}(\gamma_{t}, \Sigma) \\
+    \gamma_{t, k} &\sim 
+      \begin{cases}
+        \mathcal{N}(0, \sigma_{K}) & \quad \text{if } t = 1 \\
+        \mathcal{N}(\gamma_{t - 1, k}, \sigma_{k}) & \quad \text{if } t > 1
+      \end{cases} \\
+    \sigma_{k} &\sim \mathcal{N}^{+}(1). \\ 
+  \end{aligned}
+\end{equation}
 
-\(\theta\), which describes the probability of observing zero fossil species in a geological unit, is modeled similarly to a logistic regression with multiple covariates describing the geological unit.
+The additional covariance between variation in the regression coefficients \(\beta\) over time that not accounted for by the random-walk prior on \(\gamma\) are modeled by the unknown/estimated covariance matrix \(\Sigma\). In order to improve sampling performance and choice of priors, the covariance matrix was decomposed into a vector of scales \(\tau\) and a correlation matrix \(\Omega\) as recommended by the Stan Manual CITATION. Their associated priors are as follows:
+\begin{equation}
+  \begin{aligned}
+    \Sigma &= \text{diag}(\tau) \Omega \text{diag}{\tau} \\
+    \Omega &\sim \text{LKJ}(2) \\
+    \tau &\sim \mathcal{N}^{+}(1). \\
+  \end{aligned}
+\end{equation}
 
-\(\lambda\), which describes the expected count of fossil species from a zero-truncated Poisson distribution, is modeled similarly to a standard Poisson regression with multiple covariates the geological unit and an intercept varying by the fossil species taxonomic description.
+The LKJ distribution is a single parameter distribution of correlation matrices; values of the parameer close to 0 correspond to a uniform distribution across all possible correlations, and as values increase this distribution convergent on an identity matrix. This weakly-informative prior nudges our estimates towards a result of no correlation between covariate effects over time though is not sufficiently strong enough to prevent us inferring that kind of result.
 
-
-\section{Posterior estimation and diagnostics}
-
-
-\section{Posterior analysis}
-
-
-
-\end{document}
+Unless otherwise noted, all prior choices reflect our decision to use weakly-informative regularizing priors. Additionally, because all covariates are on approximately unit scale and we do not expect any of our regression coefficients to have magnitude greater than 2, more diffuse priors would serve no purpose and are unnecessary. Additionally, more diffuse priors would not reflect our actual expectations regarding the magnitude of covariate effects. Finally, the regularizing property of priors helps constrain our results such that we do not obtain spurious estimates of the covariate effects. Further statistical and philosophical backing for these prior choices is available HERE HERE AND HERE CITATION.

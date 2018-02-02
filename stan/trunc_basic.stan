@@ -10,7 +10,9 @@ data {
 parameters {
   vector[K] beta[T];
   
-  vector[K] mu;
+  //vector[K] mu;
+  vector[K] mu[T];
+  vector<lower=0>[K] sigma_mu;  // rw sd
   corr_matrix[K] Omega;
   vector<lower=0>[K] tau;
 
@@ -26,9 +28,17 @@ transformed parameters {
   Sigma = quad_form_diag(Omega, tau);
 }
 model {
-  mu ~ normal(0, 1);
+  // rw prior for all covariates incl intercept
+  for(k in 1:K) {
+    mu[1, k] ~ normal(0, sigma_mu[k]);
+    for(j in 2:T) {
+      mu[j, k] ~ normal(mu[j - 1, k], sigma_mu[k]);
+    }
+  }
+  //mu ~ normal(0, 1);
   Omega ~ lkj_corr(2);
   tau ~ normal(0, 1);
+  sigma_mu ~ normal(0, 1);
 
   beta ~ multi_normal(mu, Sigma);
   
