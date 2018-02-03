@@ -85,11 +85,7 @@ for(jj in seq(length(shelly))) {
   mm <- match(stratfocus$unit_id, names(unitdiv))
   stratfocus$diversity <- unlist(unitdiv)[mm]
 
-  out[[jj]] <- stratfocus[, c('unit_id', 'col_area', 't_age', 'b_age', 
-                              'max_thick', 'min_thick', 'lith', 'environ', 
-                              't_plat', 't_plng', 'b_plat', 'b_plng',
-                              'units_above', 'units_below', 'clat', 'clng', 
-                              'bin', 'diversity')]
+  out[[jj]] <- stratfocus
   out[[jj]]$taxon <- shelly[jj]
 }
 names(out) <- shelly
@@ -110,6 +106,9 @@ names(out) <- shelly
 # each taxon group individually
 for(ii in seq(length(out))) {
   bpod <- out[[ii]]
+  
+  litmat <- get.lithology(bpod)
+  bpod <- bpod[match(rownames(litmat), bpod$unit_id), ]
 
   standata <- list()
   standata$y <- bpod$diversity
@@ -123,20 +122,23 @@ for(ii in seq(length(out))) {
   # initially just intercept
   X <- matrix(1, nrow = standata$N, ncol = K)
   X[, 2] <- arm::rescale(bpod$max_thick)
-  X[, 3] <- arm::rescale(bpod$min_thick)
-  X[, 4] <- arm::rescale(bpod$col_area)
+  X[, 3] <- arm::rescale(bpod$col_area)
+  X[, 4] <- ifelse(bpod$units_above != 0, 1, 0)
   X[, 5] <- ifelse(bpod$units_above != 0, 1, 0)
-  X[, 6] <- ifelse(bpod$units_above != 0, 1, 0)
 
   topcoord <- bpod[, c('t_plng', 't_plat')]
   botcoord <- bpod[, c('b_plng', 'b_plat')]
   ch <- distGeo(topcoord, botcoord) / 1000  # km units
-  X[, 7] <- arm::rescale(ch)
+  X[, 6] <- arm::rescale(ch)
 
   toptemp <- ifelse(bpod$t_plat > 20 | bpod$t_plat < -2, 1, 0)
   bottemp <- ifelse(bpod$b_plat > 20 | bpod$b_plat < -2, 1, 0)
-  X[, 8] <- bottemp
+  X[, 7] <- bottemp
+  
+  X[, 8] <- ifelse(bpod$outcrop == 'subsurface', 1, 0)
 
+  X <- cbind(X, ilr(litmat))
+  K <- ncol(X)
   standata$X <- X
 
   temp.name <- paste0('../data/data_dump/diversity_data_', shelly[ii], '.data.R')

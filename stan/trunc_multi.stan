@@ -1,52 +1,48 @@
 data {
   int<lower=0> N;  // # observations
   int T;  // observation windows
-  int D;  // number taxonomic groups
-  int U;  // number of unique units
+  int K;  // number covariates
 
   int<lower=0> y[N];  // value observed
   int t[N];  // window for observation
-  int d[N];  // taxonomic membership
-  int u[N];  // unit membership
+  matrix[N, K] X;
 }
 parameters {
-  vector[D] mu[T]; 
-  vector[D] taxon_series; 
-  //vector<lower=0>[D] sigma_mu;
-  corr_matrix[D] Omega;
-  vector<lower=0>[D] tau;
-
-  vector[U] unit_eff;
-  real<lower=0> sigma_unit;
-
-  real<lower=0> phi;
+  matrix[T, K] mu;  // group-prior
+  vector<lower=0>[K] sigma_mu;  // rw sd
+  
+  cholesky_factor_corr[K] L_Omega;  // chol corr
+  matrix[K, T] z;  // for non-centered mv-normal
+  vector<lower=0>[K] tau;  // scales of cov
+  
+  real<lower=0> phi;  // over disperssion
 }
 transformed parameters {
-  vector[N] location;
-  cov_matrix[D] Sigma;
+  matrix[T, K] beta;  // regression coefficients time X covariate
+  vector[N] location;  // put on right support
+  
+  // non-centered mvn
+  beta = mu + (diag_pre_multiply(tau, L_Omega) * z)';
 
-  for(n in 1:N)
-    location[n] = exp(mu[t[n], d[n]] + unit_eff[u[n]]);
-
-  Sigma = quad_form_diag(Omega, tau);
+  // matrix algebra
+  location = exp(rows_dot_product(beta[t], X));
 }
 model {
-  taxon_series ~ normal(0, 1);
-  //for(i in 1:D) {
-  //  taxon_series[1, i] ~ normal(0, 1);  // initial conditions
-  //  for(j in 2:T) {
-  //    taxon_series[j, i] ~ normal(taxon_series[j - 1, i], sigma_mu[i]);
-  //  }
-  //}
-  mu ~ multi_normal(taxon_series, Sigma);
-  //sigma_mu ~ normal(0, 1);
+
+  // rw prior for all covariates incl intercept
+  for(k in 1:K) {
+    mu[1, k] ~ normal(0, sigma_mu[k]);
+    for(j in 2:T) {
+      mu[j, k] ~ normal(mu[j - 1, k], sigma_mu[k]);
+    }
+  }
+  sigma_mu ~ normal(0, 1);
   
-  Omega ~ lkj_corr(2);
+  to_vector(z) ~ normal(0, 1);
+  L_Omega ~ lkj_corr_cholesky(2);
   tau ~ normal(0, 1);
 
   phi ~ normal(0, 1);
-
-  sigma_unit ~ normal(0, 1);
 
   for(n in 1:N) 
     y[n] ~ neg_binomial_2(location[n], phi) T[1, ];

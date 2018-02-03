@@ -39,6 +39,13 @@ Geologic units in Macrostrat Thickness
 
 \section{Binning geologic units}
 
+Macrostrat units are ordered according to the underlying continuous-time age model CITATION. Geologic units, however, are not instantaneous and have a duration in time. Unfortunately the fossil collection information for each unit does not include within-unit superposition data; this means that the diversity within a geologic unit cannot be tracked trough time. Instead we have to focus on geologic units as the unit of our analysis. Importantly, units containing fossils tend to be shorter than units that do not (unpublished) most likely because the fossils help in correlating that unit in stratigraphic context which gives more precise temporal information; this helps with justifying our choice to assign each geologic unit to a single temporal bin. Specifically, we assign each geologic units to a single temporal bins based on which bin contained their midpoint. 
+
+
+
+Geologic units were binned according to their midpoint age; macrostrat provides a top and bottom age, by averaging those we get the midpoint age.
+
+
 
 
 \section{Modeling of the fossil diversity found in a geologic units}
@@ -56,7 +63,7 @@ The probability mass function for the parameterization of the Negative Binomial 
 \end{equation}
 We chose this parameterization of the Negative Binomial distribution because it has one of the simplest interpretations; the mean \(\mu\) is the expected species diversity observed in a geologic unit, and the amount of overdispersion is equal to the inverse of \(\phi\) scaled by the square of the mean. 
 
-Our hierarchical/multi-level model can be characterized as a type of GLMM where the underlying distribution for our data is a zero-truncated Negative Binomial probability mass function. 
+Our hierarchical/multi-level model can be characterized as a type of GLMM with varying-intercept and varying-slopes and the assumed data distribution is a zero-truncated Negative Binomial distribution.
 
 The effects of the unit covariates are expressed as the regression coefficients \(\beta\) which were allowed to vary over time. The temporal structure of the covariates was modeled as a random walk prior on the matrix of time-level means \(\gamma\); a random-walk prior is a simple way of constraining the estimates for \(\beta_{t}\) given the estimate of \(\beta_{t - 1}\). Additionally, the scale parameters \(\sigma\) for each of the \(K\) coefficients are related to the rate of change over time; a low value of \(\sigma_{k}\) corresponds to little between time variance in the effect of that covariate on diversity while a large value of \(\sigma_{k}\) indicates that the effect of that covariate is inconsistent through time.
 \begin{equation}
