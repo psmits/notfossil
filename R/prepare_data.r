@@ -117,8 +117,7 @@ for(ii in seq(length(out))) {
   standata$T <- max(bpod$bin)
 
   # make X
-  K <- 8  # all plus intercept
-  standata$K <- K
+  K <- 8  # all plus intercept; initial
   # initially just intercept
   X <- matrix(1, nrow = standata$N, ncol = K)
   X[, 2] <- arm::rescale(bpod$max_thick)
@@ -126,6 +125,7 @@ for(ii in seq(length(out))) {
   X[, 4] <- ifelse(bpod$units_above != 0, 1, 0)
   X[, 5] <- ifelse(bpod$units_above != 0, 1, 0)
 
+  # change in space from bottom to top
   topcoord <- bpod[, c('t_plng', 't_plat')]
   botcoord <- bpod[, c('b_plng', 'b_plat')]
   ch <- distGeo(topcoord, botcoord) / 1000  # km units
@@ -133,6 +133,7 @@ for(ii in seq(length(out))) {
 
   toptemp <- ifelse(bpod$t_plat > 20 | bpod$t_plat < -2, 1, 0)
   bottemp <- ifelse(bpod$b_plat > 20 | bpod$b_plat < -2, 1, 0)
+  # initially tropical?
   X[, 7] <- bottemp
   
   X[, 8] <- ifelse(bpod$outcrop == 'subsurface', 1, 0)
@@ -140,6 +141,7 @@ for(ii in seq(length(out))) {
   X <- cbind(X, ilr(litmat))
   K <- ncol(X)
   standata$X <- X
+  standata$K <- K
 
   temp.name <- paste0('../data/data_dump/diversity_data_', shelly[ii], '.data.R')
   with(standata, {stan_rdump(list = alply(names(standata), 1),
@@ -148,43 +150,42 @@ for(ii in seq(length(out))) {
   save(standata, file = temp.name)
 }
 
-# combined hierarchical dataset
-combo <- Reduce(rbind, out)
-
-standata <- list()
-standata$d <- as.numeric(factor(combo$taxon))
-standata$D <- max(standata$d)
-standata$u <- as.numeric(factor(combo$unit_id))
-standata$U <- max(standata$u)
-standata$y <- combo$diversity
-standata$N <- nrow(combo)
-standata$t <- combo$bin
-standata$T <- max(combo$bin)
-
-# make X
-K <- 8  # all plus intercept
-# initially just intercept
-X <- matrix(1, nrow = standata$N, ncol = K)
-X[, 2] <- arm::rescale(combo$max_thick)
-X[, 3] <- arm::rescale(combo$min_thick)
-X[, 4] <- arm::rescale(combo$col_area)
-X[, 5] <- ifelse(combo$units_above != 0, 1, 0)
-X[, 6] <- ifelse(combo$units_above != 0, 1, 0)
-
-topcoord <- combo[, c('t_plng', 't_plat')]
-botcoord <- combo[, c('b_plng', 'b_plat')]
-ch <- distGeo(topcoord, botcoord) / 1000  # km units
-X[, 7] <- arm::rescale(ch)
-
-toptemp <- ifelse(combo$t_plat > 20 | combo$t_plat < -2, 1, 0)
-bottemp <- ifelse(combo$b_plat > 20 | combo$b_plat < -2, 1, 0)
-X[, 8] <- bottemp
-
-standata$X <- X
-
-
-temp.name <- paste0('../data/data_dump/diversity_data_full.data.R')
-with(standata, {stan_rdump(list = alply(names(standata), 1),
-                           file = temp.name)})
-temp.name <- paste0('../data/data_dump/diversity_image_full.rdata')
-save(standata, file = temp.name)
+## combined hierarchical dataset
+#combo <- Reduce(rbind, out)
+#
+#standata <- list()
+#standata$d <- as.numeric(factor(combo$taxon))
+#standata$D <- max(standata$d)
+#standata$u <- as.numeric(factor(combo$unit_id))
+#standata$U <- max(standata$u)
+#standata$y <- combo$diversity
+#standata$N <- nrow(combo)
+#standata$t <- combo$bin
+#standata$T <- max(combo$bin)
+#
+## make X
+#K <- 8  # all plus intercept
+## initially just intercept
+#X <- matrix(1, nrow = standata$N, ncol = K)
+#X[, 2] <- arm::rescale(combo$max_thick)
+#X[, 3] <- arm::rescale(combo$min_thick)
+#X[, 4] <- arm::rescale(combo$col_area)
+#X[, 5] <- ifelse(combo$units_above != 0, 1, 0)
+#X[, 6] <- ifelse(combo$units_above != 0, 1, 0)
+#
+#topcoord <- combo[, c('t_plng', 't_plat')]
+#botcoord <- combo[, c('b_plng', 'b_plat')]
+#ch <- distGeo(topcoord, botcoord) / 1000  # km units
+#X[, 7] <- arm::rescale(ch)
+#
+#toptemp <- ifelse(combo$t_plat > 20 | combo$t_plat < -2, 1, 0)
+#bottemp <- ifelse(combo$b_plat > 20 | combo$b_plat < -2, 1, 0)
+#X[, 8] <- bottemp
+#
+#standata$X <- X
+#
+#temp.name <- paste0('../data/data_dump/diversity_data_full.data.R')
+#with(standata, {stan_rdump(list = alply(names(standata), 1),
+#                           file = temp.name)})
+#temp.name <- paste0('../data/data_dump/diversity_image_full.rdata')
+#save(standata, file = temp.name)
