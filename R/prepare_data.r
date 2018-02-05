@@ -107,7 +107,8 @@ names(out) <- shelly
 for(ii in seq(length(out))) {
   bpod <- out[[ii]]
   
-  litmat <- get.lithology(bpod)
+  #litmat <- full.lithology(bpod)
+  litmat <- strict.lithology(bpod)
   bpod <- bpod[match(rownames(litmat), bpod$unit_id), ]
 
   standata <- list()
@@ -123,7 +124,7 @@ for(ii in seq(length(out))) {
   X[, 2] <- arm::rescale(bpod$max_thick)
   X[, 3] <- arm::rescale(bpod$col_area)
   X[, 4] <- ifelse(bpod$units_above != 0, 1, 0)
-  X[, 5] <- ifelse(bpod$units_above != 0, 1, 0)
+  X[, 5] <- ifelse(bpod$units_below != 0, 1, 0)
 
   # change in space from bottom to top
   topcoord <- bpod[, c('t_plng', 't_plat')]
@@ -149,6 +150,10 @@ for(ii in seq(length(out))) {
   temp.name <- paste0('../data/data_dump/diversity_image_', shelly[ii], '.rdata')
   save(standata, file = temp.name)
 }
+
+
+
+
 
 ## combined hierarchical dataset
 #combo <- Reduce(rbind, out)

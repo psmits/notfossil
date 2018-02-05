@@ -1,4 +1,35 @@
-get.lithology <- function(strat) {
+strict.lithology <- function(strat) {
+  # make into a statement and a percentage
+  lit <- laply(strat$lith, function(x) str_split(x, '\\|'))
+  lit <- llply(lit, str_trim)
+  lit <- llply(lit, function(x) str_split(x, '  ~ ', simplify = TRUE))
+  names(lit) <- strat$unit_id
+  
+  # get rid of bad information
+  bad <- c('igneous', 'volcanic', 'metamorphic', 'chemical',
+           'anhydrite', 'evaporite', 'halite')
+  dec <- llply(lit, function(x) str_split(x[, 1], ' '))
+  torm <- llply(dec, function(y) laply(y, function(x) any(bad %in% x)))
+  lit <- Map(function(x, y) x[!y, , drop = FALSE], x = lit, y = torm)
+  lit <- lit[laply(lit, nrow) > 0]
+
+  # simple break down
+  dec <- llply(lit, function(x) str_split(x[, 1], ' '))
+  dec <- llply(dec, function(y) 
+               laply(y, function(x) 
+                     ifelse(any(x == 'carbonate'), 'carbonate', 
+                            ifelse(any(x == 'siliciclastic'), 'siliciclastic', 'other'))))
+
+  # replace description with single word
+  lit <- Map(function(x, y) {x[, 1] <- y; x}, lit, dec)
+  # aggregate identicals
+  lit <- llply(lit, function(x) 
+               aggregate(as.numeric(x[, 2]) ~ x[, 1], FUN = sum))
+  lit <- lith.matrix(lit)
+  lit
+}
+
+full.lithology <- function(strat) {
   # make into a statement and a percentage
   lit <- laply(strat$lith, function(x) str_split(x, '\\|'))
   lit <- llply(lit, str_trim)
@@ -42,7 +73,7 @@ get.lithology <- function(strat) {
                        'black'))
   dec <- llply(dec, function(y) laply(y, function(x) paste0(x, collapse = ' ')))
   lit <- Map(function(x, y) {x[, 1] <- y; x}, lit, dec)
-  
+
   # get rid of duplicated words because that's stupid
   lit.words <- llply(lit, function(x) str_split(x[, 1], ' '))
   dups <- worddup(lit.words)
@@ -63,10 +94,10 @@ get.lithology <- function(strat) {
   # some descriptions have been lost all together
   extrabad <- llply(lit, function(x) x[, 1] != '')
   lit <- Map(function(x, y) x[y, , drop = FALSE], lit, extrabad)
-  
+
   lit <- llply(lit, function(x) aggregate(as.numeric(x[, 2]) ~ x[, 1], FUN = sum))
   lit <- lit[laply(lit, nrow) > 0]
-  
+
   rock.matrix <- lith.matrix(lit)
   rock.matrix <- t(apply(rock.matrix, 1, function(x) x / sum(x)))
 
@@ -88,7 +119,7 @@ get.lithology <- function(strat) {
   #   similar words (e.g. shale, shaly)
   still.words <- table(Reduce(c, str_split(colnames(short.matrix), ' ')))
   apcount <- apply(short.matrix, 2, function(x) sum(x > 0))
-  solos <- names(which(apcount >= 15))
+  solos <- names(which(apcount >= 10))
   #sm <- apply(short.matrix[, solos], 1, function(x) x > 0)
   sm <- short.matrix[, (colnames(short.matrix) %in% solos)]
   smc <- apply(sm, 2, function(x) sum(x > 0))
@@ -136,7 +167,7 @@ wordrm <- function(dec, words) {
   aa <- dec
   bb <- llply(dec, function(y) llply(y, function(x) x %in% words))
   aa <- Map(function(a, b) Map(function(x, y) x[!y], a, b), 
-                   aa , bb)
+            aa , bb)
   aa
 }
 
@@ -146,6 +177,6 @@ worddup <- function(dec) {
   ndup <- llply(dec, function(y) llply(y, function(x) !duplicated(x)))
   out <- Map(function(a, b) Map(function(x, y) x[y], a, b), dec, ndup)
   out <- llply(out, function(x) 
-                     laply(x, function(y) paste0(y, collapse = ' ')))
+               laply(x, function(y) paste0(y, collapse = ' ')))
   out 
 }
