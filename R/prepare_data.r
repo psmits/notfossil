@@ -112,17 +112,17 @@ for(ii in seq(length(out))) {
   bpod <- bpod[match(rownames(litmat), bpod$unit_id), ]
 
   standata <- list()
+  standata$N <- length(bpod$diversity)
   standata$y <- bpod$diversity
   standata$t <- bpod$bin
-  standata$N <- length(bpod$diversity)
   standata$T <- max(bpod$bin)
 
   # make X
   K <- 8  # all plus intercept; initial
   # initially just intercept
   X <- matrix(1, nrow = standata$N, ncol = K)
-  X[, 2] <- arm::rescale(bpod$max_thick)
-  X[, 3] <- arm::rescale(bpod$col_area)
+  X[, 2] <- arm::rescale(log1p(bpod$max_thick))
+  X[, 3] <- arm::rescale(log1p(bpod$col_area))
   X[, 4] <- ifelse(bpod$units_above != 0, 1, 0)
   X[, 5] <- ifelse(bpod$units_below != 0, 1, 0)
 
@@ -143,6 +143,7 @@ for(ii in seq(length(out))) {
   K <- ncol(X)
   standata$X <- X
   standata$K <- K
+
 
   temp.name <- paste0('../data/data_dump/diversity_data_', shelly[ii], '.data.R')
   with(standata, {stan_rdump(list = alply(names(standata), 1),
