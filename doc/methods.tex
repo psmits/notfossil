@@ -33,7 +33,13 @@ Paleobiology Database
 \section{Geologic unit covariates}
 
 
-Geologic units in Macrostrat Thickness
+As reported in Macrostrat: max thickness (positive, real), contact with units above (binary), contact with units below (binary), distance traveled between bottom and top coordinate in kilometers (positive, real), if unit began in tropical latitudes (binary), if unit is strictly subsurface or not (binary), and the percent composition of carbonate and siliciclastic lithologies (compositional). 
+
+Positive, real valued covariates were log plus one transformed, and then rescaled by subtracting mean and dividing by twice standard deviation. 
+
+Compositional covariates describe the percent lithological composition of the geologic units and are constrained to sum to 1; this constraint creates degrees-of-freedom issues and including these covariates without appropriate transformation creates two or more nonidentifiable parameters. To that end, the composition variables were isometric log-ratio transformed (following CITATION) which reduces the total number of variables to one less than original as composition is defined relaid to a baseline (percent carbonates).
+
+
 
 
 
@@ -44,6 +50,8 @@ Macrostrat units are ordered according to the underlying continuous-time age mod
 
 
 Geologic units were binned according to their midpoint age; macrostrat provides a top and bottom age, by averaging those we get the midpoint age.
+
+
 
 
 
