@@ -38,9 +38,11 @@ transformed parameters {
   location = exp(rows_dot_product(beta[t], X));
 }
 model {
+  // rw prior
   to_vector(mu_raw) ~ normal(0, 1);
   sigma_mu ~ normal(0, 1);
   
+  // effects
   to_vector(z) ~ normal(0, 1);
   L_Omega ~ lkj_corr_cholesky(2);
   tau ~ normal(0, 1);
@@ -50,4 +52,3 @@ model {
   for(n in 1:N) 
     y[n] ~ neg_binomial_2(location[n], phi) T[1, ];
 }
-

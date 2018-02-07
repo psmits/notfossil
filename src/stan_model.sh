@@ -1,20 +1,20 @@
 #!/bin/bash
-FILES=../data/data_dump/diversity_data_Brachiopoda.data.R
-for f in $FILES;
-do
-  for i in `seq 1 4`;
-  do
-    ../stan/trunc_multi sample \
-      adapt delta=0.999 \
-      num_samples=3000 num_warmup=3000 thin=3 \
-      algorithm=hmc engine=nuts max_depth=15 stepsize=0.5 \
-      id=$i \
-      init=0 \
-      data file=$f \
-      output file=../data/mcmc_out/trunc_${i}_Brachiopoda.csv &
-  done
-  wait
-done
+#FILES=../data/data_dump/diversity_data_Brachiopoda.data.R
+#for f in $FILES;
+#do
+#  for i in `seq 1 4`;
+#  do
+#    ../stan/trunc_multi sample \
+#      adapt delta=0.999 \
+#      num_samples=3000 num_warmup=3000 thin=3 \
+#      algorithm=hmc engine=nuts max_depth=15 stepsize=0.5 \
+#      id=$i \
+#      init=0 \
+#      data file=$f \
+#      output file=../data/mcmc_out/trunc_${i}_Brachiopoda.csv &
+#  done
+#  wait
+#done
 FILES=../data/data_dump/diversity_data_Trilobita.data.R
 for f in $FILES;
 do

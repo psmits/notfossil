@@ -33,7 +33,12 @@ Paleobiology Database
 \section{Geologic unit covariates}
 
 
-As reported in Macrostrat: max thickness (positive, real), contact with units above (binary), contact with units below (binary), distance traveled between bottom and top coordinate in kilometers (positive, real), if unit began in tropical latitudes (binary), if unit is strictly subsurface or not (binary), and the percent composition of carbonate and siliciclastic lithologies (compositional). 
+As reported in Macrostrat: max thickness (positive, real), areal extent (postive, real),
+%contact with units above (binary), contact with units below (binary), 
+%distance traveled between bottom and top coordinate in kilometers (positive, real), 
+%if unit began in tropical latitudes (binary), 
+if unit is strictly subsurface or not (binary), and 
+the percent composition of carbonate and siliciclastic lithologies (compositional). 
 
 Positive, real valued covariates were log plus one transformed, and then rescaled by subtracting mean and dividing by twice standard deviation. 
 
@@ -99,3 +104,23 @@ The additional covariance between variation in the regression coefficients \(\be
 The LKJ distribution is a single parameter distribution of correlation matrices; values of the parameer close to 0 correspond to a uniform distribution across all possible correlations, and as values increase this distribution convergent on an identity matrix. This weakly-informative prior nudges our estimates towards a result of no correlation between covariate effects over time though is not sufficiently strong enough to prevent us inferring that kind of result.
 
 Unless otherwise noted, all prior choices reflect our decision to use weakly-informative regularizing priors. Additionally, because all covariates are on approximately unit scale and we do not expect any of our regression coefficients to have magnitude greater than 2, more diffuse priors would serve no purpose and are unnecessary. Additionally, more diffuse priors would not reflect our actual expectations regarding the magnitude of covariate effects. Finally, the regularizing property of priors helps constrain our results such that we do not obtain spurious estimates of the covariate effects. Further statistical and philosophical backing for these prior choices is available HERE HERE AND HERE CITATION.
+
+
+\subsection{Implementing model in Stan}
+
+Non-centered parameterization helps with divergences b/c breaks mean from variance. Cost is additional parameter, but that parameter has good behavior. For the details of what that means and why it works check out Betancourt and Girolami 2013 and the Stan manual.
+
+The above model specifications are modified as follows:
+\begin{equation}
+  \beta_{t} &= \gamma_{t} + z\Sigma
+  \gamma_{t, k} &=
+  \begin{cases}
+    \sigma_{k} * \gamma^{'}_{t, k} & \quad \text{if } t = 1 \\
+    \gamma_{t - 1, k} + \sigma_{k} * \gamma^{'}_{t, k} & \quad \text{if } t = 1 \\
+  \end{cases} \\
+  z ~ \mathcal{N}(0, 1) \\
+  \gamma^{'} ~ \mathcal{N}(0, 1) \\
+  \sigma_{k} &\sim \mathcal{N}^{+}(1). \\ 
+\end{equation}
+
+Adapt delta 0.999, tree depth 15, and stepsize 0.5.

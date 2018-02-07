@@ -40,7 +40,9 @@ single.checks <- function(y, ppc) {
               avgerr = ppc.avgerr, 
               ecdf = ppc.ecdf, 
               root = root.gg,
-              bar = ppc.bars)
+              bar = ppc.bars,
+              dens = ppc.dens,
+              hist = pps.hist)
   out
 }
 
