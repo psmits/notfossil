@@ -91,18 +91,7 @@ for(jj in seq(length(shelly))) {
 names(out) <- shelly
 
 
-# break apart lithology terms
-#strat <- out[[1]]
-#lith <- get.lithology(strat)
-# macrostrat issues
-# pick up here
-# develop covariate information
-
-
-
-
 # get the data in stan format
-# ignore covariates for now
 # each taxon group individually
 for(ii in seq(length(out))) {
   bpod <- out[[ii]]
@@ -126,15 +115,15 @@ for(ii in seq(length(out))) {
   #X[, 4] <- ifelse(bpod$units_above != 0, 1, 0)
   #X[, 5] <- ifelse(bpod$units_below != 0, 1, 0)
 
-  # change in space from bottom to top
-  topcoord <- bpod[, c('t_plng', 't_plat')]
-  botcoord <- bpod[, c('b_plng', 'b_plat')]
-  ch <- distGeo(topcoord, botcoord) / 1000  # km units
+  ## change in space from bottom to top
+  #topcoord <- bpod[, c('t_plng', 't_plat')]
+  #botcoord <- bpod[, c('b_plng', 'b_plat')]
+  #ch <- distGeo(topcoord, botcoord) / 1000  # km units
   #X[, 4] <- arm::rescale(ch)
 
-  toptemp <- ifelse(bpod$t_plat > 20 | bpod$t_plat < -2, 1, 0)
-  bottemp <- ifelse(bpod$b_plat > 20 | bpod$b_plat < -2, 1, 0)
-  # initially tropical?
+  #toptemp <- ifelse(bpod$t_plat > 20 | bpod$t_plat < -2, 1, 0)
+  #bottemp <- ifelse(bpod$b_plat > 20 | bpod$b_plat < -2, 1, 0)
+  ## initially tropical?
   #X[, 5] <- bottemp
   
   X[, 4] <- ifelse(bpod$outcrop == 'subsurface', 1, 0)
