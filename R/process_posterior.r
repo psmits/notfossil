@@ -46,7 +46,7 @@ for(kk in seq(length(shelly))) {
   pat <- paste0('trunc\\_[0-9]\\_', shelly[kk])
   files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
   fit <- read_stan_csv(files)
-  check_all_diagnostics(fit)
+  check_all_diagnostics(fit, max_depth = 15)
   post <- extract(fit, permuted = TRUE)
 
   ppc <- list()

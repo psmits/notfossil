@@ -85,11 +85,11 @@ check_rhat <- function(fit) {
     print('  Rhat above 1.1 indicates that the chains very likely have not mixed')
 }
 
-check_all_diagnostics <- function(fit) {
+check_all_diagnostics <- function(fit, max_depth = 10) {
   check_n_eff(fit)
   check_rhat(fit)
   check_div(fit)
-  check_treedepth(fit)
+  check_treedepth(fit, max_depth = max_depth)
   check_energy(fit)
 }
 

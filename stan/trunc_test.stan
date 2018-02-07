@@ -22,8 +22,6 @@ transformed parameters {
   matrix[T, K] beta;  // regression coefficients time X covariate
   vector[N] location;  // put on right support
   
-  // rw prior for all covariates incl intercept
-  // this is non-centered which adds parameter but can improve sampling
   for(k in 1:K) {
     mu[1, k] = 0 + sigma_mu[k] * mu_raw[1, k];
     for(j in 2:T) {
@@ -38,6 +36,8 @@ transformed parameters {
   location = exp(rows_dot_product(beta[t], X));
 }
 model {
+  // rw prior for all covariates incl intercept
+  // is there someway to make this non-centered?
   to_vector(mu_raw) ~ normal(0, 1);
   sigma_mu ~ normal(0, 1);
   
@@ -50,4 +50,5 @@ model {
   for(n in 1:N) 
     y[n] ~ neg_binomial_2(location[n], phi) T[1, ];
 }
+
 
