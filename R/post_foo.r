@@ -42,7 +42,7 @@ single.checks <- function(y, ppc) {
               root = root.gg,
               bar = ppc.bars,
               dens = ppc.dens,
-              hist = pps.hist)
+              hist = ppc.hist)
   out
 }
 

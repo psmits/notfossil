@@ -7,7 +7,7 @@ do
     ../stan/trunc_multi sample \
       adapt delta=0.99 \
       num_samples=3000 num_warmup=3000 thin=3 \
-      algorithm=hmc engine=nuts max_depth=15 stepsize=0.1 \
+      algorithm=hmc engine=nuts max_depth=15 stepsize=0.01 \
       id=$i \
       init=0 \
       data file=$f \
@@ -23,7 +23,7 @@ do
     ../stan/trunc_multi sample \
       adapt delta=0.99 \
       num_samples=3000 num_warmup=3000 thin=3 \
-      algorithm=hmc engine=nuts max_depth=15 stepsize=0.1 \
+      algorithm=hmc engine=nuts max_depth=15 stepsize=0.01 \
       id=$i \
       init=0 \
       data file=$f \
@@ -39,7 +39,7 @@ do
     ../stan/trunc_multi sample \
       adapt delta=0.99 \
       num_samples=3000 num_warmup=3000 thin=3 \
-      algorithm=hmc engine=nuts max_depth=15 stepsize=0.1 \
+      algorithm=hmc engine=nuts max_depth=15 stepsize=0.01 \
       id=$i \
       init=0 \
       data file=$f \
@@ -55,7 +55,7 @@ do
     ../stan/trunc_multi sample \
       adapt delta=0.99 \
       num_samples=3000 num_warmup=3000 thin=3 \
-      algorithm=hmc engine=nuts max_depth=15 stepsize=0.1 \
+      algorithm=hmc engine=nuts max_depth=15 stepsize=0.01 \
       id=$i \
       init=0 \
       data file=$f \

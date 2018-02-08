@@ -54,7 +54,7 @@ for(kk in seq(length(shelly))) {
     gg <- grab[jj]
     oo <- c()
     for(ii in seq(standata$N)) {
-      oo[ii] <- rztnbinom(1, mu = post$mu[gg, ii], theta = post$phi[gg])
+      oo[ii] <- rztnbinom(1, mu = post$location[gg, ii], theta = post$phi[gg])
     }
     ppc[[jj]] <- oo
   }
