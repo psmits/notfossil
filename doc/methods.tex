@@ -107,6 +107,8 @@ Unless otherwise noted, all prior choices reflect our decision to use weakly-inf
 
 \subsection{Implementing model in Stan}
 
+Hierarchical models can have very complex posterior geometries which make full exploration difficult CITATIONS. The two strategies for overcoming sampling pathologies associated with extremely high-curvature log-posterior surface are non-centered parameterization of hierarchical sampling statements, and adjusting some the key parameters governing Stan's adaptation phase.
+
 Non-centered parameterization helps with divergences b/c breaks mean from variance. Cost is additional parameter, but that parameter has good behavior. For the details of what that means and why it works check out Betancourt and Girolami 2013 and the Stan manual.
 
 The above model specifications are modified as follows:
@@ -122,4 +124,11 @@ The above model specifications are modified as follows:
   \sigma_{k} &\sim \mathcal{N}^{+}(1). \\ 
 \end{equation}
 
-Adapt delta 0.999, tree depth 15, and stepsize 0.5.
+Stan's adaptation phase can be adjusted to help overcome issues resulting from extremely high curvature of the log-posterior. Model fits cleared all general MCMC and HMC-specific diagnostics with the following parameters: adapt delta at 0.99, max HMC tree depth at 15, and initial HMC stepsize of 0.25. 
+
+Four chains running for 3000 warm-up steps, 3000 sampling steps, thinned to every third sample.
+
+
+\section{Model adequacy and posterior predictive checks}
+
+Model adequacy, or the quality of model fit, is evaluated through a series of posterior predictive checks. For each check, the value of a test statistic from the data is compared to a distribution of that test statistic estimated from datasets simulated from the posterior. The checks used here are comparisons of the overall mean unit diversity, the overall standard deviation of unit diversity, the empirical cumulative distribution function, the mean unit diversity for each time step, and the standard deviation of unit diversity for each time step to those test statistics from 1000 posterior predictive datasets. Model adequacy is indicated by our simulated values being approximately equal to the observed values.
