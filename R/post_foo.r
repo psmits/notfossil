@@ -1,3 +1,38 @@
+# posterior predictive simulations
+# lots of internal IO
+postchecks<- function(shelly, nsim, silent = FALSE) {
+  grab <- sample(4000, nsim)
+  
+  load(paste0('../data/data_dump/diversity_image_', shelly, '.rdata'))
+  pat <- paste0('trunc\\_[0-9]\\_', shelly)
+  files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
+  fit <- read_stan_csv(files)
+  if(!silent) {
+    check_all_diagnostics(fit, max_depth = 15)
+  }
+  post <- extract(fit, permuted = TRUE)
+
+  ppc <- list()
+  for(jj in seq(nsim)) {
+    gg <- grab[jj]
+    oo <- c()
+    for(ii in seq(standata$N)) {
+      oo[ii] <- rztnbinom(1, mu = post$location[gg, ii], theta = post$phi[gg])
+    }
+    ppc[[jj]] <- oo
+  }
+
+  # posterior predictive checks
+  checks <- single.checks(standata$y, ppc)
+  checks.time <- group.checks(standata$y, ppc, group = standata$t)
+  out <- list(data = standata, post = post,
+                    checks = checks, checks.time = checks.time)
+  out
+}
+
+
+
+
 q75 <- function(x) quantile(x, 0.75)
 q25 <- function(x) quantile(x, 0.25)
 
