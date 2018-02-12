@@ -4,9 +4,9 @@ for f in $FILES;
 do
   for i in `seq 1 4`;
   do
-    ../stan/trunc_multi sample \
+    ../stan/trunc_test sample \
       adapt delta=0.99 \
-      num_samples=4000 num_warmup=4000 thin=4 \
+      num_samples=5000 num_warmup=5000 thin=5 \
       algorithm=hmc engine=nuts max_depth=15 stepsize=0.001 \
       id=$i \
       init=0 \
@@ -20,9 +20,9 @@ for f in $FILES;
 do
   for i in `seq 1 4`;
   do
-    ../stan/trunc_multi sample \
+    ../stan/trunc_test sample \
       adapt delta=0.99 \
-      num_samples=4000 num_warmup=4000 thin=4 \
+      num_samples=5000 num_warmup=5000 thin=5 \
       algorithm=hmc engine=nuts max_depth=15 stepsize=0.001 \
       id=$i \
       init=0 \
@@ -36,9 +36,9 @@ for f in $FILES;
 do
   for i in `seq 1 4`;
   do
-    ../stan/trunc_multi sample \
+    ../stan/trunc_test sample \
       adapt delta=0.99 \
-      num_samples=4000 num_warmup=4000 thin=4 \
+      num_samples=5000 num_warmup=5000 thin=5 \
       algorithm=hmc engine=nuts max_depth=15 stepsize=0.001 \
       id=$i \
       init=0 \
@@ -52,9 +52,9 @@ for f in $FILES;
 do
   for i in `seq 1 4`;
   do
-    ../stan/trunc_multi sample \
+    ../stan/trunc_test sample \
       adapt delta=0.99 \
-      num_samples=4000 num_warmup=4000 thin=4 \
+      num_samples=5000 num_warmup=5000 thin=5 \
       algorithm=hmc engine=nuts max_depth=15 stepsize=0.001 \
       id=$i \
       init=0 \

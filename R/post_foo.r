@@ -1,8 +1,22 @@
 # posterior predictive simulations
+postpred <- function(post, sim) {
+  N <- ncol(post$location)
+  grab <- sample(4000, nsim)
+  ppc <- list()
+  for(jj in seq(nsim)) {
+    gg <- grab[jj]
+    oo <- c()
+    for(ii in seq(N)) {
+      oo[ii] <- rztnbinom(1, mu = post$location[gg, ii], theta = post$phi[gg])
+    }
+    ppc[[jj]] <- oo
+  }
+  ppc
+}
+
+# posterior predictive checks
 # lots of internal IO
 postchecks<- function(shelly, nsim, silent = FALSE) {
-  grab <- sample(4000, nsim)
-  
   load(paste0('../data/data_dump/diversity_image_', shelly, '.rdata'))
   pat <- paste0('trunc\\_[0-9]\\_', shelly)
   files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
@@ -12,15 +26,7 @@ postchecks<- function(shelly, nsim, silent = FALSE) {
   }
   post <- extract(fit, permuted = TRUE)
 
-  ppc <- list()
-  for(jj in seq(nsim)) {
-    gg <- grab[jj]
-    oo <- c()
-    for(ii in seq(standata$N)) {
-      oo[ii] <- rztnbinom(1, mu = post$location[gg, ii], theta = post$phi[gg])
-    }
-    ppc[[jj]] <- oo
-  }
+  ppc <- postpred(post, nsim)
 
   # posterior predictive checks
   checks <- single.checks(standata$y, ppc)
@@ -104,4 +110,67 @@ group.checks <- function(y, ppc, group) {
               avgerr.group = ppc.avgerr.group
               )
   out
+}
+
+
+# plot of diversity through time compared to mean estimated from posterior
+# lots of io but puts out a plot
+divtime.plot <- function(shelly, brks) {
+  midpoint <- apply(brks, 1, mean)
+  # plot up unit div through time vs our estimate of average
+  cc <- list()
+  for(ii in seq(length(shelly))) {
+    load(paste0('../data/data_dump/diversity_image_', shelly[ii], '.rdata'))
+    cc[[ii]] <- data.frame(x = standata$t, y = standata$y, g = shelly[ii])
+  }
+  cc <- Reduce(rbind, cc)
+  # put in terms of Mya
+  cc$x <- mapvalues(cc$x, sort(unique(cc$x)), midpoint)
+
+  cg <- ggplot(cc, aes(x = x, y = y)) 
+  cg <- cg + geom_count()
+  cg <- cg + facet_grid( ~ g)
+
+
+  out <- list()
+  for(ii in seq(length(shelly))) {
+    load(paste0('../data/data_dump/diversity_image_', shelly[ii], '.rdata'))
+    pat <- paste0('trunc\\_[0-9]\\_', shelly[ii])
+    files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
+    fit <- read_stan_csv(files)
+    post <- extract(fit, permuted = TRUE)
+    pp <- postpred(post, nsim)
+
+    by.time <- llply(pp, function(x) split(x, standata$t))
+    mean.time <- llply(by.time, function(x) laply(x, mean))
+
+    mean.time <- llply(mean.time, function(x) {
+                         x <- cbind(x, seq(10))
+                         x})
+
+    mean.time <- Reduce(rbind, 
+                        Map(function(x, y) 
+                            cbind(x, y), mean.time, seq(nsim)))
+    mean.time <- data.frame(mean.time, g = shelly[ii])
+    names(mean.time) <- c('est', 'time', 'sim', 'g')
+    out[[ii]] <- mean.time
+  }
+  mean.time <- Reduce(rbind, out)
+
+
+  by.time <- group_by(mean.time, time, g)
+  time.mean <- summarise(by.time, mean = mean(est), 
+                         low = quantile(est, 0.1), 
+                         high = quantile(est, 0.9))
+
+  # put in terms of Mya
+  time.mean$time <- mapvalues(time.mean$time, 
+                              sort(unique(time.mean$time)), 
+                              midpoint)
+  cg <- cg + geom_pointrange(data = time.mean, 
+                             mapping = aes(x = time, y = mean, ymin = low, ymax = high),
+                             colour = 'blue')
+  cg <- cg + scale_x_reverse()
+  cg <- cg + labs(x = 'Time (Mya)', y = 'geological unit diversity')
+  cg
 }

@@ -8,47 +8,28 @@ data {
   matrix[N, K] X;
 }
 parameters {
-  matrix[T, K] mu_raw;  // group-prior
-  vector<lower=0>[K] sigma_mu;  // rw sd
-  
-  cholesky_factor_corr[K] L_Omega;  // chol corr
-  matrix[K, T] z;  // for non-centered mv-normal
-  vector<lower=0>[K] tau;  // scales of cov
+  corr_matrix[K] Omega;
+  vector<lower=0>[K] tau; 
+  vector[K] beta[T];
+  vector[K] mu;
   
   real<lower=0> phi;  // over disperssion
 }
 transformed parameters {
-  matrix[T, K] mu;  // group-prior
-  matrix[T, K] beta;  // regression coefficients time X covariate
-  vector[N] location;  // put on right support
-  
-  for(k in 1:K) {
-    mu[1, k] = 0 + sigma_mu[k] * mu_raw[1, k];
-    for(j in 2:T) {
-      mu[j, k] = mu[j - 1, k] + sigma_mu[k] * mu_raw[1, k];
-    }
-  }
-  
-  // non-centered mvn
-  beta = mu + (diag_pre_multiply(tau, L_Omega) * z)';
-
+  vector<lower=0>[N] location;
   // matrix algebra
-  location = exp(rows_dot_product(beta[t], X));
+  for(i in 1:N)
+    location[i] = exp(X[t[i]] * beta[t[i]]);
 }
 model {
-  // rw prior for all covariates incl intercept
-  // is there someway to make this non-centered?
-  to_vector(mu_raw) ~ normal(0, 1);
-  sigma_mu ~ normal(0, 1);
-  
-  to_vector(z) ~ normal(0, 1);
-  L_Omega ~ lkj_corr_cholesky(2);
+  mu ~ normal(0, 1);
+  Omega ~ lkj_corr(2);
   tau ~ normal(0, 1);
+
+  beta ~ multi_normal(mu, quad_form_diag(Omega, tau));
 
   phi ~ normal(0, 1);
 
   for(n in 1:N) 
     y[n] ~ neg_binomial_2(location[n], phi) T[1, ];
 }
-
-
