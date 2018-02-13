@@ -50,54 +50,74 @@ brks <- brks[rev(seq(nrow(brks))), ]
 # posterior predictive /checks
 # lots of internal IO
 check.result <- Map(function(x) postchecks(x, nsim), shelly)
+chckm <- bayesplot_grid(check.result$Brachiopoda$checks$mean,
+                        check.result$Trilobita$checks$mean,
+                        check.result$Bivalvia$checks$mean,
+                        check.result$Gastropoda$checks$mean,
+                        grid_args = list(ncol = 2),
+                        titles = c('Brac mean', 'Tri mean',
+                                   'Biv mean', 'Gas mean'))
+ggsave(plot = chckm, filename = '../doc/figure/ppc_mean.png',
+       width = 10, height = 8)
+chcks <- bayesplot_grid(check.result$Brachiopoda$checks$sd,
+                        check.result$Trilobita$checks$sd,
+                        check.result$Bivalvia$checks$sd,
+                        check.result$Gastropoda$checks$sd,
+                        grid_args = list(ncol = 2),
+                        titles = c('Brac sd', 'Tri sd',
+                                   'Biv sd', 'Gas sd'))
+ggsave(plot = chcks, filename = '../doc/figure/ppc_sd.png',
+       width = 10, height = 8)
+chckroot <- bayesplot_grid(check.result$Brachiopoda$checks$root,
+                        check.result$Trilobita$checks$root,
+                        check.result$Bivalvia$checks$root,
+                        check.result$Gastropoda$checks$root,
+                        grid_args = list(ncol = 2),
+                        titles = c('Brac root', 'Tri root',
+                                   'Biv root', 'Gas root'))
+ggsave(plot = chckroot, filename = '../doc/figure/ppc_root.png',
+       width = 10, height = 8)
+chckerr <- bayesplot_grid(check.result$Brachiopoda$checks$err,
+                        check.result$Trilobita$checks$err,
+                        check.result$Bivalvia$checks$err,
+                        check.result$Gastropoda$checks$err,
+                        grid_args = list(ncol = 2),
+                        titles = c('Brac err', 'Tri err',
+                                   'Biv err', 'Gas err'))
+ggsave(plot = chckerr, filename = '../doc/figure/ppc_err.png',
+       width = 10, height = 8)
+chckecdf <- bayesplot_grid(check.result$Brachiopoda$checks$ecdf,
+                        check.result$Trilobita$checks$ecdf,
+                        check.result$Bivalvia$checks$ecdf,
+                        check.result$Gastropoda$checks$ecdf,
+                        grid_args = list(ncol = 2),
+                        titles = c('Brac ecdf', 'Tri ecdf',
+                                   'Biv ecdf', 'Gas ecdf'))
+ggsave(plot = chckecdf, filename = '../doc/figure/ppc_ecdf.png',
+       width = 10, height = 8)
+chckdens <- bayesplot_grid(check.result$Brachiopoda$checks$dens,
+                        check.result$Trilobita$checks$dens,
+                        check.result$Bivalvia$checks$dens,
+                        check.result$Gastropoda$checks$dens,
+                        grid_args = list(ncol = 2),
+                        titles = c('Brac dens', 'Tri dens',
+                                   'Biv dens', 'Gas dens'))
+ggsave(plot = chckdens, filename = '../doc/figure/ppc_dens.png',
+       width = 10, height = 8)
+
+pg <- list()
+for(ii in seq(length(shelly))) 
+  pg[[ii]] <- check.result[[ii]]$checks.time$mean.group
+
+
 
 # unit div through time vs estimated div from model
 dg <- divtime.plot(shelly, brks)
+ggsave(plot = dg, filename = '../doc/figure/unitdiv_time.png',
+       width = 10, height = 8)
 
-# covariate effects
-out <- list()
-for(ii in seq(length(shelly))) {
-  load(paste0('../data/data_dump/diversity_image_', shelly[ii], '.rdata'))
-  pat <- paste0('trunc\\_[0-9]\\_', shelly[ii])
-  files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
-  fit <- read_stan_csv(files)
-  post <- extract(fit, permuted = TRUE)
-
-  # covariates are : 
-  #   intercept
-  #   (max) thickness
-  #   areal extent
-  #   subsurface
-  #   composition siliciclastic (carbonate is base)
-  betamean <- apply(post$beta, 2:3, mean)
-  betalow <- apply(post$beta, 2:3, function(x) quantile(x, 0.1))
-  betahigh <- apply(post$beta, 2:3, function(x) quantile(x, 0.9))
-
-  betaest <- list(betamean, betalow, betahigh)
-  betaest <- llply(betaest, function(x) {
-                     colnames(x) <- c('intercept', 
-                                      'thickness', 
-                                      'area', 
-                                      'subsurface', 
-                                      'siliciclastic')
-                     x})
-
-  betaest <- llply(betaest, melt)
-  betaest <- data.frame(betaest[[1]], 
-                        low = betaest[[2]]$value, 
-                        high = betaest[[3]]$value,
-                        g = shelly[ii])
-  names(betaest)[1:2] <- c('time', 'covariate')
-
-  midpoint <- apply(brks, 1, mean)
-  betaest$time <- mapvalues(betaest$time, sort(unique(betaest$time)), midpoint)
-  out[[ii]] <- betaest
-}
-betaest <- Reduce(rbind, out)
-
-
-mg <- ggplot(betaest, aes(x = time, y = value, ymin = low, ymax = high))
-mg <- mg + geom_pointrange()
-mg <- mg + facet_grid(g ~ covariate)
-mg <- mg + scale_x_reverse()
-mg <- mg + labs(x = 'Time (Mya)', y = 'estimated regression coefficient')
+# covariate effects through time
+covname <- c('intercept', 'thickness', 'area', 'subsurface', 'siliciclastic')
+cg <- covtime.plot(shelly, brks, covname = covname)
+ggsave(plot = cg, filename = '../doc/figure/cov_time.png',
+       width = 10, height = 8)

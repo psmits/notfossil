@@ -18,7 +18,7 @@ postpred <- function(post, sim) {
 # lots of internal IO
 postchecks<- function(shelly, nsim, silent = FALSE) {
   load(paste0('../data/data_dump/diversity_image_', shelly, '.rdata'))
-  pat <- paste0('trunc\\_[0-9]\\_', shelly)
+  pat <- paste0('trunc\\_rw\\_[0-9]\\_', shelly)
   files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
   fit <- read_stan_csv(files)
   if(!silent) {
@@ -128,14 +128,14 @@ divtime.plot <- function(shelly, brks) {
   cc$x <- mapvalues(cc$x, sort(unique(cc$x)), midpoint)
 
   cg <- ggplot(cc, aes(x = x, y = y)) 
-  cg <- cg + geom_count()
-  cg <- cg + facet_grid( ~ g)
-
+  cg <- cg + geom_count(alpha = 0.5, 
+                        position = position_jitter(width = 0.1, height = 0))
+  cg <- cg + facet_grid(g ~ .)
 
   out <- list()
   for(ii in seq(length(shelly))) {
     load(paste0('../data/data_dump/diversity_image_', shelly[ii], '.rdata'))
-    pat <- paste0('trunc\\_[0-9]\\_', shelly[ii])
+    pat <- paste0('trunc\\_rw\\_[0-9]\\_', shelly[ii])
     files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
     fit <- read_stan_csv(files)
     post <- extract(fit, permuted = TRUE)
@@ -169,8 +169,73 @@ divtime.plot <- function(shelly, brks) {
                               midpoint)
   cg <- cg + geom_pointrange(data = time.mean, 
                              mapping = aes(x = time, y = mean, ymin = low, ymax = high),
-                             colour = 'blue')
+                             colour = 'blue', size = 1.5, fatten = 2, alpha = 0.75)
   cg <- cg + scale_x_reverse()
   cg <- cg + labs(x = 'Time (Mya)', y = 'geological unit diversity')
   cg
+}
+
+
+
+# covariates through time
+covtime.plot <- function(shelly, brks, covname) {
+  # covariate effects
+  out <- out2 <- list()
+  for(ii in seq(length(shelly))) {
+    load(paste0('../data/data_dump/diversity_image_', shelly[ii], '.rdata'))
+    pat <- paste0('trunc\\_rw\\_[0-9]\\_', shelly[ii])
+    files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
+    fit <- read_stan_csv(files)
+    post <- extract(fit, permuted = TRUE)
+
+    # covariates are : 
+    #   intercept
+    #   (max) thickness
+    #   areal extent
+    #   subsurface
+    #   composition siliciclastic (carbonate is base)
+
+    # violins
+    mm <- melt(post$beta)
+    mm[, 3] <- mapvalues(mm[, 3], unique(mm[, 3]), covname)
+    names(mm) <- c('iter', 'time', 'covariate', 'value')
+    mm$g <- shelly[ii]
+
+
+    # point range
+    betamean <- apply(post$beta, 2:3, mean)
+    betalow <- apply(post$beta, 2:3, function(x) quantile(x, 0.1))
+    betahigh <- apply(post$beta, 2:3, function(x) quantile(x, 0.9))
+    betaest <- list(betamean, betalow, betahigh)
+    betaest <- llply(betaest, function(x) {
+                       colnames(x) <- covname
+                       x})
+
+    betaest <- llply(betaest, melt)
+    betaest <- data.frame(betaest[[1]], 
+                          low = betaest[[2]]$value, 
+                          high = betaest[[3]]$value,
+                          g = shelly[ii])
+    names(betaest)[1:2] <- c('time', 'covariate')
+
+    midpoint <- apply(brks, 1, mean)
+    betaest$time <- mapvalues(betaest$time, sort(unique(betaest$time)), midpoint)
+    mm$time <- mapvalues(mm$time, sort(unique(mm$time)), midpoint)
+
+    out[[ii]] <- betaest
+    out2[[ii]] <- mm
+  }
+  betaest <- Reduce(rbind, out)
+  betaviol <- Reduce(rbind, out2)
+  betaviol$covariate <- factor(betaviol$covariate, levels = levels(betaest$covariate))
+
+  mg <- ggplot(betaest, aes(x = time, y = value))
+  mg <- mg + geom_violin(data = betaviol, 
+                         mapping = aes(x = time, y = value, group = time), 
+                         alpha = 0.5)
+  mg <- mg + geom_pointrange(mapping = aes(ymin = low, ymax = high), fatten = 2)
+  mg <- mg + facet_grid(g ~ covariate)
+  mg <- mg + scale_x_reverse()
+  mg <- mg + labs(x = 'Time (Mya)', y = 'estimated regression coefficient')
+  mg
 }

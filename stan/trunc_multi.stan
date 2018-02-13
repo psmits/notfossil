@@ -39,15 +39,15 @@ transformed parameters {
 }
 model {
   // rw prior
-  to_vector(mu_raw) ~ normal(0, 1);
-  sigma_mu ~ normal(0, 1);
+  to_vector(mu_raw) ~ normal(0, 2);
+  sigma_mu ~ normal(0, 2);
   
   // effects
   to_vector(z) ~ normal(0, 1);
   L_Omega ~ lkj_corr_cholesky(2);
-  tau ~ normal(0, 1);
+  tau ~ normal(0, 2);
 
-  phi ~ normal(0, 1);
+  phi ~ normal(0, 0.5);
 
   for(n in 1:N) 
     y[n] ~ neg_binomial_2(location[n], phi) T[1, ];

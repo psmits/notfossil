@@ -90,6 +90,15 @@ for(jj in seq(length(shelly))) {
 }
 names(out) <- shelly
 
+suspicious <- unique(c(arrange(out$Brachiopoda, desc(diversity))[1:10, ]$unit_id,
+                       arrange(out$Trilobita, desc(diversity))[1:10, ]$unit_id,
+                       arrange(out$Bivalvia, desc(diversity))[1:10, ]$unit_id,
+                       arrange(out$Gastropoda, desc(diversity))[1:10, ]$unit_id))
+checktime <- strat[strat$unit_id %in% suspicious, ]
+checktime <- dplyr::select(checktime, 
+                           unit_id, col_area, unit_name, t_age, b_age, 
+                           max_thick, pbdb_collections, pbdb_occurrences)
+
 
 # get the data in stan format
 # each taxon group individually
