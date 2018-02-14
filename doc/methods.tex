@@ -124,10 +124,12 @@ The above model specifications are modified as follows:
   \sigma_{k} &\sim \mathcal{N}^{+}(1). \\ 
 \end{equation}
 
-Stan's adaptation phase can be adjusted to help overcome issues resulting from extremely high curvature of the log-posterior. Model fits cleared all general MCMC and HMC-specific diagnostics with the following parameters: adapt delta at 0.99, max HMC tree depth at 15, and initial HMC stepsize of 0.25. 
 
-Four chains running for 3000 warm-up steps, 3000 sampling steps, thinned to every third sample.
+Posterior sampling was done via four Markov chains running for 5000 warm-up steps, 5000 sampling steps, thinned to every fifth sample.
 
+We used five different diagnostic criteria to determine if our chains were well mixed and if our posterior estimates were based on unbiased samples: the scale reduction factor \(\hat{R}\) (target value of \(<\)1.1), effective number of samples (eff; target value of eff/steps\(<\)0.0001), if any samples saturated the specified maximum trajectory length for avoiding infinite loops (treedepth; target value of 0 samples), presence of divergent samples which indicate pathological sampling in some neighborhoods of the log-posterior (divergences; target value of 0 samples), and the energy Bayesian Fraction of Missing Information (E-BFMI; target value \(>\)0.2). For a further explanation of these diagnostic criteria
+
+Stan's adaptation phase can be adjusted to help overcome issues resulting from extremely high curvature of the log-posterior. Model fits cleared all general MCMC and HMC-specific diagnostics with the following parameters: adapt delta at 0.999, max HMC tree depth at 15, and initial HMC stepsize of 0.001. 
 
 \section{Model adequacy and posterior predictive checks}
 

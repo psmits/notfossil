@@ -18,7 +18,7 @@ postpred <- function(post, sim) {
 # lots of internal IO
 postchecks<- function(shelly, nsim, silent = FALSE) {
   load(paste0('../data/data_dump/diversity_image_', shelly, '.rdata'))
-  pat <- paste0('trunc\\_rw\\_[0-9]\\_', shelly)
+  pat <- paste0('trunc\\_[0-9]\\_', shelly)
   files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
   fit <- read_stan_csv(files)
   if(!silent) {
@@ -135,7 +135,7 @@ divtime.plot <- function(shelly, brks) {
   out <- list()
   for(ii in seq(length(shelly))) {
     load(paste0('../data/data_dump/diversity_image_', shelly[ii], '.rdata'))
-    pat <- paste0('trunc\\_rw\\_[0-9]\\_', shelly[ii])
+    pat <- paste0('trunc\\_[0-9]\\_', shelly[ii])
     files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
     fit <- read_stan_csv(files)
     post <- extract(fit, permuted = TRUE)
@@ -183,7 +183,7 @@ covtime.plot <- function(shelly, brks, covname) {
   out <- out2 <- list()
   for(ii in seq(length(shelly))) {
     load(paste0('../data/data_dump/diversity_image_', shelly[ii], '.rdata'))
-    pat <- paste0('trunc\\_rw\\_[0-9]\\_', shelly[ii])
+    pat <- paste0('trunc\\_[0-9]\\_', shelly[ii])
     files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
     fit <- read_stan_csv(files)
     post <- extract(fit, permuted = TRUE)

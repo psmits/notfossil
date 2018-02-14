@@ -8,28 +8,50 @@ data {
   matrix[N, K] X;
 }
 parameters {
-  corr_matrix[K] Omega;
-  vector<lower=0>[K] tau; 
-  vector[K] beta[T];
-  vector[K] mu;
+  matrix[T, K] mu_raw;  // group-prior
+  //vector<lower=0>[K] sigma_mu;  // rw sd
+  vector<lower=0>[K] sigma_mu;  // rw sd
+  
+  cholesky_factor_corr[K] L_Omega;  // chol corr
+  matrix[K, T] z;  // for non-centered mv-normal
+  vector<lower=0>[K] tau;  // scales of cov
   
   real<lower=0> phi;  // over disperssion
 }
 transformed parameters {
-  vector<lower=0>[N] location;
+  matrix[T, K] mu;  // group-prior
+  matrix[T, K] beta;  // regression coefficients time X covariate
+  vector[N] location;  // put on right support
+  
+  // rw prior for all covariates incl intercept
+  // this is non-centered which adds parameter but can improve sampling
+  for(k in 1:K) {
+    //mu[1, k] = 0 + sigma_mu[k] * mu_raw[1, k];
+    mu[1, k] = mu_raw[1, k];
+    for(j in 2:T) {
+      mu[j, k] = mu[j - 1, k] + sigma_mu[k] * mu_raw[1, k];
+    }
+  }
+  
+  // non-centered mvn
+  beta = mu + (diag_pre_multiply(tau, L_Omega) * z)';
+
   // matrix algebra
-  for(i in 1:N)
-    location[i] = exp(X[t[i]] * beta[t[i]]);
+  location = exp(rows_dot_product(beta[t], X));
 }
 model {
-  mu ~ normal(0, 1);
-  Omega ~ lkj_corr(2);
-  tau ~ normal(0, 1);
+  // rw prior
+  to_vector(mu_raw) ~ normal(0, 2);
+  sigma_mu ~ normal(0, 2);
+  
+  // effects
+  to_vector(z) ~ normal(0, 1);
+  L_Omega ~ lkj_corr_cholesky(2);
+  tau ~ normal(0, 2);
 
-  beta ~ multi_normal(mu, quad_form_diag(Omega, tau));
-
-  phi ~ normal(0, 1);
+  phi ~ normal(0, 0.5);
 
   for(n in 1:N) 
     y[n] ~ neg_binomial_2(location[n], phi) T[1, ];
 }
+

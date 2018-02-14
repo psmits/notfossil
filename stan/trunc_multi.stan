@@ -9,7 +9,8 @@ data {
 }
 parameters {
   matrix[T, K] mu_raw;  // group-prior
-  vector<lower=0>[K] sigma_mu;  // rw sd
+  //vector<lower=0>[K] sigma_mu;  // rw sd
+  vector<lower=0>[K - 1] sigma_mu;  // rw sd
   
   cholesky_factor_corr[K] L_Omega;  // chol corr
   matrix[K, T] z;  // for non-centered mv-normal
@@ -25,9 +26,11 @@ transformed parameters {
   // rw prior for all covariates incl intercept
   // this is non-centered which adds parameter but can improve sampling
   for(k in 1:K) {
-    mu[1, k] = 0 + sigma_mu[k] * mu_raw[1, k];
+    //mu[1, k] = 0 + sigma_mu[k] * mu_raw[1, k];
+    mu[1, k] = mu_raw[1, k];
     for(j in 2:T) {
-      mu[j, k] = mu[j - 1, k] + sigma_mu[k] * mu_raw[1, k];
+      //mu[j, k] = mu[j - 1, k] + sigma_mu[k] * mu_raw[1, k];
+      mu[j, k] = mu[j - 1, k] + sigma_mu[k - 1] * mu_raw[1, k];
     }
   }
   
