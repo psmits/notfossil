@@ -18,7 +18,7 @@ postpred <- function(post, sim) {
 # lots of internal IO
 postchecks<- function(shelly, nsim, silent = FALSE) {
   load(paste0('../data/data_dump/diversity_image_', shelly, '.rdata'))
-  pat <- paste0('trunc\\_[0-9]\\_', shelly)
+  pat <- paste0('trunc\\_test\\_[0-9]\\_', shelly)
   files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
   fit <- read_stan_csv(files)
   if(!silent) {

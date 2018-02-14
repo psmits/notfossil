@@ -41,13 +41,13 @@ transformed parameters {
 }
 model {
   // rw prior
-  to_vector(mu_raw) ~ normal(0, 2);
-  sigma_mu ~ normal(0, 2);
+  to_vector(mu_raw) ~ normal(0, 1);
+  sigma_mu ~ normal(0, 1);
   
   // effects
   to_vector(z) ~ normal(0, 1);
   L_Omega ~ lkj_corr_cholesky(2);
-  tau ~ normal(0, 2);
+  tau ~ normal(0, 1);
 
   phi ~ normal(0, 0.5);
 

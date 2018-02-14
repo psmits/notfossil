@@ -40,6 +40,19 @@ shelly <- c('Brachiopoda', 'Trilobita', 'Bivalvia', 'Gastropoda')
 #shelly <- c('Brachiopoda', 'Arthropoda', 'Mollusca')
 nsim <- 1000
 
+
+partition <- partition_div(fit)
+div_params <- partition[[1]]
+nondiv_params <- partition[[2]]
+png('../doc/figure/div_transitions.png', width = 480, height = 480)
+plot(nondiv_params$'mu[1,3]', log(nondiv_params$'sigma_mu[3]'),
+     col='red', pch=16, cex=0.8, xlab="mu[1,3]", ylab="log(sigma_mu[3])")
+points(div_params$'mu[1,3]', log(div_params$'sigma_mu[3]'),
+       col='green', pch=16, cex=0.8)
+dev.off()
+
+
+
 # time bins
 timerange <- abs(diff(ord))
 brks <- timerange / constant

@@ -23,14 +23,12 @@ transformed parameters {
   matrix[T, K] beta;  // regression coefficients time X covariate
   vector[N] location;  // put on right support
   
-  // rw prior for all covariates incl intercept
+  // rw prior bc time series
   // this is non-centered which adds parameter but can improve sampling
   for(k in 1:K) {
-    //mu[1, k] = 0 + sigma_mu[k] * mu_raw[1, k];
     mu[1, k] = mu_raw[1, k];
     for(j in 2:T) {
-      //mu[j, k] = mu[j - 1, k] + sigma_mu[k] * mu_raw[1, k];
-      mu[j, k] = mu[j - 1, k] + sigma_mu[k - 1] * mu_raw[1, k];
+      mu[j, k] = mu[j - 1, k] + sigma_mu[k] * mu_raw[1, k];
     }
   }
   
@@ -42,13 +40,13 @@ transformed parameters {
 }
 model {
   // rw prior
-  to_vector(mu_raw) ~ normal(0, 2);
-  sigma_mu ~ normal(0, 2);
+  to_vector(mu_raw) ~ normal(0, 1);
+  sigma_mu ~ normal(0, 1);
   
   // effects
   to_vector(z) ~ normal(0, 1);
   L_Omega ~ lkj_corr_cholesky(2);
-  tau ~ normal(0, 2);
+  tau ~ normal(0, 1);
 
   phi ~ normal(0, 0.5);
 
