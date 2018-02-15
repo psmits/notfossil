@@ -29,8 +29,8 @@ postchecks<- function(shelly, nsim, silent = FALSE) {
   ppc <- postpred(post, nsim)
 
   # posterior predictive checks
-  checks <- single.checks(standata$y, ppc)
-  checks.time <- group.checks(standata$y, ppc, group = standata$t)
+  checks <- checks.single(standata$y, ppc)
+  checks.time <- checks.goup(standata$y, ppc, group = standata$t)
   out <- list(data = standata, post = post,
                     checks = checks, checks.time = checks.time)
   out
@@ -43,7 +43,7 @@ q75 <- function(x) quantile(x, 0.75)
 q25 <- function(x) quantile(x, 0.25)
 
 # internal checks
-single.checks <- function(y, ppc) {
+checks.single <- function(y, ppc) {
   ppc <- Reduce(rbind, ppc)
 
   # density
@@ -88,7 +88,7 @@ single.checks <- function(y, ppc) {
 }
 
 # internal checks
-group.checks <- function(y, ppc, group) {
+checks.group <- function(y, ppc, group) {
   ppc <- Reduce(rbind, ppc)
 
   # by group
@@ -99,6 +99,8 @@ group.checks <- function(y, ppc, group) {
   ppc.q25.group <- ppc_stat_grouped(y, ppc, group = group, stat = 'q25')
   ppc.q75.group <- ppc_stat_grouped(y, ppc, group = group, stat = 'q75')
   ppc.avgerr.group <- ppc_scatter_avg_grouped(y, ppc, group = group)
+  ppc.violin.group <- ppc_violin_grouped(y, ppc, group = group, 
+                                         y_draw = 'points')
 
   # all the plots
   out <- list(bar.group = ppc.bars.group,
@@ -107,7 +109,8 @@ group.checks <- function(y, ppc, group) {
               max.group = ppc.max.group,
               q25.group = ppc.q25.group,
               q75.group = ppc.q75.group,
-              avgerr.group = ppc.avgerr.group
+              avgerr.group = ppc.avgerr.group,
+              violin.group = ppc.violin.group
               )
   out
 }
@@ -115,7 +118,7 @@ group.checks <- function(y, ppc, group) {
 
 # plot of diversity through time compared to mean estimated from posterior
 # lots of io but puts out a plot
-divtime.plot <- function(shelly, brks) {
+plot_divtime <- function(shelly, brks) {
   midpoint <- apply(brks, 1, mean)
   # plot up unit div through time vs our estimate of average
   cc <- list()
@@ -178,7 +181,7 @@ divtime.plot <- function(shelly, brks) {
 
 
 # covariates through time
-covtime.plot <- function(shelly, brks, covname) {
+plot_covtime <- function(shelly, brks, covname) {
   # covariate effects
   out <- out2 <- list()
   for(ii in seq(length(shelly))) {

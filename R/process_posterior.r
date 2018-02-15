@@ -40,6 +40,14 @@ shelly <- c('Brachiopoda', 'Trilobita', 'Bivalvia', 'Gastropoda')
 #shelly <- c('Brachiopoda', 'Arthropoda', 'Mollusca')
 nsim <- 1000
 
+# time bins
+timerange <- abs(diff(ord))
+brks <- timerange / constant
+brks <- seq(from = ord[2], to = ord[1], by = brks)
+brks <- cbind(brks[-1], brks[-length(brks)])
+brks <- brks[rev(seq(nrow(brks))), ]
+
+
 
 #partition <- partition_div(fit)
 #div_params <- partition[[1]]
@@ -52,16 +60,8 @@ nsim <- 1000
 #dev.off()
 
 
-
-# time bins
-timerange <- abs(diff(ord))
-brks <- timerange / constant
-brks <- seq(from = ord[2], to = ord[1], by = brks)
-brks <- cbind(brks[-1], brks[-length(brks)])
-brks <- brks[rev(seq(nrow(brks))), ]
-
 # posterior predictive /checks
-# lots of internal IO
+# series of plots for the ones i really want to look at
 check.result <- Map(function(x) postchecks(x, nsim), shelly)
 chckm <- bayesplot_grid(check.result$Brachiopoda$checks$mean,
                         check.result$Trilobita$checks$mean,
@@ -82,55 +82,78 @@ chcks <- bayesplot_grid(check.result$Brachiopoda$checks$sd,
 ggsave(plot = chcks, filename = '../doc/figure/ppc_sd.png',
        width = 10, height = 8)
 chckroot <- bayesplot_grid(check.result$Brachiopoda$checks$root,
-                        check.result$Trilobita$checks$root,
-                        check.result$Bivalvia$checks$root,
-                        check.result$Gastropoda$checks$root,
-                        grid_args = list(ncol = 2),
-                        titles = c('Brac root', 'Tri root',
-                                   'Biv root', 'Gas root'))
+                           check.result$Trilobita$checks$root,
+                           check.result$Bivalvia$checks$root,
+                           check.result$Gastropoda$checks$root,
+                           grid_args = list(ncol = 2),
+                           titles = c('Brac root', 'Tri root',
+                                      'Biv root', 'Gas root'))
 ggsave(plot = chckroot, filename = '../doc/figure/ppc_root.png',
        width = 10, height = 8)
+d1 <- check.results$Brachiopoda$checks$root + coord_cartesian(xlim = c(-1, 75))
+d2 <- check.results$Trilobita$checks$root + coord_cartesian(xlim = c(-1, 75))
+d3 <- check.results$Bivalvia$checks$root + coord_cartesian(xlim = c(-1, 75))
+d4 <- check.results$Bivalvia$checks$root + coord_cartesian(xlim = c(-1, 75))
+chckroot <- bayesplot_grid(d1, d2, d3, d4, grid_args = list(ncol = 2),
+                           titles = c('Brac root', 'Tri root',
+                                      'Biv root', 'Gas root'))
+ggsave(plot = chckroot, filename = '../doc/figure/ppc_root_zoom.png',
+       width = 10, height = 8)
 chckerr <- bayesplot_grid(check.result$Brachiopoda$checks$err,
-                        check.result$Trilobita$checks$err,
-                        check.result$Bivalvia$checks$err,
-                        check.result$Gastropoda$checks$err,
-                        grid_args = list(ncol = 2),
-                        titles = c('Brac err', 'Tri err',
-                                   'Biv err', 'Gas err'))
+                          check.result$Trilobita$checks$err,
+                          check.result$Bivalvia$checks$err,
+                          check.result$Gastropoda$checks$err,
+                          grid_args = list(ncol = 2),
+                          titles = c('Brac err', 'Tri err',
+                                     'Biv err', 'Gas err'))
 ggsave(plot = chckerr, filename = '../doc/figure/ppc_err.png',
        width = 10, height = 8)
 chckecdf <- bayesplot_grid(check.result$Brachiopoda$checks$ecdf,
-                        check.result$Trilobita$checks$ecdf,
-                        check.result$Bivalvia$checks$ecdf,
-                        check.result$Gastropoda$checks$ecdf,
-                        grid_args = list(ncol = 2),
-                        titles = c('Brac ecdf', 'Tri ecdf',
-                                   'Biv ecdf', 'Gas ecdf'))
+                           check.result$Trilobita$checks$ecdf,
+                           check.result$Bivalvia$checks$ecdf,
+                           check.result$Gastropoda$checks$ecdf,
+                           grid_args = list(ncol = 2),
+                           titles = c('Brac ecdf', 'Tri ecdf',
+                                      'Biv ecdf', 'Gas ecdf'))
 ggsave(plot = chckecdf, filename = '../doc/figure/ppc_ecdf.png',
        width = 10, height = 8)
 chckdens <- bayesplot_grid(check.result$Brachiopoda$checks$dens,
-                        check.result$Trilobita$checks$dens,
-                        check.result$Bivalvia$checks$dens,
-                        check.result$Gastropoda$checks$dens,
-                        grid_args = list(ncol = 2),
-                        titles = c('Brac dens', 'Tri dens',
-                                   'Biv dens', 'Gas dens'))
+                           check.result$Trilobita$checks$dens,
+                           check.result$Bivalvia$checks$dens,
+                           check.result$Gastropoda$checks$dens,
+                           grid_args = list(ncol = 2),
+                           titles = c('Brac dens', 'Tri dens',
+                                      'Biv dens', 'Gas dens'))
 ggsave(plot = chckdens, filename = '../doc/figure/ppc_dens.png',
        width = 10, height = 8)
+d1 <- check.results$Brachiopoda$checks$dens + coord_cartesian(xlim = c(-1, 75))
+d2 <- check.results$Trilobita$checks$dens + coord_cartesian(xlim = c(-1, 75))
+d3 <- check.results$Bivalvia$checks$dens + coord_cartesian(xlim = c(-1, 75))
+d4 <- check.results$Bivalvia$checks$dens + coord_cartesian(xlim = c(-1, 75))
+chckdens <- bayesplot_grid(d1, d2, d3, d4, grid_args = list(ncol = 2),
+                           titles = c('Brac dens', 'Tri dens',
+                                      'Biv dens', 'Gas dens'))
+ggsave(plot = chckdens, filename = '../doc/figure/ppc_dens_zoom.png',
+       width = 10, height = 8)
 
-pg <- list()
-for(ii in seq(length(shelly))) 
-  pg[[ii]] <- check.result[[ii]]$checks.time$mean.group
+
+# group ppc-s
+pm <- pv <- list()
+for(ii in seq(length(shelly))) {
+  pm[[ii]] <- check.result[[ii]]$checks.time$mean.group
+  pv[[ii]] <- check.result[[ii]]$checks.time$violin.group
+}
+
 
 
 
 # unit div through time vs estimated div from model
-dg <- divtime.plot(shelly, brks)
+dg <- plot_divtime(shelly, brks)
 ggsave(plot = dg, filename = '../doc/figure/unitdiv_time.png',
        width = 10, height = 8)
 
 # covariate effects through time
 covname <- c('intercept', 'thickness', 'area', 'subsurface', 'siliciclastic')
-cg <- covtime.plot(shelly, brks, covname = covname)
+cg <- plot_covtime(shelly, brks, covname = covname)
 ggsave(plot = cg, filename = '../doc/figure/cov_time.png',
        width = 10, height = 8)

@@ -26,7 +26,6 @@ transformed parameters {
   // rw prior for all covariates incl intercept
   // this is non-centered which adds parameter but can improve sampling
   for(k in 1:K) {
-    //mu[1, k] = 0 + sigma_mu[k] * mu_raw[1, k];
     mu[1, k] = mu_raw[1, k];
     for(j in 2:T) {
       mu[j, k] = mu[j - 1, k] + sigma_mu[k] * mu_raw[j, k];
@@ -49,9 +48,8 @@ model {
   L_Omega ~ lkj_corr_cholesky(2);
   tau ~ normal(0, 1);
 
-  phi ~ normal(0, 0.5);
+  phi ~ cauchy(0, 5);
 
   for(n in 1:N) 
     y[n] ~ neg_binomial_2(location[n], phi) T[1, ];
 }
-

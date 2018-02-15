@@ -16,14 +16,106 @@
 
 \section{Results}
 
-
 \subsection{Posterior predictive results}
+% why do i want to show all these graphs?
+%   demonstrate how well the model recapitulates the observed data
+%   if the model simulates datasets like the one we observed
+%     then we can be more confident in our inferences
+%   PPCs by group reveal even more
+%     are some time bins better predicted by others?
+%     well predicted time bins indicate congruence with model
+%     poorly predicted time bins indicate incongruence with model
+%       something different is happening in these bins that requires explanation
+
+
+% overall ppc-s
+% mean
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio=true]{figure/ppc_mean}
+  \caption{<+caption text+>}
+  \label{fig:<+label+>}
+\end{figure}
+
+% sd
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio=true]{figure/ppc_sd}
+  \caption{<+caption text+>}
+  \label{fig:<+label+>}
+\end{figure}
+
+% ecdf
+%   one of the key graphs for showing how well the distribution is mimic-d
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio=true]{figure/ppc_ecdf}
+  \caption{<+caption text+>}
+  \label{fig:<+label+>}
+\end{figure}
+
+% dens
+%   hard to read because size of distribution
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio=true]{figure/ppc_dens}
+  \caption{<+caption text+>}
+  \label{fig:<+label+>}
+\end{figure}
+
+% dens zoomed in
+%   lots of small values so need to zoom in
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio=true]{figure/ppc_dens_zoom}
+  \caption{<+caption text+>}
+  \label{fig:<+label+>}
+\end{figure}
+
+
+
+% group measures  
+%   mean 
+%     is this duplicated with my easier to read time series?
+%     helps visualize the post pred skew away from empirical estimate
+%   sd
+
+
+
 
 
 \subsection{Estimated versus observed unit diversity}
 
+% time series graph
+% what does this graph represent?
+%   geological unit diversity counts at time bins
+%   comparison to posterior predictive mean est with 80CI
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio=true]{figure/unitdiv_time}
+  \caption{<+caption text+>}
+  \label{fig:<+label+>}
+\end{figure}
+
+
+
+
 
 \subsection{Effects of geological covariates on estimated diversity}
+
+% time series graph
+% what does this graph represent?
+%   effect of covariate on expected count over time
+%   violin shows full posterior estimate
+%   pointrange shows mean with 80CI
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio=true]{figure/cov_time}
+  \caption{<+caption text+>}
+  \label{fig:<+label+>}
+\end{figure}
+
+
 
 
 

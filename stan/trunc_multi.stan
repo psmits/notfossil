@@ -28,7 +28,7 @@ transformed parameters {
   for(k in 1:K) {
     mu[1, k] = mu_raw[1, k];
     for(j in 2:T) {
-      mu[j, k] = mu[j - 1, k] + sigma_mu[k] * mu_raw[1, k];
+      mu[j, k] = mu[j - 1, k] + sigma_mu[k] * mu_raw[j, k];
     }
   }
   
