@@ -60,7 +60,7 @@ The effects of the unit covariates are expressed as the regression coefficients 
     \beta_{t} &\sim \text{MVN}(\gamma_{t}, \Sigma) \\
     \gamma_{t, k} &\sim 
       \begin{cases}
-        \mathcal{N}(0, 1) & \quad \text{if } t = 1 \\
+        \mathcal{N}(0, 5) & \quad \text{if } t = 1 \\
         \mathcal{N}(\gamma_{t - 1, k}, \sigma_{k}) & \quad \text{if } t > 1
       \end{cases} \\
     \sigma_{k} &\sim \mathcal{N}^{+}(1) \\ 
@@ -89,7 +89,7 @@ In total, the complete model is as follows
     \beta_{t} &\sim \text{MVN}(\gamma_{t}, \Sigma) \\
     \gamma_{t, k} &\sim 
       \begin{cases}
-        \mathcal{N}(0, 1) & \quad \text{if } t = 1 \\
+        \mathcal{N}(0, 5) & \quad \text{if } t = 1 \\
         \mathcal{N}(\gamma_{t - 1, k}, \sigma_{k}) & \quad \text{if } t > 1
       \end{cases} \\
     \phi &\sim \mathcal{C}^{+}(5). \\

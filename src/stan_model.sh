@@ -11,7 +11,7 @@ do
       id=$i \
       init=0 \
       data file=$f \
-      output file=../data/mcmc_out/trunc_${i}_Brachiopoda.csv &
+      output file=../data/mcmc_out/trunc_test_${i}_Brachiopoda.csv &
   done
   wait
 done
@@ -27,7 +27,7 @@ do
       id=$i \
       init=0 \
       data file=$f \
-      output file=../data/mcmc_out/trunc_${i}_Trilobita.csv &
+      output file=../data/mcmc_out/trunc_test_${i}_Trilobita.csv &
   done
   wait
 done
@@ -43,7 +43,7 @@ do
       id=$i \
       init=0 \
       data file=$f \
-      output file=../data/mcmc_out/trunc_${i}_Bivalvia.csv &
+      output file=../data/mcmc_out/trunc_test_${i}_Bivalvia.csv &
   done
   wait
 done
@@ -59,7 +59,7 @@ do
       id=$i \
       init=0 \
       data file=$f \
-      output file=../data/mcmc_out/trunc_${i}_Gastropoda.csv &
+      output file=../data/mcmc_out/trunc_test_${i}_Gastropoda.csv &
   done
   wait
 done

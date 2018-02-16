@@ -31,7 +31,7 @@ transformed parameters {
 model {
   // rw prior
   for(k in 1:K) {
-    mu[1, k] ~ normal(0, 1);
+    mu[1, k] ~ normal(0, 5);
     //mu[1, k] = mu_raw[1, k];
     for(j in 2:T) {
       mu[j, k] ~ normal(mu[j - 1, k], sigma_mu[k]);
