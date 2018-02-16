@@ -18,7 +18,7 @@ postpred <- function(post, sim) {
 # lots of internal IO
 postchecks<- function(shelly, nsim, silent = FALSE) {
   load(paste0('../data/data_dump/diversity_image_', shelly, '.rdata'))
-  pat <- paste0('trunc\\_test\\_[0-9]\\_', shelly)
+  pat <- paste0('trunc\\_[0-9]\\_', shelly)
   files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
   fit <- read_stan_csv(files)
   if(!silent) {
@@ -131,6 +131,7 @@ plot_divtime <- function(shelly, brks) {
   cc$x <- mapvalues(cc$x, sort(unique(cc$x)), midpoint)
 
   cg <- ggplot(cc, aes(x = x, y = y)) 
+  cg <- cg + geom_hline(yintercept = 0, colour = 'darkgrey')
   cg <- cg + geom_count(alpha = 0.5, 
                         position = position_jitter(width = 0.1, height = 0))
   cg <- cg + facet_grid(g ~ .)
@@ -171,8 +172,10 @@ plot_divtime <- function(shelly, brks) {
                               sort(unique(time.mean$time)), 
                               midpoint)
   cg <- cg + geom_pointrange(data = time.mean, 
-                             mapping = aes(x = time, y = mean, ymin = low, ymax = high),
-                             colour = 'blue', size = 1.5, fatten = 2, alpha = 0.75)
+                             mapping = aes(x = time, y = mean, 
+                                           ymin = low, ymax = high),
+                             colour = 'blue', size = 1.5, 
+                             fatten = 2, alpha = 0.75)
   cg <- cg + scale_x_reverse()
   cg <- cg + labs(x = 'Time (Mya)', y = 'geological unit diversity')
   cg
@@ -222,7 +225,9 @@ plot_covtime <- function(shelly, brks, covname) {
     names(betaest)[1:2] <- c('time', 'covariate')
 
     midpoint <- apply(brks, 1, mean)
-    betaest$time <- mapvalues(betaest$time, sort(unique(betaest$time)), midpoint)
+    betaest$time <- mapvalues(betaest$time, 
+                              sort(unique(betaest$time)), 
+                              midpoint)
     mm$time <- mapvalues(mm$time, sort(unique(mm$time)), midpoint)
 
     out[[ii]] <- betaest
@@ -230,9 +235,11 @@ plot_covtime <- function(shelly, brks, covname) {
   }
   betaest <- Reduce(rbind, out)
   betaviol <- Reduce(rbind, out2)
-  betaviol$covariate <- factor(betaviol$covariate, levels = levels(betaest$covariate))
+  betaviol$covariate <- factor(betaviol$covariate, 
+                               levels = levels(betaest$covariate))
 
   mg <- ggplot(betaest, aes(x = time, y = value))
+  mg <- mg + geom_hline(yintercept = 0, colour = 'darkgrey')
   mg <- mg + geom_violin(data = betaviol, 
                          mapping = aes(x = time, y = value, group = time), 
                          alpha = 0.5)

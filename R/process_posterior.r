@@ -72,6 +72,7 @@ chckm <- bayesplot_grid(check.result$Brachiopoda$checks$mean,
                                    'Biv mean', 'Gas mean'))
 ggsave(plot = chckm, filename = '../doc/figure/ppc_mean.png',
        width = 10, height = 8)
+
 chcks <- bayesplot_grid(check.result$Brachiopoda$checks$sd,
                         check.result$Trilobita$checks$sd,
                         check.result$Bivalvia$checks$sd,
@@ -81,6 +82,7 @@ chcks <- bayesplot_grid(check.result$Brachiopoda$checks$sd,
                                    'Biv sd', 'Gas sd'))
 ggsave(plot = chcks, filename = '../doc/figure/ppc_sd.png',
        width = 10, height = 8)
+
 chckroot <- bayesplot_grid(check.result$Brachiopoda$checks$root,
                            check.result$Trilobita$checks$root,
                            check.result$Bivalvia$checks$root,
@@ -90,6 +92,7 @@ chckroot <- bayesplot_grid(check.result$Brachiopoda$checks$root,
                                       'Biv root', 'Gas root'))
 ggsave(plot = chckroot, filename = '../doc/figure/ppc_root.png',
        width = 10, height = 8)
+
 d1 <- check.results$Brachiopoda$checks$root + coord_cartesian(xlim = c(-1, 75))
 d2 <- check.results$Trilobita$checks$root + coord_cartesian(xlim = c(-1, 75))
 d3 <- check.results$Bivalvia$checks$root + coord_cartesian(xlim = c(-1, 75))
@@ -99,6 +102,7 @@ chckroot <- bayesplot_grid(d1, d2, d3, d4, grid_args = list(ncol = 2),
                                       'Biv root', 'Gas root'))
 ggsave(plot = chckroot, filename = '../doc/figure/ppc_root_zoom.png',
        width = 10, height = 8)
+
 chckerr <- bayesplot_grid(check.result$Brachiopoda$checks$err,
                           check.result$Trilobita$checks$err,
                           check.result$Bivalvia$checks$err,
@@ -108,6 +112,7 @@ chckerr <- bayesplot_grid(check.result$Brachiopoda$checks$err,
                                      'Biv err', 'Gas err'))
 ggsave(plot = chckerr, filename = '../doc/figure/ppc_err.png',
        width = 10, height = 8)
+
 chckecdf <- bayesplot_grid(check.result$Brachiopoda$checks$ecdf,
                            check.result$Trilobita$checks$ecdf,
                            check.result$Bivalvia$checks$ecdf,
@@ -117,6 +122,7 @@ chckecdf <- bayesplot_grid(check.result$Brachiopoda$checks$ecdf,
                                       'Biv ecdf', 'Gas ecdf'))
 ggsave(plot = chckecdf, filename = '../doc/figure/ppc_ecdf.png',
        width = 10, height = 8)
+
 chckdens <- bayesplot_grid(check.result$Brachiopoda$checks$dens,
                            check.result$Trilobita$checks$dens,
                            check.result$Bivalvia$checks$dens,
@@ -126,6 +132,7 @@ chckdens <- bayesplot_grid(check.result$Brachiopoda$checks$dens,
                                       'Biv dens', 'Gas dens'))
 ggsave(plot = chckdens, filename = '../doc/figure/ppc_dens.png',
        width = 10, height = 8)
+
 d1 <- check.results$Brachiopoda$checks$dens + coord_cartesian(xlim = c(-1, 75))
 d2 <- check.results$Trilobita$checks$dens + coord_cartesian(xlim = c(-1, 75))
 d3 <- check.results$Bivalvia$checks$dens + coord_cartesian(xlim = c(-1, 75))

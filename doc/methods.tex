@@ -19,9 +19,9 @@
 \subsection{Geological unit information}
 All information used in this analysis is avaliable freely through Macrostrat CITATION and the Paleobiological Database PBDB CITATION. For this analysis, we used direct API calls to pull data from the relational databases underpinning both Macrostrat and the PBDB; this means that our analyses are inherently dynamic and can be instantly updated as these databases continue to grow.
 
-Our first API call is to the geological units database in Macrostrat, specifically for all units that have Permian sediments: \url{https://macrostrat.org/api/v2/units?interval_name=Ordovician&response=long&format=csv}. In the language of relational data sets, the geological unit identification number (unit_id) is the primary key from units calls and used to match the foreign key from the fossil database in Macrostrat. The unique collection identification number key matches the fossil information database from Macrostrat to the occurrence database in the Paleobiological Database.
+Our first API call is to the geological units database in Macrostrat, specifically for all units that have Permian sediments: \url{https://macrostrat.org/api/v2/units?interval\_name=Ordovician&response=long&format=csv}. In the language of relational data sets, the geological unit identification number (unit\_id) is the primary key from units calls and used to match the foreign key from the fossil database in Macrostrat. The unique collection identification number key matches the fossil information database from Macrostrat to the occurrence database in the Paleobiological Database.
 
-For an explicit description of the data gathering and preparing process, please see the /R/prepare_data.r script from the project repository: \url{https://github.com/psmits/not_fossil}.
+For an explicit description of the data gathering and preparing process, please see the /R/prepare\_data.r script from the project repository: \url{https://github.com/psmits/not\_fossil}.
 
 Geological units in Macrostrat have a variety of interesting metadata, max thickness (positive, real), areal extent (postive, real), if unit is strictly subsurface or not (binary), and the percent composition of carbonate and siliciclastic lithologies (compositional). 
 
@@ -64,7 +64,7 @@ The effects of the unit covariates are expressed as the regression coefficients 
         \mathcal{N}(\gamma_{t - 1, k}, \sigma_{k}) & \quad \text{if } t > 1
       \end{cases} \\
     \sigma_{k} &\sim \mathcal{N}^{+}(1) \\ 
-    \phi &\sim \mathcal{N}^{+}(0.5). \\
+    \phi &\sim \mathcal{C}^{+}(5). \\
   \end{aligned}
 \end{equation}
 
@@ -92,7 +92,7 @@ In total, the complete model is as follows
         \mathcal{N}(0, 1) & \quad \text{if } t = 1 \\
         \mathcal{N}(\gamma_{t - 1, k}, \sigma_{k}) & \quad \text{if } t > 1
       \end{cases} \\
-    \phi &\sim \mathcal{N}^{+}(0.5). \\
+    \phi &\sim \mathcal{C}^{+}(5). \\
     \sigma_{k} &\sim \mathcal{N}^{+}(1) \\ 
     \Sigma &= \text{diag}(\tau) \Omega \text{diag}{\tau} \\
     \Omega &\sim \text{LKJ}(3) \\
