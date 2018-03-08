@@ -30,7 +30,7 @@ postchecks<- function(shelly, nsim, silent = FALSE) {
 
   # posterior predictive checks
   checks <- checks.single(standata$y, ppc)
-  checks.time <- checks.goup(standata$y, ppc, group = standata$t)
+  checks.time <- checks.group(standata$y, ppc, group = standata$t)
   out <- list(data = standata, post = post,
                     checks = checks, checks.time = checks.time)
   out
@@ -149,7 +149,7 @@ plot_divtime <- function(shelly, brks) {
     mean.time <- llply(by.time, function(x) laply(x, mean))
 
     mean.time <- llply(mean.time, function(x) {
-                         x <- cbind(x, seq(10))
+                         x <- cbind(x, seq(nrow(brks)))
                          x})
 
     mean.time <- Reduce(rbind, 
@@ -237,15 +237,24 @@ plot_covtime <- function(shelly, brks, covname) {
   betaviol <- Reduce(rbind, out2)
   betaviol$covariate <- factor(betaviol$covariate, 
                                levels = levels(betaest$covariate))
-
+  betaviol <- betaviol %>%
+    group_by(covariate, g, time) %>%
+    dplyr::mutate(p = sum(value > 0) / length(value)) %>%
+    group_by()
+  
   mg <- ggplot(betaest, aes(x = time, y = value))
   mg <- mg + geom_hline(yintercept = 0, colour = 'darkgrey')
   mg <- mg + geom_violin(data = betaviol, 
-                         mapping = aes(x = time, y = value, group = time), 
+                         mapping = aes(x = time, y = value, group = time, 
+                                       fill = p, colour = p), 
                          alpha = 0.5)
   mg <- mg + geom_pointrange(mapping = aes(ymin = low, ymax = high), fatten = 2)
   mg <- mg + facet_grid(g ~ covariate)
   mg <- mg + scale_x_reverse()
+  mg <- mg + scale_fill_distiller(name = 'Probability > 0', 
+                                  palette = 'RdBu', limits = c(0, 1))
+  mg <- mg + scale_colour_distiller(name = 'Probability > 0', 
+                                  palette = 'RdBu', limits = c(0, 1))
   mg <- mg + labs(x = 'Time (Mya)', y = 'estimated regression coefficient')
   mg
 }

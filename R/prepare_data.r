@@ -1,6 +1,7 @@
 # taxon variable is shelly
 library(arm)
 library(plyr)
+library(dplyr)
 library(stringr)
 library(compositions)
 library(geosphere)
@@ -15,9 +16,9 @@ source('../R/rock_mung.r')
 source('../R/download_scrap.r')  # just macrostrat
 
 # constants
-constant <- 10
+constant <- 16
 shelly <- c('Brachiopoda', 'Trilobita', 'Bivalvia', 'Gastropoda')
-ord <- c(460.4, 443.8)
+ord <- c(460.4, 427.4)
 hirnantian <- 445.6
 
 
@@ -142,6 +143,7 @@ for(ii in seq(length(out))) {
   standata$X <- X
   standata$K <- K
 
+  #print(mean(standata$y))
   temp.name <- paste0('../data/data_dump/diversity_data_', shelly[ii], '.data.R')
   with(standata, {stan_rdump(list = alply(names(standata), 1),
                              file = temp.name)})

@@ -1,6 +1,9 @@
 # macrostrat strat data from the orodovician
-strat <- read.csv('https://macrostrat.org/api/v2/units?interval_name=Ordovician&response=long&format=csv', 
+strat1 <- read.csv('https://macrostrat.org/api/v2/units?interval_name=Ordovician&response=long&format=csv', 
                       stringsAsFactors = FALSE)
+strat2 <- read.csv('https://macrostrat.org/api/v2/units?interval_name=Silurian&response=long&format=csv', 
+                      stringsAsFactors = FALSE)
+strat <- dplyr::union(strat1, strat2)
 #strat.sil <- read.csv('https://macrostrat.org/api/v2/units?interval_name=Silurian&response=long&format=csv', 
 #                      stringsAsFactors = FALSE)
 
@@ -15,8 +18,19 @@ fossil <- read.csv(fossil.url, stringsAsFactors = FALSE)
 #fossil.sil <- read.csv(fossil.url, stringsAsFactors = FALSE)
 
 # grab genus information from pbdb based on what occurres in collections
+lc <- length(fossil$cltn_id)
+f1 <- fossil$cltn_id[1:(lc / 2)]
+f2 <- fossil$cltn_id[((lc / 2) + 1):lc]
 fossil.url <- paste0('https://paleobiodb.org/data1.2/occs/list.txt?coll_id=',
-                     paste0(fossil$cltn_id, collapse = ','), 
-                     '&min_ma=443.8&max_ma=460.4&show=full')
-taxon <- read.csv(fossil.url, stringsAsFactors = FALSE)
+                     paste0(f1, collapse = ','), '&show=full')
+taxon1 <- read.csv(fossil.url, stringsAsFactors = FALSE)
+fossil.url <- paste0('https://paleobiodb.org/data1.2/occs/list.txt?coll_id=',
+                     paste0(f2, collapse = ','), '&show=full')
+taxon2 <- read.csv(fossil.url, stringsAsFactors = FALSE)
+taxon <- dplyr::union(dplyr::select(taxon1, 
+                                    -plant_organ, -geoplate, 
+                                    -associated_parts, -bioerosion), 
+                      dplyr::select(taxon2, 
+                                    -plant_organ, -geoplate, 
+                                    -associated_parts, -bioerosion))
 taxon <- taxon[taxon$genus != '', ]

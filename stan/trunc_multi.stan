@@ -37,7 +37,7 @@ transformed parameters {
   location = exp(rows_dot_product(beta[t], X));
 }
 model {
-  mu_raw[1, ] ~ normal(0, 5);
+  mu_raw[1, ] ~ normal(3, 3);
   to_vector(mu_raw[2:T, ]) ~ normal(0, 1);
   //to_vector(mu_raw) ~ normal(0, 1);
   sigma_mu ~ normal(0, 1);

@@ -33,11 +33,10 @@ theme_update(axis.text = element_text(size = 10),
              strip.text = element_text(size = 8))
 
 # set up data
-constant <- 10
-ord <- c(460.4, 443.8)
+constant <- 16
+ord <- c(460.4, 427.4)
 shelly <- c('Brachiopoda', 'Trilobita', 'Bivalvia', 'Gastropoda')
-#shelly <- shelly[-1]
-#shelly <- c('Brachiopoda', 'Arthropoda', 'Mollusca')
+#shelly <- shelly[2:3]
 nsim <- 1000
 
 # time bins
@@ -46,18 +45,6 @@ brks <- timerange / constant
 brks <- seq(from = ord[2], to = ord[1], by = brks)
 brks <- cbind(brks[-1], brks[-length(brks)])
 brks <- brks[rev(seq(nrow(brks))), ]
-
-
-
-#partition <- partition_div(fit)
-#div_params <- partition[[1]]
-#nondiv_params <- partition[[2]]
-#png('../doc/figure/div_transitions.png', width = 480, height = 480)
-#plot(nondiv_params$'mu[1,3]', log(nondiv_params$'sigma_mu[3]'),
-#     col='red', pch=16, cex=0.8, xlab="mu[1,3]", ylab="log(sigma_mu[3])")
-#points(div_params$'mu[1,3]', log(div_params$'sigma_mu[3]'),
-#       col='green', pch=16, cex=0.8)
-#dev.off()
 
 
 # posterior predictive /checks
@@ -93,10 +80,10 @@ chckroot <- bayesplot_grid(check.result$Brachiopoda$checks$root,
 ggsave(plot = chckroot, filename = '../doc/figure/ppc_root.png',
        width = 10, height = 8)
 
-d1 <- check.results$Brachiopoda$checks$root + coord_cartesian(xlim = c(-1, 75))
-d2 <- check.results$Trilobita$checks$root + coord_cartesian(xlim = c(-1, 75))
-d3 <- check.results$Bivalvia$checks$root + coord_cartesian(xlim = c(-1, 75))
-d4 <- check.results$Bivalvia$checks$root + coord_cartesian(xlim = c(-1, 75))
+d1 <- check.result$Brachiopoda$checks$root + coord_cartesian(xlim = c(-1, 75))
+d2 <- check.result$Trilobita$checks$root + coord_cartesian(xlim = c(-1, 75))
+d3 <- check.result$Bivalvia$checks$root + coord_cartesian(xlim = c(-1, 75))
+d4 <- check.result$Bivalvia$checks$root + coord_cartesian(xlim = c(-1, 75))
 chckroot <- bayesplot_grid(d1, d2, d3, d4, grid_args = list(ncol = 2),
                            titles = c('Brac root', 'Tri root',
                                       'Biv root', 'Gas root'))
@@ -133,10 +120,10 @@ chckdens <- bayesplot_grid(check.result$Brachiopoda$checks$dens,
 ggsave(plot = chckdens, filename = '../doc/figure/ppc_dens.png',
        width = 10, height = 8)
 
-d1 <- check.results$Brachiopoda$checks$dens + coord_cartesian(xlim = c(-1, 75))
-d2 <- check.results$Trilobita$checks$dens + coord_cartesian(xlim = c(-1, 75))
-d3 <- check.results$Bivalvia$checks$dens + coord_cartesian(xlim = c(-1, 75))
-d4 <- check.results$Bivalvia$checks$dens + coord_cartesian(xlim = c(-1, 75))
+d1 <- check.result$Brachiopoda$checks$dens + coord_cartesian(xlim = c(-1, 75))
+d2 <- check.result$Trilobita$checks$dens + coord_cartesian(xlim = c(-1, 75))
+d3 <- check.result$Bivalvia$checks$dens + coord_cartesian(xlim = c(-1, 75))
+d4 <- check.result$Bivalvia$checks$dens + coord_cartesian(xlim = c(-1, 75))
 chckdens <- bayesplot_grid(d1, d2, d3, d4, grid_args = list(ncol = 2),
                            titles = c('Brac dens', 'Tri dens',
                                       'Biv dens', 'Gas dens'))
