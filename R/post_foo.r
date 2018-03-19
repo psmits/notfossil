@@ -249,12 +249,12 @@ plot_covtime <- function(shelly, brks, covname) {
                                        fill = p, colour = p), 
                          alpha = 0.5)
   mg <- mg + geom_pointrange(mapping = aes(ymin = low, ymax = high), fatten = 2)
-  mg <- mg + facet_grid(g ~ covariate)
+  mg <- mg + facet_grid(g ~ covariate, scales = 'free_y')
   mg <- mg + scale_x_reverse()
   mg <- mg + scale_fill_distiller(name = 'Probability > 0', 
                                   palette = 'RdBu', limits = c(0, 1))
   mg <- mg + scale_colour_distiller(name = 'Probability > 0', 
-                                  palette = 'RdBu', limits = c(0, 1))
+                                    palette = 'RdBu', limits = c(0, 1))
   mg <- mg + labs(x = 'Time (Mya)', y = 'estimated regression coefficient')
   mg
 }

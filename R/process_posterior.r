@@ -33,18 +33,23 @@ theme_update(axis.text = element_text(size = 10),
              strip.text = element_text(size = 8))
 
 # set up data
-constant <- 16
+constant <- 20
 ord <- c(460.4, 427.4)
-shelly <- c('Brachiopoda', 'Trilobita', 'Bivalvia', 'Gastropoda')
-#shelly <- shelly[2:3]
+hirnantian <- 445.6
+shelly <- c('Brachiopoda', 'Anthozoa', 'Trilobita', 
+            'Bivalvia', 'Gastropoda', 'Mollusca')
 nsim <- 1000
 
-# time bins
-timerange <- abs(diff(ord))
-brks <- timerange / constant
-brks <- seq(from = ord[2], to = ord[1], by = brks)
-brks <- cbind(brks[-1], brks[-length(brks)])
-brks <- brks[rev(seq(nrow(brks))), ]
+## time bins
+## figure out logical breaks
+#ra <- range(strat$m_age)
+#timerange <- abs(diff(ra))
+#rr <- timerange / constant
+#brks1 <- seq(from = hirnantian, to = ra[2] + 1, by = rr) # 
+#brks2 <- seq(from = hirnantian, to = ra[1] - 1, by = -rr) # 
+#brks <- c(rev(brks2[-1]), brks1)
+#brks <- cbind(brks[-1], brks[-length(brks)])
+#brks <- brks[rev(seq(nrow(brks))), ]
 
 
 # posterior predictive /checks
@@ -147,7 +152,8 @@ ggsave(plot = dg, filename = '../doc/figure/unitdiv_time.png',
        width = 10, height = 8)
 
 # covariate effects through time
-covname <- c('intercept', 'thickness', 'area', 'subsurface', 'siliciclastic')
+covname <- c('intercept (c. sili)', 'thickness', 'area', 
+             'subsurface', 'fine siliciclastic', 'carbonate')
 cg <- plot_covtime(shelly, brks, covname = covname)
 ggsave(plot = cg, filename = '../doc/figure/cov_time.png',
        width = 10, height = 8)

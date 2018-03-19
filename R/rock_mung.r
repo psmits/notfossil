@@ -12,19 +12,66 @@ strict.lithology <- function(strat) {
   torm <- llply(dec, function(y) laply(y, function(x) any(bad %in% x)))
   lit <- Map(function(x, y) x[!y, , drop = FALSE], x = lit, y = torm)
   lit <- lit[laply(lit, nrow) > 0]
-
-  # simple break down
+  
+  #synonymie certain words
   dec <- llply(lit, function(x) str_split(x[, 1], ' '))
-  dec <- llply(dec, function(y) 
-               laply(y, function(x) 
-                     ifelse(any(x == 'carbonate'), 'carbonate', 
-                            ifelse(any(x == 'siliciclastic'), 'siliciclastic', 'other'))))
-
-  # replace description with single word
+  dup.words <- list(c('green', 'greenish'), 
+                    c('limestone', 'lime'),
+                    c('red', 'reddish'), 
+                    c('blue', 'bluish'),
+                    c('brown', 'brownish'),
+                    c('yellow', 'yellowish'),
+                    c('thin', 'thinly'),
+                    c('thick', 'thickly'),
+                    c('bedded', 'laminated'),
+                    c('dolomite', 'dolomitic'),
+                    c('chert', 'cherty'),
+                    c('sandstone', 'sand', 'sandy'),
+                    c('mudstone', 'mud'),
+                    c('laminated', 'laminations'),
+                    c('shale', 'shaly', 'shaley'),
+                    c('siltstone', 'silty', 'siliceous'),
+                    c('arkose', 'arkosic'),
+                    c('argillite', 'argillaceous'))
+  for(ii in seq(length(dup.words))) {
+    dec <- wordrep(dec, dup.words[[ii]])
+  }
+  # cut out specific words
+  dec <- wordrm(dec, c('sedimentary', 'light', 'dark', 'white', 'grey', 
+                       'phosphatic', 'tan', 'yellow', 'medium', 'red',
+                       'black'))
+  dec <- llply(dec, function(y) laply(y, function(x) paste0(x, collapse = ' ')))
   lit <- Map(function(x, y) {x[, 1] <- y; x}, lit, dec)
+
+  # get rid of duplicated words because that's stupid
+  lit.words <- llply(lit, function(x) str_split(x[, 1], ' '))
+  dups <- worddup(lit.words)
+  lit <- Map(function(x, y) {x[, 1] <- y; x}, lit, dups)
+
+  # coarse vs fine, carbonate vs clastics
+  #   fine: siltstone, claystone, mudstone, shale, argillite
+  dec <- purrr::map(lit, ~ str_split(.x[, 1], ' '))
+  # fine + siliciclastic
+  # coarse + siliciclastic
+  # carbonate
+  fine <- c('siltstone', 'claystone', 'mudstone', 'shale', 'argillite')
+  dec <- purrr::map(dec, function(y) 
+                    purrr::map(y, ~ ifelse(any(.x == 'siliciclastic') &
+                                           any(.x %in% fine),
+                                         'fine siliciclastic', 
+                                         ifelse(any(.x == 'siliciclastic') &
+                                                !(any(.x %in% fine)),
+                                              'coarse siliciclastic', 
+                                              ifelse(any(.x == 'carbonate'), 
+                                                     'carbonate', 'other')))))
+  # replace description with single word
+  lit <- Map(function(x, y) {x[, 1] <- y; x}, lit, dec) # 
+  lit <- purrr::map(lit, ~ matrix(unlist(.x), ncol = 2))
   # aggregate identicals
   lit <- llply(lit, function(x) 
                aggregate(as.numeric(x[, 2]) ~ x[, 1], FUN = sum))
+
+  lit <- purrr::map(lit, function(x) {x[, 2] <- x[, 2] / sum(x[, 2]); x})
   lit <- lith.matrix(lit)
   lit
 }
