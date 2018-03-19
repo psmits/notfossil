@@ -24,6 +24,11 @@ library(xtable)
 source('../R/stan_utility.R')
 source('../R/post_foo.r')
 
+read_rds('../data/breaks.rds')  
+# buts brks into namespace
+# needed for plotting
+
+# basic plotting requirements
 theme_set(theme_bw())
 theme_update(axis.text = element_text(size = 10),
              axis.title = element_text(size = 12),
@@ -39,17 +44,6 @@ hirnantian <- 445.6
 shelly <- c('Brachiopoda', 'Anthozoa', 'Trilobita', 
             'Bivalvia', 'Gastropoda', 'Mollusca')
 nsim <- 1000
-
-## time bins
-## figure out logical breaks
-#ra <- range(strat$m_age)
-#timerange <- abs(diff(ra))
-#rr <- timerange / constant
-#brks1 <- seq(from = hirnantian, to = ra[2] + 1, by = rr) # 
-#brks2 <- seq(from = hirnantian, to = ra[1] - 1, by = -rr) # 
-#brks <- c(rev(brks2[-1]), brks1)
-#brks <- cbind(brks[-1], brks[-length(brks)])
-#brks <- brks[rev(seq(nrow(brks))), ]
 
 
 # posterior predictive /checks

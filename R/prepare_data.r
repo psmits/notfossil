@@ -66,6 +66,7 @@ brks2 <- seq(from = hirnantian, to = ra[1] - 1, by = -rr) #
 brks <- c(rev(brks2[-1]), brks1)
 brks <- cbind(brks[-1], brks[-length(brks)])
 brks <- brks[rev(seq(nrow(brks))), ]
+write_rds(brks, path = '../data/breaks.rds')
 
 strat <- strat[strat$m_age > min(brks), ]
 
