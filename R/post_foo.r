@@ -24,7 +24,7 @@ postchecks<- function(shelly, nsim, silent = FALSE) {
   if(!silent) {
     check_all_diagnostics(fit, max_depth = 15)
   }
-  post <- extract(fit, permuted = TRUE)
+  post <- rstan::extract(fit, permuted = TRUE)
 
   ppc <- postpred(post, nsim)
 
@@ -142,7 +142,7 @@ plot_divtime <- function(shelly, brks) {
     pat <- paste0('trunc\\_[0-9]\\_', shelly[ii])
     files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
     fit <- read_stan_csv(files)
-    post <- extract(fit, permuted = TRUE)
+    post <- rstan::extract(fit, permuted = TRUE)
     pp <- postpred(post, nsim)
 
     by.time <- llply(pp, function(x) split(x, standata$t))
@@ -192,7 +192,7 @@ plot_covtime <- function(shelly, brks, covname) {
     pat <- paste0('trunc\\_[0-9]\\_', shelly[ii])
     files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
     fit <- read_stan_csv(files)
-    post <- extract(fit, permuted = TRUE)
+    post <- rstan::extract(fit, permuted = TRUE)
 
     # covariates are : 
     #   intercept

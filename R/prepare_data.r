@@ -68,7 +68,10 @@ brks <- cbind(brks[-1], brks[-length(brks)])
 brks <- brks[rev(seq(nrow(brks))), ]
 write_rds(brks, path = '../data/breaks.rds')
 
+
+# one pesky observation that doesn't play nice with bins
 strat <- strat[strat$m_age > min(brks), ]
+
 
 out <- list()
 for(jj in seq(length(shelly))) {

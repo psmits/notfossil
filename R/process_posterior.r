@@ -2,7 +2,7 @@
 library(reshape2)
 library(plyr)
 library(stringr)
-library(dplyr)
+library(tidyverse)
 
 # analysis
 library(countreg)
@@ -44,7 +44,7 @@ hirnantian <- 445.6
 shelly <- c('Brachiopoda', 'Anthozoa', 'Trilobita', 
             'Bivalvia', 'Gastropoda', 'Mollusca')
 nsim <- 1000
-
+#shelly <- shelly[c(1, 3, 4, 5)]
 
 # posterior predictive /checks
 # series of plots for the ones i really want to look at

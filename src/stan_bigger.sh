@@ -21,7 +21,7 @@ do
   for i in `seq 1 4`;
   do
     ../stan/trunc_multi sample \
-      adapt delta=0.99 \
+      adapt delta=0.9999 \
       num_samples=7000 num_warmup=7000 thin=7 \
       algorithm=hmc engine=nuts max_depth=15 stepsize=0.01 \
       id=$i \
@@ -37,7 +37,7 @@ do
   for i in `seq 1 4`;
   do
     ../stan/trunc_multi sample \
-      adapt delta=0.99 \
+      adapt delta=0.9999\
       num_samples=7000 num_warmup=7000 thin=7 \
       algorithm=hmc engine=nuts max_depth=15 stepsize=0.01 \
       id=$i \
@@ -53,7 +53,7 @@ do
   for i in `seq 1 4`;
   do
     ../stan/trunc_multi sample \
-      adapt delta=0.99 \
+      adapt delta=0.9999 \
       num_samples=5000 num_warmup=5000 thin=5 \
       algorithm=hmc engine=nuts max_depth=15 stepsize=0.01 \
       id=$i \
