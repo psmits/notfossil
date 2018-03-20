@@ -1,8 +1,7 @@
 # taxon variable is shelly
 library(arm)
 library(plyr)
-library(dplyr)
-library(stringr)
+library(tidyverse)
 library(compositions)
 library(geosphere)
 library(reshape2)

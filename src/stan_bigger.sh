@@ -85,7 +85,7 @@ do
   for i in `seq 1 4`;
   do
     ../stan/trunc_multi sample \
-      adapt delta=0.99 \
+      adapt delta=0.9999 \
       num_samples=5000 num_warmup=5000 thin=5 \
       algorithm=hmc engine=nuts max_depth=15 stepsize=0.01 \
       id=$i \
