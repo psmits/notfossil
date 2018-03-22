@@ -42,7 +42,7 @@ constant <- 20
 ord <- c(460.4, 427.4)
 hirnantian <- 445.6
 shelly <- c('Brachiopoda', 'Anthozoa', 'Trilobita', 
-            'Bivalvia', 'Gastropoda', 'Mollusca')
+            'Bivalvia', 'Gastropoda', 'Cephalopoda', 'Mollusca')
 nsim <- 1000
 
 # posterior predictive /checks
@@ -166,11 +166,11 @@ for(ii in seq(length(shelly))) {
 # unit div through time vs estimated div from model
 dg <- plot_divtime(shelly, brks, vert = hirnantian)
 ggsave(plot = dg, filename = '../doc/figure/unitdiv_time.png',
-       width = 10, height = 8)
+       width = 11, height = 8.5)
 
 # covariate effects through time
 covname <- c('intercept (c. sili)', 'thickness', 'area', 
              'fine siliciclastic', 'carbonate')
 cg <- plot_covtime(shelly, brks, covname = covname, vert = hirnantian)
 ggsave(plot = cg, filename = '../doc/figure/cov_time.png',
-       width = 10, height = 8)
+       width = 11, height = 8.5)

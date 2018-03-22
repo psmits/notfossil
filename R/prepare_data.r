@@ -14,10 +14,15 @@ source('../R/rock_mung.r')
 #   fossil.ord # fossil occurrences in the ordovician
 #   strat.ord # fossil occurrences in the ordovician
 source('../R/download_scrap.r')  # just macrostrat
+unique(taxon[taxon$class == 'Cephalopoda', 'order'])
+sort(unique(taxon$phylum))
+sort(unique(taxon$class))
+sort(unique(taxon$order))
 
 # constants
 constant <- 20
-shelly <- c('Brachiopoda', 'Anthozoa', 'Trilobita', 'Bivalvia', 'Gastropoda')
+shelly <- c('Brachiopoda', 'Anthozoa', 'Trilobita', 
+            'Bivalvia', 'Gastropoda', 'Cephalopoda')
 ord <- c(460.4, 427.4)
 hirnantian <- 445.6
 

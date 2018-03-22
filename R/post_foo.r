@@ -133,6 +133,7 @@ plot_divtime <- function(shelly, brks, vert) {
   cg <- ggplot(cc, aes(x = x, y = y)) 
   cg <- cg + geom_hline(yintercept = 0, colour = 'darkgrey')
   cg <- cg + geom_vline(xintercept = vert, alpha = 0.5, linetype = 'dashed')
+  cg <- cg + geom_vline(xintercept = 443.8, alpha = 0.5, linetype = 'dotdash')
   cg <- cg + geom_count(alpha = 0.5, 
                         position = position_jitter(width = 0.1, height = 0))
   cg <- cg + facet_grid(g ~ .)
@@ -246,6 +247,7 @@ plot_covtime <- function(shelly, brks, covname, vert) {
   mg <- ggplot(betaest, aes(x = time, y = value))
   mg <- mg + geom_hline(yintercept = 0, colour = 'darkgrey')
   mg <- mg + geom_vline(xintercept = vert, alpha = 0.5, linetype = 'dashed')
+  mg <- mg + geom_vline(xintercept = 443.8, alpha = 0.5, linetype = 'dotdash')
   mg <- mg + geom_violin(data = betaviol, 
                          mapping = aes(x = time, y = value, group = time, 
                                        fill = p, colour = p), 
