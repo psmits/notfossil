@@ -24,13 +24,13 @@ postchecks<- function(shelly, nsim, silent = FALSE) {
   if(!silent) {
     check_all_diagnostics(fit, max_depth = 15)
   }
-  post <- extract(fit, permuted = TRUE)
+  post <- rstan::extract(fit, permuted = TRUE)
 
   ppc <- postpred(post, nsim)
 
   # posterior predictive checks
-  checks <- single.checks(standata$y, ppc)
-  checks.time <- group.checks(standata$y, ppc, group = standata$t)
+  checks <- checks.single(standata$y, ppc)
+  checks.time <- checks.group(standata$y, ppc, group = standata$t)
   out <- list(data = standata, post = post,
                     checks = checks, checks.time = checks.time)
   out
@@ -43,7 +43,7 @@ q75 <- function(x) quantile(x, 0.75)
 q25 <- function(x) quantile(x, 0.25)
 
 # internal checks
-single.checks <- function(y, ppc) {
+checks.single <- function(y, ppc) {
   ppc <- Reduce(rbind, ppc)
 
   # density
@@ -88,7 +88,7 @@ single.checks <- function(y, ppc) {
 }
 
 # internal checks
-group.checks <- function(y, ppc, group) {
+checks.group <- function(y, ppc, group) {
   ppc <- Reduce(rbind, ppc)
 
   # by group
@@ -99,6 +99,8 @@ group.checks <- function(y, ppc, group) {
   ppc.q25.group <- ppc_stat_grouped(y, ppc, group = group, stat = 'q25')
   ppc.q75.group <- ppc_stat_grouped(y, ppc, group = group, stat = 'q75')
   ppc.avgerr.group <- ppc_scatter_avg_grouped(y, ppc, group = group)
+  ppc.violin.group <- ppc_violin_grouped(y, ppc, group = group, 
+                                         y_draw = 'points')
 
   # all the plots
   out <- list(bar.group = ppc.bars.group,
@@ -107,7 +109,8 @@ group.checks <- function(y, ppc, group) {
               max.group = ppc.max.group,
               q25.group = ppc.q25.group,
               q75.group = ppc.q75.group,
-              avgerr.group = ppc.avgerr.group
+              avgerr.group = ppc.avgerr.group,
+              violin.group = ppc.violin.group
               )
   out
 }
@@ -115,7 +118,7 @@ group.checks <- function(y, ppc, group) {
 
 # plot of diversity through time compared to mean estimated from posterior
 # lots of io but puts out a plot
-divtime.plot <- function(shelly, brks) {
+plot_divtime <- function(shelly, brks, vert) {
   midpoint <- apply(brks, 1, mean)
   # plot up unit div through time vs our estimate of average
   cc <- list()
@@ -128,9 +131,12 @@ divtime.plot <- function(shelly, brks) {
   cc$x <- mapvalues(cc$x, sort(unique(cc$x)), midpoint)
 
   cg <- ggplot(cc, aes(x = x, y = y)) 
-  cg <- cg + geom_count()
-  cg <- cg + facet_grid( ~ g)
-
+  cg <- cg + geom_hline(yintercept = 0, colour = 'darkgrey')
+  cg <- cg + geom_vline(xintercept = vert, alpha = 0.5, linetype = 'dashed')
+  cg <- cg + geom_vline(xintercept = 443.8, alpha = 0.5, linetype = 'dotdash')
+  cg <- cg + geom_count(alpha = 0.5, 
+                        position = position_jitter(width = 0.1, height = 0))
+  cg <- cg + facet_grid(g ~ .)
 
   out <- list()
   for(ii in seq(length(shelly))) {
@@ -138,14 +144,14 @@ divtime.plot <- function(shelly, brks) {
     pat <- paste0('trunc\\_[0-9]\\_', shelly[ii])
     files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
     fit <- read_stan_csv(files)
-    post <- extract(fit, permuted = TRUE)
+    post <- rstan::extract(fit, permuted = TRUE)
     pp <- postpred(post, nsim)
 
     by.time <- llply(pp, function(x) split(x, standata$t))
     mean.time <- llply(by.time, function(x) laply(x, mean))
 
     mean.time <- llply(mean.time, function(x) {
-                         x <- cbind(x, seq(10))
+                         x <- cbind(x, seq(nrow(brks)))
                          x})
 
     mean.time <- Reduce(rbind, 
@@ -168,9 +174,91 @@ divtime.plot <- function(shelly, brks) {
                               sort(unique(time.mean$time)), 
                               midpoint)
   cg <- cg + geom_pointrange(data = time.mean, 
-                             mapping = aes(x = time, y = mean, ymin = low, ymax = high),
-                             colour = 'blue')
+                             mapping = aes(x = time, y = mean, 
+                                           ymin = low, ymax = high),
+                             colour = 'blue', size = 1.5, 
+                             fatten = 2, alpha = 0.75)
   cg <- cg + scale_x_reverse()
   cg <- cg + labs(x = 'Time (Mya)', y = 'geological unit diversity')
   cg
+}
+
+
+
+# covariates through time
+plot_covtime <- function(shelly, brks, covname, vert) {
+  # covariate effects
+  out <- out2 <- list()
+  for(ii in seq(length(shelly))) {
+    load(paste0('../data/data_dump/diversity_image_', shelly[ii], '.rdata'))
+    pat <- paste0('trunc\\_[0-9]\\_', shelly[ii])
+    files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
+    fit <- read_stan_csv(files)
+    post <- rstan::extract(fit, permuted = TRUE)
+
+    # covariates are : 
+    #   intercept
+    #   (max) thickness
+    #   areal extent
+    #   subsurface
+    #   composition siliciclastic (carbonate is base)
+
+    # violins
+    mm <- melt(post$beta)
+    mm[, 3] <- mapvalues(mm[, 3], unique(mm[, 3]), covname)
+    names(mm) <- c('iter', 'time', 'covariate', 'value')
+    mm$g <- shelly[ii]
+
+
+    # point range
+    betamean <- apply(post$beta, 2:3, mean)
+    betalow <- apply(post$beta, 2:3, function(x) quantile(x, 0.1))
+    betahigh <- apply(post$beta, 2:3, function(x) quantile(x, 0.9))
+    betaest <- list(betamean, betalow, betahigh)
+    betaest <- llply(betaest, function(x) {
+                       colnames(x) <- covname
+                       x})
+
+    betaest <- llply(betaest, melt)
+    betaest <- data.frame(betaest[[1]], 
+                          low = betaest[[2]]$value, 
+                          high = betaest[[3]]$value,
+                          g = shelly[ii])
+    names(betaest)[1:2] <- c('time', 'covariate')
+
+    midpoint <- apply(brks, 1, mean)
+    betaest$time <- mapvalues(betaest$time, 
+                              sort(unique(betaest$time)), 
+                              midpoint)
+    mm$time <- mapvalues(mm$time, sort(unique(mm$time)), midpoint)
+
+    out[[ii]] <- betaest
+    out2[[ii]] <- mm
+  }
+  betaest <- Reduce(rbind, out)
+  betaviol <- Reduce(rbind, out2)
+  betaviol$covariate <- factor(betaviol$covariate, 
+                               levels = levels(betaest$covariate))
+  betaviol <- betaviol %>%
+    group_by(covariate, g, time) %>%
+    dplyr::mutate(p = sum(value > 0) / length(value)) %>%
+    group_by()
+  
+  mg <- ggplot(betaest, aes(x = time, y = value))
+  mg <- mg + geom_hline(yintercept = 0, colour = 'darkgrey')
+  mg <- mg + geom_vline(xintercept = vert, alpha = 0.5, linetype = 'dashed')
+  mg <- mg + geom_vline(xintercept = 443.8, alpha = 0.5, linetype = 'dotdash')
+  mg <- mg + geom_violin(data = betaviol, 
+                         mapping = aes(x = time, y = value, group = time, 
+                                       fill = p, colour = p), 
+                         alpha = 0.5)
+  mg <- mg + geom_pointrange(mapping = aes(ymin = low, ymax = high), fatten = 2)
+  mg <- mg + facet_grid(g ~ covariate, scales = 'free_y')
+  mg <- mg + scale_x_reverse()
+  mg <- mg + scale_fill_distiller(name = 'Probability > 0', 
+                                  palette = 'RdBu', limits = c(0, 1))
+  mg <- mg + scale_colour_distiller(name = 'Probability > 0', 
+                                    palette = 'RdBu', limits = c(0, 1))
+  mg <- mg + labs(x = 'Time (Mya)', y = 'estimated regression coefficient')
+  mg
 }

@@ -14,60 +14,36 @@
 
 \begin{document}
 
+\section{Materials and Methods}
 
-\section{Geological unit lithological descriptions}
-Geological units were downloaded from Macrostrat platform CITATION 
-% give api link
+\subsection{Geological unit information}
+All information used in this analysis is avaliable freely through Macrostrat CITATION and the Paleobiological Database PBDB CITATION. For this analysis, we used direct API calls to pull data from the relational databases underpinning both Macrostrat and the PBDB; this means that our analyses are inherently dynamic and can be instantly updated as these databases continue to grow.
 
+Our first API call is to the geological units database in Macrostrat, specifically for all units that have Permian sediments: \url{https://macrostrat.org/api/v2/units?interval\_name=Ordovician&response=long&format=csv}. In the language of relational data sets, the geological unit identification number (unit\_id) is the primary key from units calls and used to match the foreign key from the fossil database in Macrostrat. The unique collection identification number key matches the fossil information database from Macrostrat to the occurrence database in the Paleobiological Database.
 
-\section{Fossil occurrences in geological units}
-Units records in Macrostrat have lists of the Paleobiology Database collections found in that unit. 
+For an explicit description of the data gathering and preparing process, please see the /R/prepare\_data.r script from the project repository: \url{https://github.com/psmits/not\_fossil}.
 
-% give api link
-
-Paleobiology Database
-
-
-
-
-\section{Geologic unit covariates}
-
-
-As reported in Macrostrat: max thickness (positive, real), areal extent (postive, real),
-%contact with units above (binary), contact with units below (binary), 
-%distance traveled between bottom and top coordinate in kilometers (positive, real), 
-%if unit began in tropical latitudes (binary), 
-if unit is strictly subsurface or not (binary), and 
-the percent composition of carbonate and siliciclastic lithologies (compositional). 
+Geological units in Macrostrat have a variety of interesting metadata, max thickness (positive, real), areal extent (postive, real), if unit is strictly subsurface or not (binary), and the percent composition of carbonate and siliciclastic lithologies (compositional). 
 
 Positive, real valued covariates were log plus one transformed, and then rescaled by subtracting mean and dividing by twice standard deviation. Rescaling the covariates has multiple advantages: 1) regression coefficients now describe the expected change in unit diversity per change in standard deviation of covariate, and 2) regression coefficients are comparable across covariates because they are all on the same scale (the expected standard deviation of a binary variable is 0.5).
 
 Compositional covariates describe the percent lithological composition of the geologic units and are constrained to sum to 1; this constraint creates degrees-of-freedom issues and including these covariates without appropriate transformation creates two or more nonidentifiable parameters. To that end, the composition variables were isometric log-ratio transformed (following CITATION) which reduces the total number of variables to one less than original as composition is defined relaid to a baseline (percent carbonates). Unfortunately, the scale and interpretations of the associated regression coefficients are different from the other covariates, making direct comparison tricky.
 
 
-
-
-\section{Binning geologic units}
+\subsection{Binning geologic units}
 
 Macrostrat units are ordered according to the underlying continuous-time age model CITATION. Geologic units, however, are not instantaneous and have a duration in time. Unfortunately the fossil collection information for each unit does not include within-unit superposition data; this means that the diversity within a geologic unit cannot be tracked trough time. Instead we have to focus on geologic units as the unit of our analysis. Importantly, units containing fossils tend to be shorter than units that do not (unpublished) most likely because the fossils help in correlating that unit in stratigraphic context which gives more precise temporal information; this helps with justifying our choice to assign each geologic unit to a single temporal bin. Specifically, we assign each geologic units to a single temporal bins based on which bin contained their midpoint. 
-
-
 
 Geologic units were binned according to their midpoint age; macrostrat provides a top and bottom age, by averaging those we get the midpoint age.
 
 
-
-
-
-
-\section{Modeling of the fossil diversity found in a geologic units}
+\subsection{Modeling of the fossil diversity found in a geologic units}
 
 A natual statistical distribution for discrete data is the Poisson distribution. 
 
 Poisson parameterization makes strong assumptions about the mean-variance relationship of the data which is rarely found in life. To allow for possible overdisperssion in the data (variance greater than mean), we adopted the Negative Binomial distribution which can be derived as a mixture a Gamma and a Poisson distribution.
 
 All geologic units we're analyzing have at least one species occurrence associated with it; this explicit observation restriction means that instead of a full distribution of counts from 0 to positive infinity, we instead have a truncated distribution ranging from 1 to positive infinity.
-
 
 The probability mass function for the parameterization of the Negative Binomial distribution in terms of mean \(\mu\) and dispersion \(\phi\) is written as:
 \begin{equation}
@@ -84,10 +60,11 @@ The effects of the unit covariates are expressed as the regression coefficients 
     \beta_{t} &\sim \text{MVN}(\gamma_{t}, \Sigma) \\
     \gamma_{t, k} &\sim 
       \begin{cases}
-        \mathcal{N}(0, \sigma_{K}) & \quad \text{if } t = 1 \\
+        \mathcal{N}(0, 5) & \quad \text{if } t = 1 \\
         \mathcal{N}(\gamma_{t - 1, k}, \sigma_{k}) & \quad \text{if } t > 1
       \end{cases} \\
-    \sigma_{k} &\sim \mathcal{N}^{+}(1). \\ 
+    \sigma_{k} &\sim \mathcal{N}^{+}(1) \\ 
+    \phi &\sim \mathcal{C}^{+}(5). \\
   \end{aligned}
 \end{equation}
 
@@ -95,7 +72,7 @@ The additional covariance between variation in the regression coefficients \(\be
 \begin{equation}
   \begin{aligned}
     \Sigma &= \text{diag}(\tau) \Omega \text{diag}{\tau} \\
-    \Omega &\sim \text{LKJ}(2) \\
+    \Omega &\sim \text{LKJ}(3) \\
     \tau &\sim \mathcal{N}^{+}(1). \\
   \end{aligned}
 \end{equation}
@@ -104,8 +81,27 @@ The LKJ distribution is a single parameter distribution of correlation matrices;
 
 Unless otherwise noted, all prior choices reflect our decision to use weakly-informative regularizing priors. Additionally, because all covariates are on approximately unit scale and we do not expect any of our regression coefficients to have magnitude greater than 2, more diffuse priors would serve no purpose and are unnecessary. Additionally, more diffuse priors would not reflect our actual expectations regarding the magnitude of covariate effects. Finally, the regularizing property of priors helps constrain our results such that we do not obtain spurious estimates of the covariate effects. Further statistical and philosophical backing for these prior choices is available HERE HERE AND HERE CITATION.
 
+In total, the complete model is as follows
+\begin{equation}
+  \begin{aligned}
+    y &\sim \text{Negative Binomial}(\mu, \phi) T[1, ] \\
+    \mu_{i} &= \exp(X_{i} \beta_{t[i]}) \\
+    \beta_{t} &\sim \text{MVN}(\gamma_{t}, \Sigma) \\
+    \gamma_{t, k} &\sim 
+      \begin{cases}
+        \mathcal{N}(0, 5) & \quad \text{if } t = 1 \\
+        \mathcal{N}(\gamma_{t - 1, k}, \sigma_{k}) & \quad \text{if } t > 1
+      \end{cases} \\
+    \phi &\sim \mathcal{C}^{+}(5). \\
+    \sigma_{k} &\sim \mathcal{N}^{+}(1) \\ 
+    \Sigma &= \text{diag}(\tau) \Omega \text{diag}{\tau} \\
+    \Omega &\sim \text{LKJ}(3) \\
+    \tau &\sim \mathcal{N}^{+}(1). \\
+  \end{aligned}
+\end{equation}
 
-\subsection{Implementing model in Stan}
+
+\subsubsection{Implementing model in Stan}
 
 Hierarchical models can have very complex posterior geometries which make full exploration difficult CITATIONS. The two strategies for overcoming sampling pathologies associated with extremely high-curvature log-posterior surface are non-centered parameterization of hierarchical sampling statements, and adjusting some the key parameters governing Stan's adaptation phase.
 
@@ -116,19 +112,23 @@ The above model specifications are modified as follows:
   \beta_{t} &= \gamma_{t} + z\Sigma
   \gamma_{t, k} &=
   \begin{cases}
-    \sigma_{k} * \gamma^{'}_{t, k} & \quad \text{if } t = 1 \\
+    \gamma^{'}_{t, k} & \quad \text{if } t = 1 \\
     \gamma_{t - 1, k} + \sigma_{k} * \gamma^{'}_{t, k} & \quad \text{if } t = 1 \\
   \end{cases} \\
   z ~ \mathcal{N}(0, 1) \\
   \gamma^{'} ~ \mathcal{N}(0, 1) \\
-  \sigma_{k} &\sim \mathcal{N}^{+}(1). \\ 
 \end{equation}
 
-Stan's adaptation phase can be adjusted to help overcome issues resulting from extremely high curvature of the log-posterior. Model fits cleared all general MCMC and HMC-specific diagnostics with the following parameters: adapt delta at 0.99, max HMC tree depth at 15, and initial HMC stepsize of 0.25. 
+Posterior sampling was done via four Markov chains running for 5000 warm-up steps, 5000 sampling steps, thinned to every fifth sample.
 
-Four chains running for 3000 warm-up steps, 3000 sampling steps, thinned to every third sample.
+We used five different diagnostic criteria to determine if our chains were well mixed and if our posterior estimates were based on unbiased samples: the scale reduction factor \(\hat{R}\) (target value of \(<\)1.1), effective number of samples (eff; target value of eff/steps\(<\)0.0001), if any samples saturated the specified maximum trajectory length for avoiding infinite loops (treedepth; target value of 0 samples), presence of divergent samples which indicate pathological sampling in some neighborhoods of the log-posterior (divergences; target value of 0 samples), and the energy Bayesian Fraction of Missing Information (E-BFMI; target value \(>\)0.2). For a further explanation of these diagnostic criteria
+
+Stan's adaptation phase can be adjusted to help overcome issues resulting from extremely high curvature of the log-posterior. Model fits cleared all general MCMC and HMC-specific diagnostics with the following parameters: adapt delta at 0.999, max HMC tree depth at 15, and initial HMC stepsize of 0.00001. 
 
 
-\section{Model adequacy and posterior predictive checks}
+\subsection{Model adequacy and posterior predictive checks}
 
 Model adequacy, or the quality of model fit, is evaluated through a series of posterior predictive checks. For each check, the value of a test statistic from the data is compared to a distribution of that test statistic estimated from datasets simulated from the posterior. The checks used here are comparisons of the overall mean unit diversity, the overall standard deviation of unit diversity, the empirical cumulative distribution function, the mean unit diversity for each time step, and the standard deviation of unit diversity for each time step to those test statistics from 1000 posterior predictive datasets. Model adequacy is indicated by our simulated values being approximately equal to the observed values.
+
+
+\end{document}

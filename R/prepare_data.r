@@ -1,23 +1,29 @@
 # taxon variable is shelly
 library(arm)
 library(plyr)
-library(stringr)
+library(tidyverse)
 library(compositions)
 library(geosphere)
 library(reshape2)
 library(rstan)
 library(caret)
+library(dplyr)
 source('../R/rock_mung.r')
 
 # bring in data
 #   fossil.ord # fossil occurrences in the ordovician
 #   strat.ord # fossil occurrences in the ordovician
 source('../R/download_scrap.r')  # just macrostrat
+unique(taxon[taxon$class == 'Cephalopoda', 'order'])
+sort(unique(taxon$phylum))
+sort(unique(taxon$class))
+sort(unique(taxon$order))
 
 # constants
-constant <- 10
-shelly <- c('Brachiopoda', 'Trilobita', 'Bivalvia', 'Gastropoda')
-ord <- c(460.4, 443.8)
+constant <- 20
+shelly <- c('Brachiopoda', 'Anthozoa', 'Trilobita', 
+            'Bivalvia', 'Gastropoda', 'Cephalopoda')
+ord <- c(460.4, 427.4)
 hirnantian <- 445.6
 
 
@@ -53,14 +59,23 @@ strat <- strat[strat$unit_id %in% taxon$unit, ]  # does unit have fossils
 # keep uits that have their mid point in time range
 strat <- strat[strat$m_age < ord[1] & strat$m_age > ord[2], ]
 
-
 # bin data
 # figure out logical breaks
-timerange <- abs(diff(ord))
-brks <- timerange / constant
-brks <- seq(from = ord[2], to = ord[1], by = brks)
+ra <- range(strat$m_age)
+timerange <- abs(diff(ra))
+#timerange <- abs(diff(ord))
+rr <- timerange / constant
+brks1 <- seq(from = hirnantian, to = ra[2] + 1, by = rr) # 
+brks2 <- seq(from = hirnantian, to = ra[1] - 1, by = -rr) # 
+brks <- c(rev(brks2[-1]), brks1)
 brks <- cbind(brks[-1], brks[-length(brks)])
 brks <- brks[rev(seq(nrow(brks))), ]
+write_rds(brks, path = '../data/breaks.rds')
+
+
+# one pesky observation that doesn't play nice with bins
+strat <- strat[strat$m_age > min(brks), ]
+
 
 out <- list()
 for(jj in seq(length(shelly))) {
@@ -71,8 +86,6 @@ for(jj in seq(length(shelly))) {
   # geologic units with fossils from focal
   unitfocus <- cltn2unit[cltn2unit[, 1] %in% focus$collection_no, 2]  
   stratfocus <- strat[strat$unit_id %in% unitfocus, ]
-  dim(stratfocus)
-  length(unique(unitfocus))
 
   # assign a bin
   stratfocus$bin <- NA
@@ -89,6 +102,30 @@ for(jj in seq(length(shelly))) {
   out[[jj]]$taxon <- shelly[jj]
 }
 names(out) <- shelly
+
+# make a mollusc category after the fact
+tt <- full_join(out$Bivalvia, out$Gastropoda)
+tt <- tt %>%
+  group_by(unit_id, bin) %>%
+  dplyr::mutate(diversity = sum(diversity)) %>%
+  ungroup() %>%
+  distinct(unit_id, .keep_all = TRUE)
+out$Mollusca <- tt
+shelly <- names(out)
+
+#suspicious <- unique(c(arrange(out$Brachiopoda, desc(diversity))[1:10, ]$unit_id,
+#                       arrange(out$Trilobita, desc(diversity))[1:10, ]$unit_id,
+#                       arrange(out$Bivalvia, desc(diversity))[1:10, ]$unit_id,
+#                       arrange(out$Gastropoda, desc(diversity))[1:10, ]$unit_id))
+#checktime <- strat[strat$unit_id %in% suspicious, ]
+#checktime <- dplyr::select(checktime, 
+#                           unit_id, col_area, unit_name, t_age, b_age, 
+#                           max_thick, pbdb_collections, pbdb_occurrences)
+
+out <- purrr::map(out, function(x) {
+                    m <- x$unit_id != 19112
+                    x <- x[m, ]
+                    x})
 
 
 # get the data in stan format
@@ -107,7 +144,7 @@ for(ii in seq(length(out))) {
   standata$T <- max(bpod$bin)
 
   # make X
-  K <- 4  # all plus intercept; initial
+  K <- 3  # all plus intercept; initial
   # initially just intercept
   X <- matrix(1, nrow = standata$N, ncol = K)
   X[, 2] <- arm::rescale(log1p(bpod$max_thick))
@@ -126,13 +163,13 @@ for(ii in seq(length(out))) {
   ## initially tropical?
   #X[, 5] <- bottemp
   
-  X[, 4] <- ifelse(bpod$outcrop == 'subsurface', 1, 0)
 
   X <- cbind(X, ilr(litmat))
   K <- ncol(X)
   standata$X <- X
   standata$K <- K
 
+  #print(mean(standata$y))
   temp.name <- paste0('../data/data_dump/diversity_data_', shelly[ii], '.data.R')
   with(standata, {stan_rdump(list = alply(names(standata), 1),
                              file = temp.name)})
