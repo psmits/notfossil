@@ -242,7 +242,7 @@ plot_covtime <- function(shelly, brks, covname, vert) {
   betaviol <- betaviol %>%
     group_by(covariate, g, time) %>%
     dplyr::mutate(p = sum(value > 0) / length(value)) %>%
-    group_by()
+    ungroup()
   
   mg <- ggplot(betaest, aes(x = time, y = value))
   mg <- mg + geom_hline(yintercept = 0, colour = 'darkgrey')
@@ -261,4 +261,62 @@ plot_covtime <- function(shelly, brks, covname, vert) {
                                     palette = 'RdBu', limits = c(0, 1))
   mg <- mg + labs(x = 'Time (Mya)', y = 'estimated regression coefficient')
   mg
+}
+
+
+# look at differences in effects through time 
+plot_diffbeta <- function(shelly, covname = covname) {
+
+  get_diffbeta <- function(x, cova = 1) {
+    dd <- dim(x)
+    ds1 <- seq(dd[2] - 1)
+    ds2 <- ds1 + 1
+
+    nc <- seq(length(ds1))
+    o <- purrr::map(nc, ~ x[, ds1[.x], cova] - x[, ds2[.x], cova])
+    o
+  }
+  get_covdiff <- function(shelly) {
+    out <- list()
+    for(ii in seq(length(shelly))) {
+      pat <- paste0('trunc\\_[0-9]\\_', shelly[ii])
+      files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
+      fit <- read_stan_csv(files)
+      post <- rstan::extract(fit, permuted = TRUE)
+
+      nc <- seq(dim(post$beta)[3])
+      out[[ii]] <- purrr::map(nc, ~ get_diffbeta(post$beta, cova = .x))
+    }
+    names(out) <- shelly
+    out
+  }
+
+  cov_timepairs <- get_covdiff(shelly)
+
+  normal <- function(x) (x - min(x)) / (max(x) - min(x))
+  mctp <- melt(cov_timepairs)
+  names(mctp) <- c('value', 'timepair', 'covariate', 'taxon')
+  mctp <- mctp %>%
+    group_by(timepair, covariate, taxon) %>%
+    dplyr::mutate(p = sum(value > 0)/ length(value),
+                  ip = ifelse(p > 0.5, p, 1 - p)) %>%
+    ungroup()
+
+  mctp$covariate <- with(mctp, {
+                           plyr::mapvalues(covariate, 
+                                           from = unique(covariate),
+                                           to = covname)})
+  mctp$ip <- normal(mctp$ip)
+  # value, time pair, covariate, taxon
+  mct <- ggplot(mctp, aes(x = timepair, y = value, 
+                          group = timepair, fill = p, colour = p))
+  mct <- mct + geom_violin(aes(alpha = ip))
+  mct <- mct + facet_grid(taxon ~ covariate, scales = 'free_y')
+  mct <- mct + scale_fill_distiller(name = 'Probability > 0',
+                                    palette = 'RdBu', limits = c(0, 1))
+  mct <- mct + scale_colour_distiller(name = 'Probability > 0',
+                                      palette = 'RdBu', limits = c(0, 1))
+  mct <- mct + scale_alpha(guide = FALSE)
+
+  mct
 }

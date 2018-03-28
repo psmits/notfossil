@@ -41,9 +41,10 @@ theme_update(axis.text = element_text(size = 10),
 constant <- 20
 ord <- c(460.4, 427.4)
 hirnantian <- 445.6
+nsim <- 1000
 shelly <- c('Brachiopoda', 'Anthozoa', 'Trilobita', 
             'Bivalvia', 'Gastropoda', 'Cephalopoda', 'Mollusca')
-nsim <- 1000
+
 
 # posterior predictive /checks
 # series of plots for the ones i really want to look at
@@ -162,7 +163,7 @@ for(ii in seq(length(shelly))) {
 
 
 
-
+shelly <- shelly[c(1:5, 7)]
 # unit div through time vs estimated div from model
 dg <- plot_divtime(shelly, brks, vert = hirnantian)
 ggsave(plot = dg, filename = '../doc/figure/unitdiv_time.png',
@@ -174,3 +175,6 @@ covname <- c('intercept (c. sili)', 'thickness', 'area',
 cg <- plot_covtime(shelly, brks, covname = covname, vert = hirnantian)
 ggsave(plot = cg, filename = '../doc/figure/cov_time.png',
        width = 11, height = 8.5)
+
+
+

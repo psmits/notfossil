@@ -127,6 +127,8 @@ out <- purrr::map(out, function(x) {
                     x <- x[m, ]
                     x})
 
+#out$Cephalopoda %>% group_by(bin, taxon) %>% tally()
+
 
 # get the data in stan format
 # each taxon group individually

@@ -37,7 +37,7 @@ transformed parameters {
   location = exp(rows_dot_product(beta[t], X));
 }
 model {
-  mu_raw[1, ] ~ normal(3, 3);
+  mu_raw[1, ] ~ normal(3, 2);
   to_vector(mu_raw[2:T, ]) ~ normal(0, 1);
   //to_vector(mu_raw) ~ normal(0, 1);
   sigma_mu ~ normal(0, 1);
@@ -47,9 +47,8 @@ model {
   L_Omega ~ lkj_corr_cholesky(2);
   tau ~ normal(0, 1);
 
-  phi ~ normal(0, 5);
+  phi ~ normal(0, 4);
 
   for(n in 1:N) 
     y[n] ~ neg_binomial_2(location[n], phi) T[1, ];
 }
-
