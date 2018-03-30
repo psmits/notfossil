@@ -320,3 +320,40 @@ plot_diffbeta <- function(shelly, covname = covname) {
 
   mct
 }
+
+
+
+compare_hir <- function(shelly, hirnantian = 445.6, brks) {
+  tc <- which(brks == hirnantian)[1]
+  ordprob <- silprob <- list()
+  for(ii in seq(length(shelly))) {
+    pat <- paste0('trunc\\_[0-9]\\_', shelly[ii])
+    files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
+    fit <- read_stan_csv(files)
+    post <- rstan::extract(fit, permuted = TRUE)
+
+    dd <- dim(post$beta)
+    betahir <- post$beta[, tc, ]
+    betaord <- post$beta[, seq(tc - 1), ]
+    betasil <- post$beta[, seq(from = tc + 1, to = dd[2]), ]
+
+    # compare to hirnantian
+    op <- sp <- c()
+    for(jj in seq(dd[3])) {
+      tisp <- dim(betaord)
+      compa <- purrr::map(seq(tisp[2]), ~ betaord[, .x, jj] > betahir[, jj])
+      op[jj] <- sum(purrr::map_dbl(compa, ~ sum(.x))) / length(betaord[, , jj])
+
+      tisp <- dim(betasil)
+      compa <- purrr::map(seq(tisp[2]), ~ betasil[, .x, jj] > betahir[, jj])
+      sp[jj] <- sum(purrr::map_dbl(compa, ~ sum(.x))) / length(betasil[, , jj])
+    }
+    ordprob[[ii]] <- op
+    silprob[[ii]] <- sp
+  }
+  names(ordprob) <- names(silprob) <- shelly
+  out <- list(ordivician = ordprob, 
+              silurian = silprob)
+  out
+}
+

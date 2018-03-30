@@ -176,5 +176,12 @@ cg <- plot_covtime(shelly, brks, covname = covname, vert = hirnantian)
 ggsave(plot = cg, filename = '../doc/figure/cov_time.png',
        width = 11, height = 8.5)
 
+# step differenes 
+bg <- plot_diffbeta(shelly, covname)
+ggsave(plot = bg, filename = '../doc/figure/cov_diff.png',
+       width = 11, height = 8.5)
 
+
+
+compare_pvals <- compare_hir(shelly, hirnantian, brks)
 
