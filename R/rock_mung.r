@@ -62,8 +62,8 @@ strict.lithology <- function(strat) {
                                          ifelse(any(.x == 'siliciclastic') &
                                                 !(any(.x %in% fine)),
                                               'coarse siliciclastic', 
-                                              ifelse(any(.x == 'carbonate'), 
-                                                     'carbonate', 'other')))))
+                                              ifelse(any(.x == 'dolomite'), 
+                                                     'dolomite', 'other')))))
   # replace description with single word
   lit <- Map(function(x, y) {x[, 1] <- y; x}, lit, dec) # 
   lit <- purrr::map(lit, ~ matrix(unlist(.x), ncol = 2))

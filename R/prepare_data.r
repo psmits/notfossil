@@ -14,10 +14,10 @@ source('../R/rock_mung.r')
 #   fossil.ord # fossil occurrences in the ordovician
 #   strat.ord # fossil occurrences in the ordovician
 source('../R/download_scrap.r')  # just macrostrat
-unique(taxon[taxon$class == 'Cephalopoda', 'order'])
-sort(unique(taxon$phylum))
-sort(unique(taxon$class))
-sort(unique(taxon$order))
+#unique(taxon[taxon$class == 'Cephalopoda', 'order'])
+#sort(unique(taxon$phylum))
+#sort(unique(taxon$class))
+#sort(unique(taxon$order))
 
 # constants
 constant <- 20
@@ -127,8 +127,6 @@ out <- purrr::map(out, function(x) {
                     x <- x[m, ]
                     x})
 
-#out$Cephalopoda %>% group_by(bin, taxon) %>% tally()
-
 
 # get the data in stan format
 # each taxon group individually
@@ -170,6 +168,10 @@ for(ii in seq(length(out))) {
   K <- ncol(X)
   standata$X <- X
   standata$K <- K
+
+  standata$prior_intercept_location <- 2
+  standata$prior_intercept_scale <- 2
+  standata$prior_phi_scale <- 5
 
   #print(mean(standata$y))
   temp.name <- paste0('../data/data_dump/diversity_data_', shelly[ii], '.data.R')

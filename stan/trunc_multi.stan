@@ -6,6 +6,12 @@ data {
   int<lower=0> y[N];  // value observed
   int t[N];  // window for observation
   matrix[N, K] X;
+
+  real prior_intercept_location;
+  real prior_intercept_scale;
+  //real prior_coef_scale;
+  //real prior_group_scale;
+  real prior_phi_scale;
 }
 parameters {
   matrix[T, K] mu_raw;  // group-prior
@@ -37,9 +43,8 @@ transformed parameters {
   location = exp(rows_dot_product(beta[t], X));
 }
 model {
-  mu_raw[1, ] ~ normal(3, 2);
-  to_vector(mu_raw[2:T, ]) ~ normal(0, 1);
-  //to_vector(mu_raw) ~ normal(0, 1);
+  mu_raw[1, 1] ~ normal(prior_intercept_location, prior_intercept_scale);
+  to_vector(mu_raw[2:T, 2:K]) ~ normal(0, 1);
   sigma_mu ~ normal(0, 1);
   
   // effects
@@ -47,7 +52,7 @@ model {
   L_Omega ~ lkj_corr_cholesky(2);
   tau ~ normal(0, 1);
 
-  phi ~ normal(0, 4);
+  phi ~ cauchy(0, prior_phi_scale);
 
   for(n in 1:N) 
     y[n] ~ neg_binomial_2(location[n], phi) T[1, ];

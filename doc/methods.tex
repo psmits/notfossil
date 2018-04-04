@@ -17,6 +17,8 @@
 \section{Materials and Methods}
 
 \subsection{Geological unit information}
+Anthozoa, Brachiopoda, Bivalvia, Gastropoda, Bivalvia + Gastropoda, Trilobita, Cephalopoda
+
 All information used in this analysis is avaliable freely through Macrostrat CITATION and the Paleobiological Database PBDB CITATION. For this analysis, we used direct API calls to pull data from the relational databases underpinning both Macrostrat and the PBDB; this means that our analyses are inherently dynamic and can be instantly updated as these databases continue to grow.
 
 Our first API call is to the geological units database in Macrostrat, specifically for all units that have Permian sediments: \url{https://macrostrat.org/api/v2/units?interval\_name=Ordovician&response=long&format=csv}. In the language of relational data sets, the geological unit identification number (unit\_id) is the primary key from units calls and used to match the foreign key from the fossil database in Macrostrat. The unique collection identification number key matches the fossil information database from Macrostrat to the occurrence database in the Paleobiological Database.
@@ -27,19 +29,20 @@ Geological units in Macrostrat have a variety of interesting metadata, max thick
 
 Positive, real valued covariates were log plus one transformed, and then rescaled by subtracting mean and dividing by twice standard deviation. Rescaling the covariates has multiple advantages: 1) regression coefficients now describe the expected change in unit diversity per change in standard deviation of covariate, and 2) regression coefficients are comparable across covariates because they are all on the same scale (the expected standard deviation of a binary variable is 0.5).
 
-Compositional covariates describe the percent lithological composition of the geologic units and are constrained to sum to 1; this constraint creates degrees-of-freedom issues and including these covariates without appropriate transformation creates two or more nonidentifiable parameters. To that end, the composition variables were isometric log-ratio transformed (following CITATION) which reduces the total number of variables to one less than original as composition is defined relaid to a baseline (percent carbonates). Unfortunately, the scale and interpretations of the associated regression coefficients are different from the other covariates, making direct comparison tricky.
+
+Lithological composition was simplified to three descriptors: carbonates, coarse siliciclastics, and fine siliciclastics. All geological units are described by the percent composition of these three lithologies. Compositional covariates are constrained to sum to 1 which creates degrees-of-freedom issues when trying to model their possible effects as including these covariates without appropriate transformation creates two or more nonidentifiable parameters. To that end, the composition variables were isometric log-ratio transformed (following CITATION) which reduces the total number of variables to one less than original as composition is defined relaid to a baseline (percent carbonates). Unfortunately, the scale and interpretations of the associated regression coefficients are different from the other covariates, making direct comparison tricky.
 
 
 \subsection{Binning geologic units}
 
 Macrostrat units are ordered according to the underlying continuous-time age model CITATION. Geologic units, however, are not instantaneous and have a duration in time. Unfortunately the fossil collection information for each unit does not include within-unit superposition data; this means that the diversity within a geologic unit cannot be tracked trough time. Instead we have to focus on geologic units as the unit of our analysis. Importantly, units containing fossils tend to be shorter than units that do not (unpublished) most likely because the fossils help in correlating that unit in stratigraphic context which gives more precise temporal information; this helps with justifying our choice to assign each geologic unit to a single temporal bin. Specifically, we assign each geologic units to a single temporal bins based on which bin contained their midpoint. 
 
-Geologic units were binned according to their midpoint age; macrostrat provides a top and bottom age, by averaging those we get the midpoint age.
+Geologic units were binned according to their midpoint age; macrostrat provides a top and bottom age, by averaging those we get the midpoint age. The unit was assigned to Whatever temporal bin that midpoint age fell into.
 
 
 \subsection{Modeling of the fossil diversity found in a geologic units}
 
-A natual statistical distribution for discrete data is the Poisson distribution. 
+A natural statistical distribution for discrete data is the Poisson distribution. 
 
 Poisson parameterization makes strong assumptions about the mean-variance relationship of the data which is rarely found in life. To allow for possible overdisperssion in the data (variance greater than mean), we adopted the Negative Binomial distribution which can be derived as a mixture a Gamma and a Poisson distribution.
 
@@ -60,8 +63,8 @@ The effects of the unit covariates are expressed as the regression coefficients 
     \beta_{t} &\sim \text{MVN}(\gamma_{t}, \Sigma) \\
     \gamma_{t, k} &\sim 
       \begin{cases}
-        \mathcal{N}(0, 5) & \quad \text{if } t = 1 \\
-        \mathcal{N}(\gamma_{t - 1, k}, \sigma_{k}) & \quad \text{if } t > 1
+        \mathcal{N}(2, 2) & \quad \text{if } t = 1, k = 1 \\
+        \mathcal{N}(\gamma_{t - 1, k}, \sigma_{k}) & \quad \text{if } t > 1, k > 1 \\
       \end{cases} \\
     \sigma_{k} &\sim \mathcal{N}^{+}(1) \\ 
     \phi &\sim \mathcal{C}^{+}(5). \\
@@ -72,7 +75,7 @@ The additional covariance between variation in the regression coefficients \(\be
 \begin{equation}
   \begin{aligned}
     \Sigma &= \text{diag}(\tau) \Omega \text{diag}{\tau} \\
-    \Omega &\sim \text{LKJ}(3) \\
+    \Omega &\sim \text{LKJ}(1) \\
     \tau &\sim \mathcal{N}^{+}(1). \\
   \end{aligned}
 \end{equation}

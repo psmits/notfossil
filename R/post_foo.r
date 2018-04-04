@@ -14,6 +14,37 @@ postpred <- function(post, sim) {
   ppc
 }
 
+# summary statistic for time points from posterior predictive dist
+get_postpredstat <- function(shelly, nsim, foo = mean) {
+  out <- list()
+  for(ii in seq(length(shelly))) {
+    load(paste0('../data/data_dump/diversity_image_', shelly[ii], '.rdata'))
+    pat <- paste0('trunc\\_[0-9]\\_', shelly[ii])
+    files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
+    fit <- read_stan_csv(files)
+    post <- rstan::extract(fit, permuted = TRUE)
+    pp <- postpred(post, nsim)
+
+    by.time <- llply(pp, function(x) split(x, standata$t))
+    mean.time <- llply(by.time, function(x) laply(x, foo))
+
+    mean.time <- llply(mean.time, function(x) {
+                         x <- cbind(x, seq(nrow(brks)))
+                         x})
+
+    mean.time <- Reduce(rbind, 
+                        Map(function(x, y) 
+                            cbind(x, y), mean.time, seq(nsim)))
+    mean.time <- data.frame(mean.time, g = shelly[ii])
+    names(mean.time) <- c('est', 'time', 'sim', 'g')
+    out[[ii]] <- mean.time
+  }
+  names(out) <- shelly
+
+  out                                  # list by taxonomic group
+}
+
+
 # posterior predictive checks
 # lots of internal IO
 postchecks<- function(shelly, nsim, silent = FALSE) {
@@ -32,7 +63,7 @@ postchecks<- function(shelly, nsim, silent = FALSE) {
   checks <- checks.single(standata$y, ppc)
   checks.time <- checks.group(standata$y, ppc, group = standata$t)
   out <- list(data = standata, post = post,
-                    checks = checks, checks.time = checks.time)
+              checks = checks, checks.time = checks.time)
   out
 }
 
@@ -138,33 +169,11 @@ plot_divtime <- function(shelly, brks, vert) {
                         position = position_jitter(width = 0.1, height = 0))
   cg <- cg + facet_grid(g ~ .)
 
-  out <- list()
-  for(ii in seq(length(shelly))) {
-    load(paste0('../data/data_dump/diversity_image_', shelly[ii], '.rdata'))
-    pat <- paste0('trunc\\_[0-9]\\_', shelly[ii])
-    files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
-    fit <- read_stan_csv(files)
-    post <- rstan::extract(fit, permuted = TRUE)
-    pp <- postpred(post, nsim)
-
-    by.time <- llply(pp, function(x) split(x, standata$t))
-    mean.time <- llply(by.time, function(x) laply(x, mean))
-
-    mean.time <- llply(mean.time, function(x) {
-                         x <- cbind(x, seq(nrow(brks)))
-                         x})
-
-    mean.time <- Reduce(rbind, 
-                        Map(function(x, y) 
-                            cbind(x, y), mean.time, seq(nsim)))
-    mean.time <- data.frame(mean.time, g = shelly[ii])
-    names(mean.time) <- c('est', 'time', 'sim', 'g')
-    out[[ii]] <- mean.time
-  }
-  mean.time <- Reduce(rbind, out)
-
+  mean.time <- get_postpredstat(shelly, nsim, mean)
+  mean.time <- purrr::reduce(mean.time, rbind)
 
   by.time <- group_by(mean.time, time, g)
+ 
   time.mean <- summarise(by.time, mean = mean(est), 
                          low = quantile(est, 0.1), 
                          high = quantile(est, 0.9))
@@ -243,7 +252,7 @@ plot_covtime <- function(shelly, brks, covname, vert) {
     group_by(covariate, g, time) %>%
     dplyr::mutate(p = sum(value > 0) / length(value)) %>%
     ungroup()
-  
+
   mg <- ggplot(betaest, aes(x = time, y = value))
   mg <- mg + geom_hline(yintercept = 0, colour = 'darkgrey')
   mg <- mg + geom_vline(xintercept = vert, alpha = 0.5, linetype = 'dashed')
@@ -307,6 +316,15 @@ plot_diffbeta <- function(shelly, covname = covname) {
                                            from = unique(covariate),
                                            to = covname)})
   mctp$ip <- normal(mctp$ip)
+
+  prsss <- as.character(interaction(seq(from = 1, to = nrow(brks) - 1), 
+                                    seq(from = 2, to = nrow(brks))))
+  mctp$timepair <- with(mctp, {
+                          plyr::mapvalues(timepair, 
+                                          from = sort(unique(timepair)),
+                                          to = prsss)})
+  mctp$timepair <- factor(mctp$timepair, levels = prsss)
+
   # value, time pair, covariate, taxon
   mct <- ggplot(mctp, aes(x = timepair, y = value, 
                           group = timepair, fill = p, colour = p))
@@ -322,9 +340,10 @@ plot_diffbeta <- function(shelly, covname = covname) {
 }
 
 
-
-compare_hir <- function(shelly, hirnantian = 445.6, brks) {
+# covariate effects at the hirnantian
+compare_hirbeta <- function(shelly, hirnantian = 445.6, brks) {
   tc <- which(brks == hirnantian)[1]
+
   ordprob <- silprob <- list()
   for(ii in seq(length(shelly))) {
     pat <- paste0('trunc\\_[0-9]\\_', shelly[ii])
@@ -332,18 +351,22 @@ compare_hir <- function(shelly, hirnantian = 445.6, brks) {
     fit <- read_stan_csv(files)
     post <- rstan::extract(fit, permuted = TRUE)
 
-    dd <- dim(post$beta)
+    dd <- dim(post$beta) # sim, time, covariate
     betahir <- post$beta[, tc, ]
     betaord <- post$beta[, seq(tc - 1), ]
     betasil <- post$beta[, seq(from = tc + 1, to = dd[2]), ]
+    # which are which? 
 
     # compare to hirnantian
     op <- sp <- c()
     for(jj in seq(dd[3])) {
+      # for each covariate
+      # ordovician
       tisp <- dim(betaord)
       compa <- purrr::map(seq(tisp[2]), ~ betaord[, .x, jj] > betahir[, jj])
       op[jj] <- sum(purrr::map_dbl(compa, ~ sum(.x))) / length(betaord[, , jj])
 
+      # silurian
       tisp <- dim(betasil)
       compa <- purrr::map(seq(tisp[2]), ~ betasil[, .x, jj] > betahir[, jj])
       sp[jj] <- sum(purrr::map_dbl(compa, ~ sum(.x))) / length(betasil[, , jj])
@@ -357,3 +380,18 @@ compare_hir <- function(shelly, hirnantian = 445.6, brks) {
   out
 }
 
+
+
+plot_diffdiv <- function(shelly, nsim, foo = mean) {
+  # simulate from posterior, calculate mean for each time point for each sim
+  mm <- get_postpredstat(shelly, nsim, foo)
+  mm <- purrr::reduce(mm, rbind)
+  # g is taxonomic group
+
+  # probability t+1 is greater than t
+  # make pairs to map
+  # filter to pair
+  # compare pair
+}
+
+#compare_hirdiv <- function(shelly, hirnantian, brks, nsim, foo = mean)
