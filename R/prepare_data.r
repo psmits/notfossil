@@ -22,7 +22,7 @@ source('../R/download_scrap.r')  # just macrostrat
 # constants
 constant <- 20
 shelly <- c('Brachiopoda', 'Anthozoa', 'Trilobita', 
-            'Bivalvia', 'Gastropoda', 'Cephalopoda')
+            'Bivalvia', 'Gastropoda')#, 'Cephalopoda')
 ord <- c(460.4, 427.4)
 hirnantian <- 445.6
 
@@ -126,7 +126,6 @@ out <- purrr::map(out, function(x) {
                     m <- x$unit_id != 19112
                     x <- x[m, ]
                     x})
-
 
 # get the data in stan format
 # each taxon group individually

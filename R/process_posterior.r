@@ -43,7 +43,7 @@ ord <- c(460.4, 427.4)
 hirnantian <- 445.6
 nsim <- 1000
 shelly <- c('Brachiopoda', 'Anthozoa', 'Trilobita', 
-            'Bivalvia', 'Gastropoda', 'Cephalopoda', 'Mollusca')
+            'Bivalvia', 'Gastropoda', 'Mollusca')#'Cephalopoda'
 
 
 # posterior predictive /checks
