@@ -1,152 +1,3 @@
-# posterior predictive simulations
-postpred <- function(post, sim) {
-  N <- ncol(post$location)
-  grab <- sample(4000, nsim)
-  ppc <- list()
-  for(jj in seq(nsim)) {
-    gg <- grab[jj]
-    oo <- c()
-    for(ii in seq(N)) {
-      oo[ii] <- rztnbinom(1, mu = post$location[gg, ii], theta = post$phi[gg])
-    }
-    ppc[[jj]] <- oo
-  }
-  ppc
-}
-
-# summary statistic for time points from posterior predictive dist
-get_postpredstat <- function(shelly, nsim, foo = mean) {
-  out <- list()
-  for(ii in seq(length(shelly))) {
-    load(paste0('../data/data_dump/diversity_image_', shelly[ii], '.rdata'))
-    pat <- paste0('trunc\\_[0-9]\\_', shelly[ii])
-    files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
-    fit <- read_stan_csv(files)
-    post <- rstan::extract(fit, permuted = TRUE)
-    pp <- postpred(post, nsim)
-
-    by.time <- llply(pp, function(x) split(x, standata$t))
-    mean.time <- llply(by.time, function(x) laply(x, foo))
-
-    mean.time <- llply(mean.time, function(x) {
-                         x <- cbind(x, seq(nrow(brks)))
-                         x})
-
-    mean.time <- Reduce(rbind, 
-                        Map(function(x, y) 
-                            cbind(x, y), mean.time, seq(nsim)))
-    mean.time <- data.frame(mean.time, g = shelly[ii])
-    names(mean.time) <- c('est', 'time', 'sim', 'g')
-    out[[ii]] <- mean.time
-  }
-  names(out) <- shelly
-
-  out                                  # list by taxonomic group
-}
-
-
-# posterior predictive checks
-# lots of internal IO
-postchecks<- function(shelly, nsim, silent = FALSE) {
-  load(paste0('../data/data_dump/diversity_image_', shelly, '.rdata'))
-  pat <- paste0('trunc\\_[0-9]\\_', shelly)
-  files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
-  fit <- read_stan_csv(files)
-  if(!silent) {
-    check_all_diagnostics(fit, max_depth = 15)
-  }
-  post <- rstan::extract(fit, permuted = TRUE)
-
-  ppc <- postpred(post, nsim)
-
-  # posterior predictive checks
-  checks <- checks.single(standata$y, ppc)
-  checks.time <- checks.group(standata$y, ppc, group = standata$t)
-  out <- list(data = standata, post = post,
-              checks = checks, checks.time = checks.time)
-  out
-}
-
-
-
-
-q75 <- function(x) quantile(x, 0.75)
-q25 <- function(x) quantile(x, 0.25)
-
-# internal checks
-checks.single <- function(y, ppc) {
-  ppc <- Reduce(rbind, ppc)
-
-  # density
-  ppc.dens <- ppc_dens_overlay(y, ppc[1:50, ])
-  ppc.hist <- ppc_hist(y, ppc[1:5, ])
-
-  # point estimates
-  ppc.mean <- ppc_stat(y, ppc, stat = 'mean')
-  ppc.sd <- ppc_stat(y, ppc, stat = 'sd')
-  ppc.max <- ppc_stat(y, ppc, stat = 'max')
-  #prop_zero <- function(x) mean(x == 0)
-  #ppc.zero <- ppc_stat(y, ppc, stat = 'prop_zero')
-  ppc.q25 <- ppc_stat(y, ppc, stat = 'q25')
-  ppc.q75 <- ppc_stat(y, ppc, stat = 'q75')
-
-  # error
-  ppc.err <- ppc_error_scatter(y, ppc[1:6, ])
-  ppc.avgerr <- ppc_error_scatter_avg(y, ppc)
-  ppc.ecdf <- ppc_ecdf_overlay(y, ppc[1:50, ])
-
-  # rootograms because i find them easy to read
-  root.gg <- ppc_rootogram(y, ppc, style = 'hanging', prob = 0.8)
-
-  # bars
-  ppc.bars <- ppc_bars(y, ppc)
-
-  # output
-  out <- list(mean = ppc.mean, 
-              sd = ppc.sd, 
-              max = ppc.max, 
-              #zero = ppc.zero, 
-              q25 = ppc.q25,
-              q75 = ppc.q75,
-              err = ppc.err, 
-              avgerr = ppc.avgerr, 
-              ecdf = ppc.ecdf, 
-              root = root.gg,
-              bar = ppc.bars,
-              dens = ppc.dens,
-              hist = ppc.hist)
-  out
-}
-
-# internal checks
-checks.group <- function(y, ppc, group) {
-  ppc <- Reduce(rbind, ppc)
-
-  # by group
-  ppc.bars.group <- ppc_bars_grouped(y, ppc, group = group)
-  ppc.mean.group <- ppc_stat_grouped(y, ppc, group = group, stat = 'mean')
-  ppc.sd.group <- ppc_stat_grouped(y, ppc, group = group, stat = 'sd')
-  ppc.max.group <- ppc_stat_grouped(y, ppc, group = group, stat = 'max')
-  ppc.q25.group <- ppc_stat_grouped(y, ppc, group = group, stat = 'q25')
-  ppc.q75.group <- ppc_stat_grouped(y, ppc, group = group, stat = 'q75')
-  ppc.avgerr.group <- ppc_scatter_avg_grouped(y, ppc, group = group)
-  ppc.violin.group <- ppc_violin_grouped(y, ppc, group = group, 
-                                         y_draw = 'points')
-
-  # all the plots
-  out <- list(bar.group = ppc.bars.group,
-              mean.group = ppc.mean.group,
-              sd.group = ppc.sd.group,
-              max.group = ppc.max.group,
-              q25.group = ppc.q25.group,
-              q75.group = ppc.q75.group,
-              avgerr.group = ppc.avgerr.group,
-              violin.group = ppc.violin.group
-              )
-  out
-}
-
-
 # plot of diversity through time compared to mean estimated from posterior
 # lots of io but puts out a plot
 plot_divtime <- function(shelly, brks, vert) {
@@ -205,12 +56,6 @@ plot_covtime <- function(shelly, brks, covname, vert) {
     fit <- read_stan_csv(files)
     post <- rstan::extract(fit, permuted = TRUE)
 
-    # covariates are : 
-    #   intercept
-    #   (max) thickness
-    #   areal extent
-    #   subsurface
-    #   composition siliciclastic (carbonate is base)
 
     # violins
     mm <- melt(post$beta)
@@ -274,7 +119,7 @@ plot_covtime <- function(shelly, brks, covname, vert) {
 
 
 # look at differences in effects through time 
-plot_diffbeta <- function(shelly, covname = covname) {
+plot_diffbeta <- function(shelly, covname) {
 
   get_diffbeta <- function(x, cova = 1) {
     dd <- dim(x)
@@ -302,20 +147,16 @@ plot_diffbeta <- function(shelly, covname = covname) {
 
   cov_timepairs <- get_covdiff(shelly)
 
-  normal <- function(x) (x - min(x)) / (max(x) - min(x))
   mctp <- melt(cov_timepairs)
   names(mctp) <- c('value', 'timepair', 'covariate', 'taxon')
-  mctp <- mctp %>%
+  mctp <- mctp %>% 
     group_by(timepair, covariate, taxon) %>%
-    dplyr::mutate(p = sum(value > 0)/ length(value),
-                  ip = ifelse(p > 0.5, p, 1 - p)) %>%
-    ungroup()
-
+    dplyr::summarize(p = sum(value > 0) / length(value))
+  
   mctp$covariate <- with(mctp, {
                            plyr::mapvalues(covariate, 
                                            from = unique(covariate),
                                            to = covname)})
-  mctp$ip <- normal(mctp$ip)
 
   prsss <- as.character(interaction(seq(from = 1, to = nrow(brks) - 1), 
                                     seq(from = 2, to = nrow(brks))))
@@ -326,15 +167,13 @@ plot_diffbeta <- function(shelly, covname = covname) {
   mctp$timepair <- factor(mctp$timepair, levels = prsss)
 
   # value, time pair, covariate, taxon
-  mct <- ggplot(mctp, aes(x = timepair, y = value, 
-                          group = timepair, fill = p, colour = p))
-  mct <- mct + geom_violin(aes(alpha = ip))
-  mct <- mct + facet_grid(taxon ~ covariate, scales = 'free_y')
-  mct <- mct + scale_fill_distiller(name = 'Probability > 0',
-                                    palette = 'RdBu', limits = c(0, 1))
-  mct <- mct + scale_colour_distiller(name = 'Probability > 0',
-                                      palette = 'RdBu', limits = c(0, 1))
-  mct <- mct + scale_alpha(guide = FALSE)
+  mctp
+  mct <- ggplot(mctp, aes(x = timepair, y = p, group = taxon)) + 
+    geom_line() +
+    geom_hline(yintercept = 0.9, linetype = 'dashed', alpha = 0.25) +
+    geom_hline(yintercept = 0.1, linetype = 'dashed', alpha = 0.25) +
+    facet_grid(taxon ~ covariate) +
+    labs(x = 'time pair', y = 'probability')
 
   mct
 }
@@ -375,23 +214,83 @@ compare_hirbeta <- function(shelly, hirnantian = 445.6, brks) {
     silprob[[ii]] <- sp
   }
   names(ordprob) <- names(silprob) <- shelly
-  out <- list(ordivician = ordprob, 
-              silurian = silprob)
+  out <- transpose(list(ordivician = ordprob, 
+                        silurian = silprob))
   out
 }
 
 
 
-plot_diffdiv <- function(shelly, nsim, foo = mean) {
+plot_diffdiv <- function(shelly, nsim, foo = mean, brks) {
   # simulate from posterior, calculate mean for each time point for each sim
   mm <- get_postpredstat(shelly, nsim, foo)
-  mm <- purrr::reduce(mm, rbind)
+  
+  #mm <- purrr::reduce(mm, rbind)
   # g is taxonomic group
 
-  # probability t+1 is greater than t
-  # make pairs to map
-  # filter to pair
-  # compare pair
+  get_diffdiv <- function(x) {
+    xt <- split(x, x$time)
+    nn <- x %>% dplyr::summarize(n = n_distinct(time)) %>% unlist()
+    d1 <- seq(from = 1, to = nn - 1)
+    d2 <- seq(from = 2, to = nn)
+    nc <- seq(length(d1))
+    out <- purrr::map(nc, ~ xt[[d1[.x]]]$est - xt[[d2[.x]]]$est) %>%
+      purrr::map_dbl(., ~ sum(.x > 0) / length(.x))
+
+    out
+  }
+  o <- purrr::map(mm, get_diffdiv)
+  
+  # give the times for plotting
+  nn <- nrow(brks)
+  d1 <- seq(from = 1, to = nn - 1)
+  d2 <- seq(from = 2, to = nn)
+  prsss <- as.character(interaction(d1, d2))
+  fp <- purrr::map(o, ~ tibble(p = .x, comp = prsss)) %>% 
+    bind_rows(.id = 'taxon')
+
+  fp$taxon <- factor(fp$taxon, levels = unique(shelly))
+  fp$comp <- factor(fp$comp, levels = prsss)
+  fpg <- ggplot(fp, aes(x = comp, y = p, group = taxon)) +
+    geom_line() + 
+    geom_hline(yintercept = 0.9, linetype = 'dashed', alpha = 0.25) +
+    geom_hline(yintercept = 0.1, linetype = 'dashed', alpha = 0.25) +
+    facet_grid(taxon ~ .) +
+    labs(x = 'time pair', y = 'probability')
+
+  fpg
+
 }
 
-#compare_hirdiv <- function(shelly, hirnantian, brks, nsim, foo = mean)
+compare_hirdiv <- function(shelly, hirnantian = 445.6, brks, nsim, foo = mean) {
+#compare_hirbeta <- function(shelly, hirnantian = 445.6, brks) {
+  mm <- get_postpredstat(shelly, nsim, foo)
+  
+  # useful values to have around
+  tc <- which(brks == hirnantian)[1] # the hirnantian
+  dd <- nrow(brks) # time steps
+
+  get_pval <- function(x, divhir) {
+    xs <- split(x, x$time)
+    compa <- purrr::map(xs, ~ .x$est > divhir$est)
+    ca <- purrr::map_dbl(compa, ~ sum(.x))
+    sum(ca) / length(unlist(compa))
+  }
+ 
+  # use get_pval to get ord vs hir, sil vs hir
+  split_extract <- function(x, tc, dd) {
+    divhir <- x[x$time == tc, ]
+    divord <- x[x$time %in% seq(tc - 1), ]
+    divsil <- x[x$time %in% seq(from = tc + 1, to = dd), ]
+
+    op <- get_pval(divord, divhir)
+    os <- get_pval(divsil, divhir)
+    out <- list(ordovician = op, 
+                silurian = os)
+    out
+  }
+
+  # get the (unlabeled) pvalues
+  pv <- purrr::map(mm, ~ split_extract(.x, tc, dd))
+  pv
+}
