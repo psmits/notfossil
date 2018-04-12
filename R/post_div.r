@@ -214,7 +214,7 @@ compare_hirbeta <- function(shelly, hirnantian = 445.6, brks) {
     silprob[[ii]] <- sp
   }
   names(ordprob) <- names(silprob) <- shelly
-  out <- transpose(list(ordivician = ordprob, 
+  out <- transpose(list(ordovician = ordprob, 
                         silurian = silprob))
   out
 }

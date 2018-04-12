@@ -1,9 +1,3 @@
-# manipulation
-library(reshape2)
-library(plyr)
-library(stringr)
-library(tidyverse)
-
 # analysis
 library(countreg)
 library(compositions)
@@ -13,12 +7,18 @@ library(coda)
 library(loo)
 
 # plotting
-library(ggplot2)
 library(scales)
 library(grid)
 library(ggridges)
 library(bayesplot)
 library(xtable)
+
+# manipulation
+library(reshape2)
+library(plyr)
+library(stringr)
+library(tidyverse)
+
 
 # helpful functions
 source('../R/stan_utility.R')
@@ -43,8 +43,8 @@ constant <- 20
 ord <- c(460.4, 427.4)
 hirnantian <- 445.6
 nsim <- 1000
-shelly <- c('Anthozoa', # divergences
-            'Bivalvia', # divergences
+shelly <- c(# 'Anthozoa', # divergences
+            # 'Bivalvia', # divergences
             'Brachiopoda', 
             'Gastropoda', 
             'Mollusca',
@@ -56,15 +56,15 @@ check.result <- Map(function(x) postchecks(x, nsim), shelly)
 
 
 # make plots for the posterior predictive tests
-chckm <- bayesplot_grid(check.result$Anthozoa$checks$mean,
-                        check.result$Bivalvia$checks$mean,
+chckm <- bayesplot_grid(#check.result$Anthozoa$checks$mean,
+                        #check.result$Bivalvia$checks$mean,
                         check.result$Brachiopoda$checks$mean,
                         check.result$Gastropoda$checks$mean,
                         check.result$Mollusca$checks$mean,
                         check.result$Trilobita$checks$mean,
                         grid_args = list(ncol = 2),
-                        titles = c('Anth mean',
-                                   'Biv mean', 
+                        titles = c(# 'Anth mean',
+                                   # 'Biv mean', 
                                    'Brac mean', 
                                    'Gas mean',
                                    'Mol mean',
@@ -72,15 +72,15 @@ chckm <- bayesplot_grid(check.result$Anthozoa$checks$mean,
 ggsave(plot = chckm, filename = '../doc/figure/ppc_mean.png',
        width = 10, height = 8)
 
-chcks <- bayesplot_grid(check.result$Anthozoa$checks$sd,
-                        check.result$Bivalvia$checks$sd,
+chcks <- bayesplot_grid(#check.result$Anthozoa$checks$sd,
+                        #check.result$Bivalvia$checks$sd,
                         check.result$Brachiopoda$checks$sd,
                         check.result$Gastropoda$checks$sd,
                         check.result$Mollusca$checks$sd,
                         check.result$Trilobita$checks$sd,
                         grid_args = list(ncol = 2),
-                        titles = c('Anth sd',
-                                   'Biv sd', 
+                        titles = c(# 'Anth sd',
+                                   # 'Biv sd', 
                                    'Brac sd', 
                                    'Gas sd',
                                    'Mol sd', 
@@ -88,15 +88,15 @@ chcks <- bayesplot_grid(check.result$Anthozoa$checks$sd,
 ggsave(plot = chcks, filename = '../doc/figure/ppc_sd.png',
        width = 10, height = 8)
 
-chckroot <- bayesplot_grid(check.result$Anthozoa$checks$root,
-                           check.result$Bivalvia$checks$root,
+chckroot <- bayesplot_grid(#check.result$Anthozoa$checks$root,
+                           #check.result$Bivalvia$checks$root,
                            check.result$Brachiopoda$checks$root,
                            check.result$Gastropoda$checks$root,
                            check.result$Mollusca$checks$root,
                            check.result$Trilobita$checks$root,
                            grid_args = list(ncol = 2),
-                           titles = c('Anth root',
-                                      'Biv root', 
+                           titles = c(# 'Anth root',
+                                      # 'Biv root', 
                                       'Brac root', 
                                       'Gas root',
                                       'Mol root', 
@@ -107,16 +107,21 @@ ggsave(plot = chckroot, filename = '../doc/figure/ppc_root.png',
 
 
 
-d1 <- check.result$Anthozoa$checks$root + coord_cartesian(xlim = c(-1, 65))
-d2 <- check.result$Bivalvia$checks$root + coord_cartesian(xlim = c(-1, 65))
+#d1 <- check.result$Anthozoa$checks$root + coord_cartesian(xlim = c(-1, 65))
+#d2 <- check.result$Bivalvia$checks$root + coord_cartesian(xlim = c(-1, 65))
 d3 <- check.result$Brachiopoda$checks$root + coord_cartesian(xlim = c(-1, 65))
 d4 <- check.result$Gastropoda$checks$root + coord_cartesian(xlim = c(-1, 65))
 d5 <- check.result$Mollusca$checks$root + coord_cartesian(xlim = c(-1, 65))
 d6 <- check.result$Trilobita$checks$root + coord_cartesian(xlim = c(-1, 65))
-chckroot <- bayesplot_grid(d1, d2, d3, d4, d5, d6, 
+chckroot <- bayesplot_grid(#d1, 
+                           #d2, 
+                           d3, 
+                           d4, 
+                           d5, 
+                           d6, 
                            grid_args = list(ncol = 2),
-                           titles = c('Anth root',
-                                      'Biv root', 
+                           titles = c(# 'Anth root',
+                                      # 'Biv root', 
                                       'Brac root', 
                                       'Gas root',
                                       'Mol root', 
@@ -124,15 +129,15 @@ chckroot <- bayesplot_grid(d1, d2, d3, d4, d5, d6,
 ggsave(plot = chckroot, filename = '../doc/figure/ppc_root_zoom.png',
        width = 10, height = 8)
 
-chckerr <- bayesplot_grid(check.result$Anthozoa$checks$err,
-                          check.result$Bivalvia$checks$err,
+chckerr <- bayesplot_grid(#check.result$Anthozoa$checks$err,
+                          #check.result$Bivalvia$checks$err,
                           check.result$Brachiopoda$checks$err,
                           check.result$Gastropoda$checks$err,
                           check.result$Mollusca$checks$err,
                           check.result$Trilobita$checks$err,
                           grid_args = list(ncol = 2),
-                          titles = c('Anth err',
-                                     'Biv err', 
+                          titles = c(# 'Anth err',
+                                     # 'Biv err', 
                                      'Brac err', 
                                      'Gas err',
                                      'Mol err', 
@@ -140,15 +145,15 @@ chckerr <- bayesplot_grid(check.result$Anthozoa$checks$err,
 ggsave(plot = chckerr, filename = '../doc/figure/ppc_err.png',
        width = 10, height = 8)
 
-chckecdf <- bayesplot_grid(check.result$Anthozoa$checks$ecdf,
-                           check.result$Bivalvia$checks$ecdf,
+chckecdf <- bayesplot_grid(#check.result$Anthozoa$checks$ecdf,
+                           #check.result$Bivalvia$checks$ecdf,
                            check.result$Brachiopoda$checks$ecdf,
                            check.result$Gastropoda$checks$ecdf,
                            check.result$Mollusca$checks$ecdf,
                            check.result$Trilobita$checks$ecdf,
                            grid_args = list(ncol = 2),
-                           titles = c('Anth ecdf',
-                                      'Biv ecdf', 
+                           titles = c(# 'Anth ecdf',
+                                      # 'Biv ecdf', 
                                       'Brac ecdf', 
                                       'Gas ecdf',
                                       'Mol ecdf', 
@@ -156,15 +161,15 @@ chckecdf <- bayesplot_grid(check.result$Anthozoa$checks$ecdf,
 ggsave(plot = chckecdf, filename = '../doc/figure/ppc_ecdf.png',
        width = 10, height = 8)
 
-chckdens <- bayesplot_grid(check.result$Anthozoa$checks$dens,
-                           check.result$Bivalvia$checks$dens,
+chckdens <- bayesplot_grid(#check.result$Anthozoa$checks$dens,
+                           #check.result$Bivalvia$checks$dens,
                            check.result$Brachiopoda$checks$dens,
                            check.result$Gastropoda$checks$dens,
                            check.result$Mollusca$checks$dens,
                            check.result$Trilobita$checks$dens,
                            grid_args = list(ncol = 2),
-                           titles = c('Anth dens',
-                                      'Biv dens', 
+                           titles = c(# 'Anth dens',
+                                      # 'Biv dens', 
                                       'Brac dens', 
                                       'Gas dens',
                                       'Mol dens', 
@@ -172,15 +177,21 @@ chckdens <- bayesplot_grid(check.result$Anthozoa$checks$dens,
 ggsave(plot = chckdens, filename = '../doc/figure/ppc_dens.png',
        width = 10, height = 8)
 
-d1 <- check.result$Anthozoa$checks$dens + coord_cartesian(xlim = c(-1, 65))
-d2 <- check.result$Bivalvia$checks$dens + coord_cartesian(xlim = c(-1, 65))
+#d1 <- check.result$Anthozoa$checks$dens + coord_cartesian(xlim = c(-1, 65))
+#d2 <- check.result$Bivalvia$checks$dens + coord_cartesian(xlim = c(-1, 65))
 d3 <- check.result$Brachiopoda$checks$dens + coord_cartesian(xlim = c(-1, 65))
 d4 <- check.result$Gastropoda$checks$dens + coord_cartesian(xlim = c(-1, 65))
 d5 <- check.result$Mollusca$checks$dens + coord_cartesian(xlim = c(-1, 65))
 d6 <- check.result$Trilobita$checks$dens + coord_cartesian(xlim = c(-1, 65))
-chckdens <- bayesplot_grid(d1, d2, d3, d4, d5, d6, grid_args = list(ncol = 2),
-                           titles = c('Anth dens',
-                                      'Biv dens', 
+chckdens <- bayesplot_grid(#d1, 
+                           #d2, 
+                           d3, 
+                           d4, 
+                           d5, 
+                           d6, 
+                           grid_args = list(ncol = 2),
+                           titles = c(# 'Anth dens',
+                                      # 'Biv dens', 
                                       'Brac dens', 
                                       'Gas dens',
                                       'Mol dens', 
@@ -214,7 +225,6 @@ ggsave(plot = dg, filename = '../doc/figure/unitdiv_diff.png',
 compare_pvals_div <- compare_hirdiv(shelly, hirnantian, brks, nsim, foo = mean)
 
 
-
 # effects
 # covariate effects through time
 covname <- c('intercept (carbonate)', 'thickness', 'area', 
@@ -234,3 +244,30 @@ compare_pvals_beta <- compare_hirbeta(shelly, hirnantian, brks)
 
 
 # have a plot to think about compare_pvals_*
+cpdiv <- melt(compare_pvals_div)
+names(cpdiv) <- c('value', 'time', 'taxon')
+
+cpbet <- purrr::map(compare_pvals_beta, function(a) 
+                    purrr::map(a, ~ tibble(value = .x, covname)))
+cpbet <- purrr::map(cpbet, ~ bind_rows(.x, .id = 'time')) %>%
+  bind_rows(., .id = 'taxon')
+
+
+# plot intercept stuff
+names(cpdiv) <- c('div.value', 'time', 'taxon')
+names(cpbet) <- c('taxon', 'time', 'cov.value', 'covname')
+
+toplot <- left_join(cpbet, cpdiv) %>%
+  dplyr::mutate(modifier = interaction(taxon, time))
+
+tpg <- ggplot(toplot, aes(x = div.value, y = cov.value, colour = taxon)) +
+  geom_point(aes(shape = covname)) + 
+  geom_abline(intercept = 0, slope = 1) +
+  coord_fixed(ratio = 1, xlim = c(0, 1), ylim = c(0, 1)) +
+  facet_wrap(~ time) + 
+  labs(x = 'probability (ord, sil) div > hir div',
+       y = 'probability (ord, sil) est > hir est')
+ggsave(plot = tpg, filename = '../doc/figure/compare_pval.png',
+       width = 11, height = 8.5)
+
+
