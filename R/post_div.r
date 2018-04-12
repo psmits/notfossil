@@ -36,8 +36,8 @@ plot_divtime <- function(shelly, brks, vert) {
   cg <- cg + geom_pointrange(data = time.mean, 
                              mapping = aes(x = time, y = mean, 
                                            ymin = low, ymax = high),
-                             colour = 'blue', size = 1.5, 
-                             fatten = 2, alpha = 0.75)
+                             colour = 'blue', size = 1, 
+                             fatten = 1.5, alpha = 0.75)
   cg <- cg + scale_x_reverse()
   cg <- cg + labs(x = 'Time (Mya)', y = 'geological unit diversity')
   cg
@@ -46,7 +46,7 @@ plot_divtime <- function(shelly, brks, vert) {
 
 
 # covariates through time
-plot_covtime <- function(shelly, brks, covname, vert) {
+plot_covtime <- function(shelly, brks, covname, vert, violin = FALSE) {
   # covariate effects
   out <- out2 <- list()
   for(ii in seq(length(shelly))) {
@@ -102,10 +102,6 @@ plot_covtime <- function(shelly, brks, covname, vert) {
   mg <- mg + geom_hline(yintercept = 0, colour = 'darkgrey')
   mg <- mg + geom_vline(xintercept = vert, alpha = 0.5, linetype = 'dashed')
   mg <- mg + geom_vline(xintercept = 443.8, alpha = 0.5, linetype = 'dotdash')
-  mg <- mg + geom_violin(data = betaviol, 
-                         mapping = aes(x = time, y = value, group = time, 
-                                       fill = p, colour = p), 
-                         alpha = 0.5)
   mg <- mg + geom_pointrange(mapping = aes(ymin = low, ymax = high), fatten = 2)
   mg <- mg + facet_grid(g ~ covariate, scales = 'free_y')
   mg <- mg + scale_x_reverse()
@@ -114,6 +110,14 @@ plot_covtime <- function(shelly, brks, covname, vert) {
   mg <- mg + scale_colour_distiller(name = 'Probability > 0', 
                                     palette = 'RdBu', limits = c(0, 1))
   mg <- mg + labs(x = 'Time (Mya)', y = 'estimated regression coefficient')
+  
+  if(violin) {
+    mg <- mg + geom_violin(data = betaviol, 
+                           mapping = aes(x = time, y = value, group = time, 
+                                         fill = p, colour = p), 
+                           alpha = 0.5)
+  }
+  
   mg
 }
 
