@@ -40,12 +40,19 @@ export_standata <- function(x, name, type = c('diversity', 'occurrence')) {
   standata$T <- max(bpod$bin)
 
   # make X
-  K <- 3  # all plus intercept; initial
+  K <- 4  # all plus intercept; initial
   # initially just intercept
   X <- matrix(1, nrow = standata$N, ncol = K)
   X[, 2] <- arm::rescale(log1p(bpod$max_thick))
   X[, 3] <- arm::rescale(log1p(bpod$col_area))
-  
+
+  nt <- pmap_dbl(list(bln = bpod$b_plng,
+                      bpl = bpod$b_plat,
+                      tln = bpod$t_plng,
+                      tpl = bpod$t_plat),
+                 .f = function(bln, bpl, tln, tpl) 
+                   geomean(rbind(c(bln, bpl), c(tln, tpl)))[2])
+  X[, 4] <- arm::rescale(nt)
 
   X <- cbind(X, ilr(litmat))
   K <- ncol(X)
