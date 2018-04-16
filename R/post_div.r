@@ -1,11 +1,12 @@
 # plot of diversity through time compared to mean estimated from posterior
 # lots of io but puts out a plot
-plot_divtime <- function(shelly, brks, vert) {
+plot_divtime <- function(shelly, type, brks, vert) {
   midpoint <- apply(brks, 1, mean)
   # plot up unit div through time vs our estimate of average
   cc <- list()
   for(ii in seq(length(shelly))) {
-    load(paste0('../data/data_dump/diversity_image_', shelly[ii], '.rdata'))
+    load(paste0('../data/data_dump/diversity_image_', 
+                shelly[ii], '_', type, '.rdata'))
     cc[[ii]] <- data.frame(x = standata$t, y = standata$y, g = shelly[ii])
   }
   cc <- Reduce(rbind, cc)
@@ -20,7 +21,7 @@ plot_divtime <- function(shelly, brks, vert) {
                         position = position_jitter(width = 0.1, height = 0))
   cg <- cg + facet_grid(g ~ .)
 
-  mean.time <- get_postpredstat(shelly, nsim, mean)
+  mean.time <- get_postpredstat(shelly, type, nsim, mean)
   mean.time <- purrr::reduce(mean.time, rbind)
 
   by.time <- group_by(mean.time, time, g)
@@ -46,12 +47,13 @@ plot_divtime <- function(shelly, brks, vert) {
 
 
 # covariates through time
-plot_covtime <- function(shelly, brks, covname, vert, violin = FALSE) {
+plot_covtime <- function(shelly, type, brks, covname, vert, violin = FALSE) {
   # covariate effects
   out <- out2 <- list()
   for(ii in seq(length(shelly))) {
-    load(paste0('../data/data_dump/diversity_image_', shelly[ii], '.rdata'))
-    pat <- paste0('trunc\\_[0-9]\\_', shelly[ii])
+    load(paste0('../data/data_dump/diversity_image_', 
+                shelly[ii], '_', type, '.rdata'))
+    pat <- paste0('trunc\\_[0-9]\\_', shelly[ii], '_', type)
     files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
     fit <- read_stan_csv(files)
     post <- rstan::extract(fit, permuted = TRUE)
@@ -123,7 +125,7 @@ plot_covtime <- function(shelly, brks, covname, vert, violin = FALSE) {
 
 
 # look at differences in effects through time 
-plot_diffbeta <- function(shelly, covname) {
+plot_diffbeta <- function(shelly, type, covname) {
 
   get_diffbeta <- function(x, cova = 1) {
     dd <- dim(x)
@@ -134,10 +136,10 @@ plot_diffbeta <- function(shelly, covname) {
     o <- purrr::map(nc, ~ x[, ds1[.x], cova] - x[, ds2[.x], cova])
     o
   }
-  get_covdiff <- function(shelly) {
+  get_covdiff <- function(shelly, type) {
     out <- list()
     for(ii in seq(length(shelly))) {
-      pat <- paste0('trunc\\_[0-9]\\_', shelly[ii])
+      pat <- paste0('trunc\\_[0-9]\\_', shelly[ii], '_', type)
       files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
       fit <- read_stan_csv(files)
       post <- rstan::extract(fit, permuted = TRUE)
@@ -149,7 +151,7 @@ plot_diffbeta <- function(shelly, covname) {
     out
   }
 
-  cov_timepairs <- get_covdiff(shelly)
+  cov_timepairs <- get_covdiff(shelly, type)
 
   mctp <- melt(cov_timepairs)
   names(mctp) <- c('value', 'timepair', 'covariate', 'taxon')
@@ -184,12 +186,12 @@ plot_diffbeta <- function(shelly, covname) {
 
 
 # covariate effects at the hirnantian
-compare_hirbeta <- function(shelly, hirnantian = 445.6, brks) {
+compare_hirbeta <- function(shelly, type, hirnantian = 445.6, brks) {
   tc <- which(brks == hirnantian)[1]
 
   ordprob <- silprob <- list()
   for(ii in seq(length(shelly))) {
-    pat <- paste0('trunc\\_[0-9]\\_', shelly[ii])
+    pat <- paste0('trunc\\_[0-9]\\_', shelly[ii], '_', type)
     files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
     fit <- read_stan_csv(files)
     post <- rstan::extract(fit, permuted = TRUE)
@@ -225,9 +227,9 @@ compare_hirbeta <- function(shelly, hirnantian = 445.6, brks) {
 
 
 
-plot_diffdiv <- function(shelly, nsim, foo = mean, brks) {
+plot_diffdiv <- function(shelly, type, nsim, foo = mean, brks) {
   # simulate from posterior, calculate mean for each time point for each sim
-  mm <- get_postpredstat(shelly, nsim, foo)
+  mm <- get_postpredstat(shelly, type, nsim, foo)
   
   #mm <- purrr::reduce(mm, rbind)
   # g is taxonomic group
@@ -266,9 +268,10 @@ plot_diffdiv <- function(shelly, nsim, foo = mean, brks) {
 
 }
 
-compare_hirdiv <- function(shelly, hirnantian = 445.6, brks, nsim, foo = mean) {
+compare_hirdiv <- function(shelly, type, hirnantian = 445.6, 
+                           brks, nsim, foo = mean) {
 #compare_hirbeta <- function(shelly, hirnantian = 445.6, brks) {
-  mm <- get_postpredstat(shelly, nsim, foo)
+  mm <- get_postpredstat(shelly, type, nsim, foo)
   
   # useful values to have around
   tc <- which(brks == hirnantian)[1] # the hirnantian
@@ -297,4 +300,75 @@ compare_hirdiv <- function(shelly, hirnantian = 445.6, brks, nsim, foo = mean) {
   # get the (unlabeled) pvalues
   pv <- purrr::map(mm, ~ split_extract(.x, tc, dd))
   pv
+}
+
+
+
+
+
+# plot all the diversity and effect information that's extracted
+plot_infertests <- function(shelly, type, brks, vert, foo, nsim) {
+# diversity
+# unit div through time vs estimated div from model
+  dg <- plot_divtime(shelly, type = type, brks, vert = hirnantian)
+  tn <- paste0('../doc/figure/unitdiv_time_', type, '.png')
+  ggsave(plot = dg, filename = tn, width = 11, height = 8.5)
+
+  # step div
+  # expected unit diversity
+  dg <- plot_diffdiv(shelly, type = type, nsim, foo = mean, brks)
+  tn <- paste0('../doc/figure/unitdiv_diff_', type, '.png')
+  ggsave(plot = dg, filename = tn, width = 11, height = 8.5)
+
+  # p-val of div differences
+  compare_pvals_div <- compare_hirdiv(shelly, type = type,
+                                      hirnantian, brks, nsim, foo = mean)
+
+
+  # effects
+  # covariate effects through time
+  covname <- c('intercept (carbonate)', 'thickness', 'area', 
+               'dolomite', 'fine silic.', 'coarse silic.')
+  cg <- plot_covtime(shelly, type = type, brks, 
+                     covname = covname, vert = hirnantian)
+  tn <- paste0('../doc/figure/cov_time_', type, '.png')
+  ggsave(plot = cg, filename = tn, width = 11, height = 8.5)
+
+
+  # step differences in coef ests
+  bg <- plot_diffbeta(shelly, type = type, covname)
+  tn <- paste0('../doc/figure/cov_diff_', type, '.png')
+  ggsave(plot = bg, filename = tn, width = 11, height = 8.5)
+
+
+  # p-value of beta hir vs ord, hir vs sil
+  compare_pvals_beta <- compare_hirbeta(shelly, type = type, hirnantian, brks)
+
+
+  # have a plot to think about compare_pvals_*
+  cpdiv <- melt(compare_pvals_div)
+  names(cpdiv) <- c('value', 'time', 'taxon')
+
+  cpbet <- purrr::map(compare_pvals_beta, function(a) 
+                      purrr::map(a, ~ tibble(value = .x, covname)))
+  cpbet <- purrr::map(cpbet, ~ bind_rows(.x, .id = 'time')) %>%
+    bind_rows(., .id = 'taxon')
+
+
+  # plot intercept stuff
+  names(cpdiv) <- c('div.value', 'time', 'taxon')
+  names(cpbet) <- c('taxon', 'time', 'cov.value', 'covname')
+
+  toplot <- left_join(cpbet, cpdiv) %>%
+    dplyr::mutate(modifier = interaction(taxon, time))
+
+  tpg <- ggplot(toplot, aes(x = div.value, y = cov.value, colour = taxon)) +
+    geom_point(aes(shape = covname)) + 
+    geom_abline(intercept = 0, slope = 1) +
+    coord_fixed(ratio = 1, xlim = c(0, 1), ylim = c(0, 1)) +
+    facet_wrap(~ time) + 
+    labs(x = 'probability (ord, sil) div > hir div',
+         y = 'probability (ord, sil) est > hir est')
+    tn <- paste0('../doc/figure/compare_pval_', type, '.png')
+    ggsave(plot = tpg, filename = tn, width = 11, height = 8.5)
 }
