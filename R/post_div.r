@@ -307,7 +307,7 @@ compare_hirdiv <- function(shelly, type, hirnantian = 445.6,
 
 
 # plot all the diversity and effect information that's extracted
-plot_infertests <- function(shelly, type, brks, vert, foo, nsim) {
+plot_infertests <- function(shelly, type, brks, vert, foo, nsim, covname) {
 # diversity
 # unit div through time vs estimated div from model
   dg <- plot_divtime(shelly, type = type, brks, vert = hirnantian)
@@ -324,11 +324,8 @@ plot_infertests <- function(shelly, type, brks, vert, foo, nsim) {
   compare_pvals_div <- compare_hirdiv(shelly, type = type,
                                       hirnantian, brks, nsim, foo = mean)
 
-
   # effects
   # covariate effects through time
-  covname <- c('intercept (carbonate)', 'thickness', 'area', 
-               'dolomite', 'fine silic.', 'coarse silic.')
   cg <- plot_covtime(shelly, type = type, brks, 
                      covname = covname, vert = hirnantian)
   tn <- paste0('../doc/figure/cov_time_', type, '.png')

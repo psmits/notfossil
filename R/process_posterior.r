@@ -69,9 +69,11 @@ purrr::walk(check.result.oc, ppo)
 
 # plot all the inference plots (effects, est div, sigs, etc)
 # don't need to walk because internal loops/walks/etc
+covname <- c('intercept (carbonate)', 'thickness', 'area', 'latitude',
+             'dolomite', 'fine silic.', 'coarse silic.')
 mit <- partial(plot_infertests, 
                brks = brks, vert = hirnantian, 
-               foo = mean, nsim = nsim)
+               foo = mean, nsim = nsim, covname = covname)
 mitd <- partial(mit, type = type[1])
 mitd(shelly)
 mito <- partial(mit, type = type[2])
