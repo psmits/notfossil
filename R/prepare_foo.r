@@ -70,9 +70,9 @@ export_standata <- function(x, name, type = c('diversity', 'occurrence')) {
   }
 
   if(type == 'occurrence') {
-    standata$prior_intercept_location <- standata$prior_intercept_location * 10
-    standata$prior_intercept_location <- standata$prior_intercept_scale * 10
-    standata$prior_phi_scale <- standata$prior_phi_scale * 10
+    standata$prior_intercept_location <- 200
+    standata$prior_intercept_scale <- 100
+    standata$prior_phi_scale <- 500
   }
 
 

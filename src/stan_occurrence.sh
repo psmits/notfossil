@@ -1,4 +1,4 @@
-
+#!/bin/bash
 # occurrence data
 FILES=../data/data_dump/diversity_data_Brachiopoda_occurrence.data.R
 for f in $FILES;
@@ -96,3 +96,4 @@ do
   done
   wait
 done
+
