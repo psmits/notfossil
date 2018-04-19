@@ -17,27 +17,41 @@
 \section{Materials and Methods}
 
 \subsection{Geological unit information}
-Anthozoa, Brachiopoda, Bivalvia, Gastropoda, Bivalvia + Gastropoda, Trilobita, Cephalopoda
 
 All information used in this analysis is avaliable freely through Macrostrat CITATION and the Paleobiological Database PBDB CITATION. For this analysis, we used direct API calls to pull data from the relational databases underpinning both Macrostrat and the PBDB; this means that our analyses are inherently dynamic and can be instantly updated as these databases continue to grow.
 
-Our first API call is to the geological units database in Macrostrat, specifically for all units that have Permian sediments: \url{https://macrostrat.org/api/v2/units?interval\_name=Ordovician&response=long&format=csv}. In the language of relational data sets, the geological unit identification number (unit\_id) is the primary key from units calls and used to match the foreign key from the fossil database in Macrostrat. The unique collection identification number key matches the fossil information database from Macrostrat to the occurrence database in the Paleobiological Database.
+Macrostrat geological units that have some amount of their sediments within the Ordovician or Silurian; this requires two API calls to Macrostrat, one for each of the periods (e.g. /units?interval_name=Ordovician). These data frames were merged using a left-join with geological unit identification code (unit\_id) as the key value which prevents double counting of geologic units that range through both periods. 
 
-For an explicit description of the data gathering and preparing process, please see the /R/prepare\_data.r script from the project repository: \url{https://github.com/psmits/not\_fossil}.
+The key value of geological unit metadata associated with this data frame are the unique identifiers for each geological unit. These values can be used as the key value for linking these geological units to the fossils found within those units (e.g. /fossils?unit\_id=\dots). This aspect of the Macrostrat database includes information on the count of Paleobiology Database collections drawn from that unit, the count of unique fossils listed in the Paleobiology Database associated with that unit, the unique taxonomic identifiers for each of those fossils, and the unique identifiers for each of the collections drawn from that unit (cltn\_id). This final value acts as the foreign key for extracting fossil occurrence and taxonomic information from the Paleobiology Database.
 
-Geological units in Macrostrat have a variety of interesting metadata, max thickness (positive, real), areal extent (postive, real), if unit is strictly subsurface or not (binary), and the percent composition of carbonate and siliciclastic lithologies (compositional). 
+A final API call is made, this time to Paleobiology Database, using the collection id foreign key from Macrostrat (e.g. /occs/list.txt?coll\_id=\dots); this API call was technically done as two calls and the resulting union of those data frames is a data frame with all the metadata for all of the fossil occurrences in collections drawn from geological units from the Ordovician and Silurian present in Macrostrat.
+
+For an explicit description of the data gathering and preparing process, please see the /R/download\_scrap.r and /R/prepare\_data.r scripts from the project repository \url{https://github.com/psmits/not\_fossil}.
+
+
+The above series of API calls produces three data frames: Macrostrat geological units and their metadata, fossil counts and collection information for those Macrostrat geological units, and the unique fossils present in these units and their metadata from the Paleobiology database. 
+
+The geological unit metadata values that are relevant to this analysis include areal extent of the unit (positive, real values), maximum unit thickness (positive, real values), and the lithological description of the unit. Lithology is expressed as one or more natural language statements (e.g. sliciclastic sedimentary) and the percentage of the unit associated with that lithology.
+
+Lithological description, being made of natural language statements, requires some standardization and simplification to make it amenable to analysis. Ultimately, we described lithology as some combination of fine siliciclastics, coarse siliciclastics, dolomitic carbonates, and non-dolomitic carbonates. The multi-step process to reduce the original natural language descriptions is detailed here, though for the complete and explicit process the \tt{strict.lithology} function in R/rock\_mung.r script file from the project repository \url{https://github.com/psmits/not\_fossil}.
+
+Units that have at least one description including the words igneous, volcanic, metamorphic, chemical, anhydrite, evaporite, or halite were removed prior to analysis.
+After this step, descriptive terms were unified so that the natural language descriptions are easier match together (e.g. green and greenish become green, mudstone and mud become mudstone). Next, some additional words were removed from descriptions for either being too general or too specific (e.g. sedimentary, dark, etc.). Each of choices were arbitrary but ultimately did not effect the final description because of the strictness of the next step.
+
+The final step was assigning the final lithological descriptions amenable to analysis from the simplified natural language descriptions. Fine siliciclastics were defined as siltstone, claystone, mudstone, shale, and argillite while coarse siliciclastics were all other siliciclastic lithologies. Dolomitic carbonates are those lithologies containing the word ``dolomite'' in the descriptions. Finally, non-dolomitic carbonates were all other carbonate lithologies.
 
 Positive, real valued covariates were log plus one transformed, and then rescaled by subtracting mean and dividing by twice standard deviation. Rescaling the covariates has multiple advantages: 1) regression coefficients now describe the expected change in unit diversity per change in standard deviation of covariate, and 2) regression coefficients are comparable across covariates because they are all on the same scale (the expected standard deviation of a binary variable is 0.5).
 
+Compositional covariates are constrained to sum to 1 which creates degrees-of-freedom issues when trying to model their possible effects as including these covariates without appropriate transformation creates two or more nonidentifiable parameters. To that end, the composition variables were isometric log-ratio transformed (following CITATION) which reduces the total number of variables to one less than original as composition is defined relaid to a baseline (percent carbonates). Unfortunately, the scale and interpretations of the associated regression coefficients are different from the other covariates, making direct comparison tricky.
 
-Lithological composition was simplified to three descriptors: carbonates, coarse siliciclastics, and fine siliciclastics. All geological units are described by the percent composition of these three lithologies. Compositional covariates are constrained to sum to 1 which creates degrees-of-freedom issues when trying to model their possible effects as including these covariates without appropriate transformation creates two or more nonidentifiable parameters. To that end, the composition variables were isometric log-ratio transformed (following CITATION) which reduces the total number of variables to one less than original as composition is defined relaid to a baseline (percent carbonates). Unfortunately, the scale and interpretations of the associated regression coefficients are different from the other covariates, making direct comparison tricky.
+
+The fossil occurrence and diversity for each of the geological units was determined for each of the following taxonomic groups: Anthozoa, Brachiopoda, Bivalvia, Cephalopoda, Gastropoda, and Trilobita. Fossil membership was determined based on the metadata for phylum or class from the Paleobiology database.
+
 
 
 \subsection{Binning geologic units}
 
-Macrostrat units are ordered according to the underlying continuous-time age model CITATION. Geologic units, however, are not instantaneous and have a duration in time. Unfortunately the fossil collection information for each unit does not include within-unit superposition data; this means that the diversity within a geologic unit cannot be tracked trough time. Instead we have to focus on geologic units as the unit of our analysis. Importantly, units containing fossils tend to be shorter than units that do not (unpublished) most likely because the fossils help in correlating that unit in stratigraphic context which gives more precise temporal information; this helps with justifying our choice to assign each geologic unit to a single temporal bin. Specifically, we assign each geologic units to a single temporal bins based on which bin contained their midpoint. 
-
-Geologic units were binned according to their midpoint age; macrostrat provides a top and bottom age, by averaging those we get the midpoint age. The unit was assigned to Whatever temporal bin that midpoint age fell into.
+Macrostrat units are ordered according to the underlying continuous-time age model CITATION. Geologic units, however, are not instantaneous and have a duration in time. Unfortunately the fossil collection information for each unit does not include within-unit superposition data; this means that the diversity within a geologic unit cannot be tracked trough time. Instead we have to focus on geologic units as the unit of our analysis. Specifically, we assign each geologic units to a single temporal bins based on which bin contained their midpoint. Macrostrat provides a top and bottom age and by averaging those we get the midpoint age. 
 
 
 \subsection{Modeling of the fossil diversity found in a geologic units}
