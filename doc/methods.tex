@@ -28,8 +28,9 @@ A final API call is made, this time to Paleobiology Database, using the collecti
 
 For an explicit description of the data gathering and preparing process, please see the /R/download\_scrap.r and /R/prepare\_data.r scripts from the project repository \url{https://github.com/psmits/not\_fossil}.
 
-
 The above series of API calls produces three data frames: Macrostrat geological units and their metadata, fossil counts and collection information for those Macrostrat geological units, and the unique fossils present in these units and their metadata from the Paleobiology database. 
+
+An interesting feature of Macrostrat geologic units is that they are ordered according to the underlying continuous-time age model CITATION. This age model increases the overal resolution of the geological record. Unfortunately the fossil collection information for each unit does not include within-unit superposition data; this means that the diversity within a geologic unit cannot be tracked over the duration of the unit but only as a function of the complete unit. Because of this, the most precise unit of our analysis is the geologic unit. Specifically, we assign each geologic units to a single temporal bins based on which bin contained their midpoint. Macrostrat provides a top and bottom age and by averaging those we get the midpoint age. In total, we divided the data into 20 uniform-duration discrete time intervals.
 
 The geological unit metadata values that are relevant to this analysis include areal extent of the unit (positive, real values), maximum unit thickness (positive, real values), and the lithological description of the unit. Lithology is expressed as one or more natural language statements (e.g. sliciclastic sedimentary) and the percentage of the unit associated with that lithology.
 
@@ -40,18 +41,14 @@ After this step, descriptive terms were unified so that the natural language des
 
 The final step was assigning the final lithological descriptions amenable to analysis from the simplified natural language descriptions. Fine siliciclastics were defined as siltstone, claystone, mudstone, shale, and argillite while coarse siliciclastics were all other siliciclastic lithologies. Dolomitic carbonates are those lithologies containing the word ``dolomite'' in the descriptions. Finally, non-dolomitic carbonates were all other carbonate lithologies.
 
-Positive, real valued covariates were log plus one transformed, and then rescaled by subtracting mean and dividing by twice standard deviation. Rescaling the covariates has multiple advantages: 1) regression coefficients now describe the expected change in unit diversity per change in standard deviation of covariate, and 2) regression coefficients are comparable across covariates because they are all on the same scale (the expected standard deviation of a binary variable is 0.5).
+Prior to analysis, the positive real valued covariates were log (plus one) transformed and then rescaled by subtracting mean and dividing by twice its standard deviation. Rescaling the covariates has multiple advantages: 1) regression coefficients now describe the expected change in unit diversity per change in standard deviation of covariate, and 2) regression coefficients are comparable across covariates because they are all on the same scale (the expected standard deviation of a binary variable is 0.5). 
 
-Compositional covariates are constrained to sum to 1 which creates degrees-of-freedom issues when trying to model their possible effects as including these covariates without appropriate transformation creates two or more nonidentifiable parameters. To that end, the composition variables were isometric log-ratio transformed (following CITATION) which reduces the total number of variables to one less than original as composition is defined relaid to a baseline (percent carbonates). Unfortunately, the scale and interpretations of the associated regression coefficients are different from the other covariates, making direct comparison tricky.
+In contrast to the other covariations, compositional covariates are constrained to sum to 1 which creates degrees-of-freedom issues when trying to model their possible effects as including these covariates without appropriate transformation creates two or more nonidentifiable parameters. To that end, the composition variables were isometric log-ratio transformed (following the recomendations of CITATION) which reduces the total number of variables to one less than original as composition is defined relaid to a baseline (percent carbonates). Unfortunately, the scale and interpretations of the associated regression coefficients are different from the other covariates, making direct comparison tricky.
 
-
-The fossil occurrence and diversity for each of the geological units was determined for each of the following taxonomic groups: Anthozoa, Brachiopoda, Bivalvia, Cephalopoda, Gastropoda, and Trilobita. Fossil membership was determined based on the metadata for phylum or class from the Paleobiology database.
-
+The fossil occurrence and diversity for each of the geological units was determined for each of the following taxonomic groups: Anthozoa, Brachiopoda, Bivalvia, Cephalopoda, Gastropoda, and Trilobita. Fossil membership was determined based on the metadata for phylum or class from the Paleobiology database. We fit our model separately to each of these datasets.
 
 
-\subsection{Binning geologic units}
 
-Macrostrat units are ordered according to the underlying continuous-time age model CITATION. Geologic units, however, are not instantaneous and have a duration in time. Unfortunately the fossil collection information for each unit does not include within-unit superposition data; this means that the diversity within a geologic unit cannot be tracked trough time. Instead we have to focus on geologic units as the unit of our analysis. Specifically, we assign each geologic units to a single temporal bins based on which bin contained their midpoint. Macrostrat provides a top and bottom age and by averaging those we get the midpoint age. 
 
 
 \subsection{Modeling of the fossil diversity found in a geologic units}
@@ -66,9 +63,7 @@ The probability mass function for the parameterization of the Negative Binomial 
 \begin{equation}
   \text{Negative Binomial}(y | \mu, \phi) = \binom{y + \phi - 1}{y} \frac{\mu}{\mu + \phi}^{\mu} \frac{\phi}{\mu + \phi}^{\phi}.
 \end{equation}
-We chose this parameterization of the Negative Binomial distribution because it has one of the simplest interpretations; the mean \(\mu\) is the expected species diversity observed in a geologic unit, and the amount of overdispersion is equal to the inverse of \(\phi\) scaled by the square of the mean. 
-
-Our hierarchical/multi-level model can be characterized as a type of GLMM with varying-intercept and varying-slopes and the assumed data distribution is a zero-truncated Negative Binomial distribution.
+We chose this parameterization of the Negative Binomial distribution because it has one of the simplest interpretations; the mean \(\mu\) is the expected species diversity observed in a geologic unit, and the amount of overdispersion is equal to the inverse of \(\phi\) scaled by the square of the mean. Our hierarchical/multi-level model can be characterized as a type of GLMM with varying-intercept and varying-slopes where the assumed data distribution is a zero-truncated Negative Binomial distribution and our regression uses a log-link function.
 
 The effects of the unit covariates are expressed as the regression coefficients \(\beta\) which were allowed to vary over time. The temporal structure of the covariates was modeled as a random walk prior on the matrix of time-level means \(\gamma\); a random-walk prior is a simple way of constraining the estimates for \(\beta_{t}\) given the estimate of \(\beta_{t - 1}\). Additionally, the scale parameters \(\sigma\) for each of the \(K\) coefficients are related to the rate of change over time; a low value of \(\sigma_{k}\) corresponds to little between time variance in the effect of that covariate on diversity while a large value of \(\sigma_{k}\) indicates that the effect of that covariate is inconsistent through time.
 \begin{equation}
@@ -77,11 +72,11 @@ The effects of the unit covariates are expressed as the regression coefficients 
     \beta_{t} &\sim \text{MVN}(\gamma_{t}, \Sigma) \\
     \gamma_{t, k} &\sim 
       \begin{cases}
-        \mathcal{N}(2, 2) & \quad \text{if } t = 1, k = 1 \\
+        \mathcal{N}(I, S) & \quad \text{if } t = 1, k = 1 \\
         \mathcal{N}(\gamma_{t - 1, k}, \sigma_{k}) & \quad \text{if } t > 1, k > 1 \\
       \end{cases} \\
     \sigma_{k} &\sim \mathcal{N}^{+}(1) \\ 
-    \phi &\sim \mathcal{C}^{+}(5). \\
+    \phi &\sim \mathcal{N}^{+}(H). \\
   \end{aligned}
 \end{equation}
 
@@ -94,7 +89,7 @@ The additional covariance between variation in the regression coefficients \(\be
   \end{aligned}
 \end{equation}
 
-The LKJ distribution is a single parameter distribution of correlation matrices; values of the parameer close to 0 correspond to a uniform distribution across all possible correlations, and as values increase this distribution convergent on an identity matrix. This weakly-informative prior nudges our estimates towards a result of no correlation between covariate effects over time though is not sufficiently strong enough to prevent us inferring that kind of result.
+The LKJ distribution is a single parameter distribution of correlation matrices; values of the parameter close to 0 correspond to a uniform distribution across all possible correlations, and as values increase this distribution convergent on an identity matrix. This weakly-informative prior nudges our estimates towards a result of no correlation between covariate effects over time though is not sufficiently strong enough to prevent us inferring that kind of result.
 
 Unless otherwise noted, all prior choices reflect our decision to use weakly-informative regularizing priors. Additionally, because all covariates are on approximately unit scale and we do not expect any of our regression coefficients to have magnitude greater than 2, more diffuse priors would serve no purpose and are unnecessary. Additionally, more diffuse priors would not reflect our actual expectations regarding the magnitude of covariate effects. Finally, the regularizing property of priors helps constrain our results such that we do not obtain spurious estimates of the covariate effects. Further statistical and philosophical backing for these prior choices is available HERE HERE AND HERE CITATION.
 
@@ -106,10 +101,10 @@ In total, the complete model is as follows
     \beta_{t} &\sim \text{MVN}(\gamma_{t}, \Sigma) \\
     \gamma_{t, k} &\sim 
       \begin{cases}
-        \mathcal{N}(0, 5) & \quad \text{if } t = 1 \\
+        \mathcal{N}(I, S) & \quad \text{if } t = 1 \\
         \mathcal{N}(\gamma_{t - 1, k}, \sigma_{k}) & \quad \text{if } t > 1
       \end{cases} \\
-    \phi &\sim \mathcal{C}^{+}(5). \\
+    \phi &\sim \mathcal{N}^{+}(5). \\
     \sigma_{k} &\sim \mathcal{N}^{+}(1) \\ 
     \Sigma &= \text{diag}(\tau) \Omega \text{diag}{\tau} \\
     \Omega &\sim \text{LKJ}(3) \\
@@ -118,11 +113,30 @@ In total, the complete model is as follows
 \end{equation}
 
 
+\begin{table}
+  \centering
+  \begin{tabular}{l c}
+    Taxonomic group & Intercept prior mean \(I\) & Intercept prior scale \(S\) & Dispersion scale \(H\) \\
+    \hline \\
+    Anthozoa & 1 & 2 & 3 \\
+    Brachiopoda & 2 & 2 & 5 \\
+    Bivalvia & 1 & 2 & 3 \\
+    Cephalopoda & 2 & 2 & 5 \\
+    Gastropoda & 2 & 2 & 5 \\
+    Trilobita & 2 & 2 & 5 \\
+  \end{tabular}
+  \caption{Key prior choices for each of the taxonomic groups included in this analysis. Prior choice reflects our expectations of the average diversity of that group in a geologic unit.}
+  \label{tab:prior}
+\end{table}
+
+
 \subsubsection{Implementing model in Stan}
+
+The joint posterior was approximated using a Markov-chain Monte Carlo routine that is a variant of Hamiltonian Monte Carlo called the No-U-Turn Sampler \citep{Hoffman2014} as implemented in the probabilistic programming language Stan \citep{2014stan}. The posterior distribution was approximated from four parallel chains run for 40,000 steps, split half warm-up and half sampling and thinned to every 20th sample for a total of 4000 posterior samples. Chain convergence was assessed via the scale reduction factor \(\hat{R}\) where values close to 1 (\(\hat{R} < 1.1\)) indicate approximate convergence. Convergence means that the chains are approximately stationary and the samples are well mixed \citep{Gelman2013d}. After the model was fit to the data, 100 datasets were simulated from the posterior predictive distribution of the model. These simulations were used to test for adequacy of model fit as described below.
 
 Hierarchical models can have very complex posterior geometries which make full exploration difficult CITATIONS. The two strategies for overcoming sampling pathologies associated with extremely high-curvature log-posterior surface are non-centered parameterization of hierarchical sampling statements, and adjusting some the key parameters governing Stan's adaptation phase.
 
-Non-centered parameterization helps with divergences b/c breaks mean from variance. Cost is additional parameter, but that parameter has good behavior. For the details of what that means and why it works check out Betancourt and Girolami 2013 and the Stan manual.
+Non-centered parameterization help mitigate divergences because this separates the location from the scale, thus ``opening'' up the log-posterior surface. The cost of this reparameterization is the addition of one parameter per regression coefficient, though this parameter has good sampling behavior is relatively constrained by a regularizing prior. For the details of what that means and why it works check out Betancourt and Girolami 2013 and the Stan manual.
 
 The above model specifications are modified as follows:
 \begin{equation}
@@ -130,13 +144,14 @@ The above model specifications are modified as follows:
   \gamma_{t, k} &=
   \begin{cases}
     \gamma^{'}_{t, k} & \quad \text{if } t = 1 \\
-    \gamma_{t - 1, k} + \sigma_{k} * \gamma^{'}_{t, k} & \quad \text{if } t = 1 \\
+    \gamma_{t - 1, k} + \sigma_{k} * \gamma^{'}_{t, k} & \quad \text{if } t > 1 \\
   \end{cases} \\
-  z ~ \mathcal{N}(0, 1) \\
-  \gamma^{'} ~ \mathcal{N}(0, 1) \\
+  z &\sim \mathcal{N}(0, 1) \\
+    \gamma^{'}_{t, 1} &\sim \mathcal{N}(I, S) & \quad \text{if } t = 1 \\
+    \gamma^{'}_{t, \_} &\sim \mathcal{N}(0, 1) & \quad \text{if } t = 1 \text{ and } k > 1 \\
+    \gamma^{'}_{t, \_} &\sim \mathcal{N}(0, 1) & \quad \text{if } t > 1 \\
+  \end{cases} \\
 \end{equation}
-
-
 
 
 We used five different diagnostic criteria to determine if our chains were well mixed and if our posterior estimates were based on unbiased samples: the scale reduction factor \(\hat{R}\) (target value of \(<\)1.1), effective number of samples (eff; target value of eff/steps\(<\)0.0001), if any samples saturated the specified maximum trajectory length for avoiding infinite loops (treedepth; target value of 0 samples), presence of divergent samples which indicate pathological sampling in some neighborhoods of the log-posterior (divergences; target value of 0 samples), and the energy Bayesian Fraction of Missing Information (E-BFMI; target value \(>\)0.2). For a further explanation of these diagnostic criteria
@@ -150,21 +165,19 @@ Ultimately, estimation of the joint posterior distributions for each of the taxo
   \begin{tabular}{ l l l l l l }
     Taxonomic group & chain steps (half warm-up, half sample) & thinning & adapt delta & max tree depth & initial step size \\
     \hline
-    Anthozoa & 20000 & 10 & 0.999999 & 15 & 0.0001 \\
-    Bivalvia & 20000 & 10 & 0.99999999999999 & 15 & 0.000000000001 \\
-    Brachiopoda & 10000 & 5 & 0.99 & 15 & 0.01 \\
-    Gastropoda & 10000 & 5 & 0.999999 & 15 & 0.0001 \\
-    Trilobita & 20000 & 10 & 0.99999999999999 & 15 & 0.000000000001 \\
-    (Bivalvia + Gastropoda) & 10000 & 5 & 0.99 & 15 & 0.01 \\
+    Anthozoa & 20000 & 10 & 0.99999999 & 20 & 0.0000001 \\
+    Bivalvia & 20000 & 10 & 0.99999999 & 20 & 0.0000001 \\
+    Brachiopoda & 20000 & 10 & 0.99 & 20 & 0.1 \\
+    Gastropoda & 20000 & 10 & 0.9999 & 20 & 0.1 \\
+    Trilobita & 20000 & 10 & 0.9999 & 20 & 0.1 \\
+    (Bivalvia + Gastropoda) & 20000 & 10 & 0.9999 & 20 & 0.1 \\
   \end{tabular}
   \caption{Settings for sampler for getting posterior estimates.}
   \label{tab:<+label+>}
 \end{table}
 
 
-\subsection{Model adequacy and posterior predictive checks}
-
-Model adequacy, or the quality of model fit, is evaluated through a series of posterior predictive checks. For each check, the value of a test statistic from the data is compared to a distribution of that test statistic estimated from datasets simulated from the posterior. The checks used here are comparisons of the overall mean unit diversity, the overall standard deviation of unit diversity, the empirical cumulative distribution function, the mean unit diversity for each time step, and the standard deviation of unit diversity for each time step to those test statistics from 1000 posterior predictive datasets. Model adequacy is indicated by our simulated values being approximately equal to the observed values.
+Model adequacy was evaluated using a series of posterior predictive checks. Posterior predictive checks are a means for understanding model fit or adequacy. The concept of model adequacy is that if our model is an adequate descriptor of the observed data, then data simulated from the posterior predictive distribution should be similar to the observed given the same covariates, etc. \citep{Gelman2013d}. Posterior predictive checks can take many forms but the basic idea is to compare some property of the empirical data to that property estimated from each of the simulated datasets. For each check, the value of a test statistic from the data is compared to a distribution of that test statistic estimated from datasets simulated from the posterior. The checks used here are comparisons of the overall mean unit diversity, the overall standard deviation of unit diversity, the empirical cumulative distribution function, the mean unit diversity for each time step, and the standard deviation of unit diversity for each time step to those test statistics from 1000 posterior predictive datasets. Model adequacy is indicated by our simulated values being approximately equal to the observed values.
 
 
 \end{document}

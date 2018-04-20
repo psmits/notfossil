@@ -33,52 +33,32 @@
 \begin{figure}[ht]
   \centering
   \includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio=true]{figure/ppc_mean}
-  \caption{<+caption text+>}
-  \label{fig:<+label+>}
+  \caption{Posterior predictive results comparing the observed mean diversity of a geological unit for each of the studied taxonomic groups to a distribution of 1000 estimates from datasets simulated from the posterior predictive distribution of our models. Model adequacy is determined by how similar the posterior predictive distribution is to the observed value. In all cases, our models appear able to reproduce to observed means.}
+  \label{fig:ppc_mean}
 \end{figure}
 
 % sd
 \begin{figure}[ht]
   \centering
   \includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio=true]{figure/ppc_sd}
-  \caption{<+caption text+>}
-  \label{fig:<+label+>}
+  \caption{Posterior predictive results comparing the observed standard deviation diversity of a geological unit for each of the studied taxonomic groups to a distribution of 1000 estimates from datasets simulated from the posterior predictive distribution of our models. Model adequacy is determined by how similar the posterior predictive distribution is to the observed value. In all cases, our models appear able to reproduce to observed standard deviations.}
+  \label{fig:ppc_sd}
 \end{figure}
 
-% ecdf
-%   one of the key graphs for showing how well the distribution is mimic-d
-\begin{figure}[ht]
-  \centering
-  \includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio=true]{figure/ppc_ecdf}
-  \caption{<+caption text+>}
-  \label{fig:<+label+>}
-\end{figure}
-
-% dens
-%   hard to read because size of distribution
-\begin{figure}[ht]
-  \centering
-  \includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio=true]{figure/ppc_dens}
-  \caption{<+caption text+>}
-  \label{fig:<+label+>}
-\end{figure}
-
-% dens zoomed in
-%   lots of small values so need to zoom in
 \begin{figure}[ht]
   \centering
   \includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio=true]{figure/ppc_dens_zoom}
-  \caption{<+caption text+>}
-  \label{fig:<+label+>}
+  \caption{Posterior predictive results comparing the empirical probability density of a geological unit for each of the studied taxonomic groups to a distribution of 1000 probability densities from datasets simulated from the posterior predictive distribution of our models. Model adequacy is determined by how similar the posterior predictive distribution is to the observed value. In all cases, our models appear able to almost reproduce to observed ecdf-s.}
+  \label{fig:ppc_dens}
 \end{figure}
 
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio=true]{figure/ppc_ecdf}
+  \caption{Posterior predictive results comparing the empirical cummulative distribution function (ecdf) of a geological unit for each of the studied taxonomic groups to a distribution of 1000 estimates from datasets simulated from the posterior predictive distribution of our models. Model adequacy is determined by how similar the posterior predictive distribution is to the observed value. In all cases, our models appear able to almost reproduce to observed ecdf-s.}
+  \label{fig:ppc_ecdf}
+\end{figure}
 
-
-% group measures  
-%   mean 
-%     is this duplicated with my easier to read time series?
-%     helps visualize the post pred skew away from empirical estimate
-%   sd
 
 
 
@@ -102,9 +82,18 @@
 \begin{figure}[ht]
   \centering
   \includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio=true]{figure/unitdiv_time}
-  \caption{<+caption text+>}
-  \label{fig:<+label+>}
+  \caption{Geological unit diversity though time and the expected diversity (with 80\% credible interval) as estimated from our models. Unit diversity is presented as partially transparent points and our jittered in the y-axis to improve readability. Point size is proportional to the number of units in that interval that have identical unit diversity. The dashed grey line corresponds to the onset of the Hirnantian geological stage, while the dashed-dotted grey line corresponds to the end of the Ordovician epoch and the start of the Silurian epoch.}
+  \label{fig:time_div}
 \end{figure}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio=true]{figure/unitdiv_diff}
+  \caption{Probability that our estimate of mean unit diversity at time \(t\) is greater than the estimate at time \(t + 1\). The dashed grey horizontal lines correspond to probability of 0.8 and 0.2; these are the thresholds we chose as indicating if a pair-wise difference is potentially larger (or smaller) than no-difference (\(P = 0.5\)), and worthy of further inspection.}
+  \label{fig:diff_div}
+\end{figure}
+
+% covariance of effect change?
 
 
 
@@ -135,13 +124,32 @@
 \begin{figure}[ht]
   \centering
   \includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio=true]{figure/cov_time}
-  \caption{<+caption text+>}
-  \label{fig:<+label+>}
+  \caption{Estimates of all estimated covariate effect time series for each of the analyzed taxonomic groups, including intercept estimates. Points represent mean estimate along with a 80\% credible interval. The black horizontal line corresponds to no effect. Points are plotted at the mid-point of the discrete time interval.}
+  \label{fig:time_cov}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio=true]{figure/cov_diff}
+  \caption{Probability that a parameter estimate at time \(t\) is greater than the estimate at time \(t + 1\). The dashed grey horizontal lines correspond to probability of 0.8 and 0.2; these are the thresholds we chose as indicating if a pair-wise difference is potentially larger (or smaller) than no-difference (\(P = 0.5\)), and worthy of further inspection.}
+  \label{fig:diff_cov}
 \end{figure}
 
 % covariance of effect change?
 %   are effects correlated in their changes through time?
 
+
+
+
+
+
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio=true]{figure/compare_pval}
+  \caption{Scatterplot of the estimated probability that geological unit diversity is lower during the Hirnantian than either the Ordovician (left facet) or the Silurian (right facet) vs the estimated probability that a covariate estimate is lower during the Hirnantian than either the Ordovician or the Silurian. For each of the taxonomic groups there is only one estimate for the probability of difference in diversity, but there are six probability estimates for each of the covariate effect parameters. }
+  \label{fig:<+label+>}
+\end{figure}<++>
 
 
 \end{document}
