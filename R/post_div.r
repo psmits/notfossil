@@ -1,3 +1,10 @@
+# functions for analyzing patterns of diversity and covariate effects
+# covers everything including
+# calculations
+# plots
+
+
+
 # plot of diversity through time compared to mean estimated from posterior
 # lots of io but puts out a plot
 plot_divtime <- function(shelly, type, brks, vert) {
@@ -51,13 +58,7 @@ plot_covtime <- function(shelly, type, brks, covname, vert, violin = FALSE) {
   # covariate effects
   out <- out2 <- list()
   for(ii in seq(length(shelly))) {
-    load(paste0('../data/data_dump/diversity_image_', 
-                shelly[ii], '_', type, '.rdata'))
-    pat <- paste0('trunc\\_[0-9]\\_', shelly[ii], '_', type)
-    files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
-    fit <- read_stan_csv(files)
-    post <- rstan::extract(fit, permuted = TRUE)
-
+    post <- read_mcmcout(shelly[ii], type)
 
     # violins
     mm <- melt(post$beta)
@@ -139,10 +140,7 @@ plot_diffbeta <- function(shelly, type, covname) {
   get_covdiff <- function(shelly, type) {
     out <- list()
     for(ii in seq(length(shelly))) {
-      pat <- paste0('trunc\\_[0-9]\\_', shelly[ii], '_', type)
-      files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
-      fit <- read_stan_csv(files)
-      post <- rstan::extract(fit, permuted = TRUE)
+      post <- read_mcmcout(shelly[ii], type)
 
       nc <- seq(dim(post$beta)[3])
       out[[ii]] <- purrr::map(nc, ~ get_diffbeta(post$beta, cova = .x))
@@ -191,10 +189,7 @@ compare_hirbeta <- function(shelly, type, hirnantian = 445.6, brks) {
 
   ordprob <- silprob <- list()
   for(ii in seq(length(shelly))) {
-    pat <- paste0('trunc\\_[0-9]\\_', shelly[ii], '_', type)
-    files <- list.files('../data/mcmc_out', pattern = pat, full.names = TRUE)
-    fit <- read_stan_csv(files)
-    post <- rstan::extract(fit, permuted = TRUE)
+    post <- read_mcmcout(shelly[ii], type)
 
     dd <- dim(post$beta) # sim, time, covariate
     betahir <- post$beta[, tc, ]

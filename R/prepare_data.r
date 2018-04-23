@@ -99,6 +99,5 @@ out <- purrr::map(out, function(x) {
 # partials make this easier, imo
 esd <- partial(export_standata, type = 'diversity')
 purrr::walk2(out, shelly, esd)
-
 eso <- partial(export_standata, type = 'occurrence')
 purrr::walk2(out, shelly, eso)

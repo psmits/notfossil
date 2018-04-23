@@ -21,6 +21,7 @@ library(tidyverse)
 
 # helpful functions
 source('../R/stan_utility.R')
+source('../R/post_foo.r')
 source('../R/post_checks.r')
 source('../R/post_div.r')
 
@@ -45,32 +46,29 @@ nsim <- 1000
 shelly <- c(# 'Anthozoa', # divergences
             # 'Bivalvia', # divergences
             'Brachiopoda', 
-            'Gastropoda', 
-            'Mollusca',
+            # 'Gastropoda', # bonus data
+            # 'Mollusca', # bonus data
             'Trilobita')
 type <- c('diversity', 'occurrence')
 
 # posterior predictive /checks
 # series of plots for the ones i really want to look at
-check.result <- purrr::map(shelly, 
-                           postchecks(x, type = type[1], nsim), shelly)
-check.result.oc <- purrr::map(shelly, 
-                              postchecks(x, type = type[2], nsim), shelly)
+check.result <- purrr::map(shelly, ~ postchecks(.x, type = type[1], nsim))
+check.result.oc <- purrr::map(shelly, ~ postchecks(.x, type = type[2], nsim)) 
+names(check.result) <- names(check.result.oc) <- shelly
 
 
 # walk over the posterior predictive plots
 # partials make this easier, imo
-ppd <- partial(plot_postchecks, type = type[1])
-purrr::walk(check.result, ppd)
-
-ppo <- partial(plot_postchecks, type = type[2])
-purrr::walk(check.result.oc, ppo)
+plot_postchecks(check.result, type = type[1])
+plot_postchecks(check.result, type = type[2])
 
 
 # plot all the inference plots (effects, est div, sigs, etc)
 # don't need to walk because internal loops/walks/etc
 covname <- c('intercept (carbonate)', 'thickness', 'area', 'latitude',
              'dolomite', 'fine silic.', 'coarse silic.')
+
 mit <- partial(plot_infertests, 
                brks = brks, vert = hirnantian, 
                foo = mean, nsim = nsim, covname = covname)

@@ -29,12 +29,21 @@ get_values <- function(taxon, strat, shelly) {
 
 # export focus to walk on
 export_standata <- function(x, name, type = c('diversity', 'occurrence')) {
+  
+  x <- out[[1]]
+  bane <- shelly[1]
   litmat <- strict.lithology(x)
   bpod <- x[match(rownames(litmat), x$unit_id), ]
 
   standata <- list()
-  standata$N <- length(bpod$diversity)
-  standata$y <- bpod$diversity
+  if(type == 'diversity') {
+    standata$N <- length(bpod$diversity)
+    standata$y <- bpod$diversity
+  } else if(type == 'occurrence') {
+    standata$N <- length(bpod$occurrence)
+    standata$y <- bpod$occurrence
+  }
+
 
   standata$t <- bpod$bin
   standata$T <- max(bpod$bin)
