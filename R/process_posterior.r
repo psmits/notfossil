@@ -65,6 +65,7 @@ plot_postchecks(check.result, type = type[2])
 
 
 # plot all the inference plots (effects, est div, sigs, etc)
+# only 
 # don't need to walk because internal loops/walks/etc
 covname <- c('intercept (carbonate)', 'thickness', 'area', 'latitude',
              'dolomite', 'fine silic.', 'coarse silic.')

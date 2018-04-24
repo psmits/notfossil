@@ -165,19 +165,23 @@ Ultimately, estimation of the joint posterior distributions for each of the taxo
   \begin{tabular}{ l l l l l l }
     Taxonomic group & chain steps (half warm-up, half sample) & thinning & adapt delta & max tree depth & initial step size \\
     \hline
-    Anthozoa & 20000 & 10 & 0.99999999 & 20 & 0.0000001 \\
-    Bivalvia & 20000 & 10 & 0.99999999 & 20 & 0.0000001 \\
-    Brachiopoda & 20000 & 10 & 0.99 & 20 & 0.1 \\
-    Gastropoda & 20000 & 10 & 0.9999 & 20 & 0.1 \\
-    Trilobita & 20000 & 10 & 0.9999 & 20 & 0.1 \\
-    (Bivalvia + Gastropoda) & 20000 & 10 & 0.9999 & 20 & 0.1 \\
+    Anthozoa & & & & & \\
+    Bivalvia & & & & & \\
+    Brachiopoda & & & & & \\
+    Gastropoda & & & & & \\
+    Trilobita & & & & & \\
+    (Bivalvia + Gastropoda) & & & & & \\
   \end{tabular}
   \caption{Settings for sampler for getting posterior estimates.}
   \label{tab:<+label+>}
 \end{table}
 
 
-Model adequacy was evaluated using a series of posterior predictive checks. Posterior predictive checks are a means for understanding model fit or adequacy. The concept of model adequacy is that if our model is an adequate descriptor of the observed data, then data simulated from the posterior predictive distribution should be similar to the observed given the same covariates, etc. \citep{Gelman2013d}. Posterior predictive checks can take many forms but the basic idea is to compare some property of the empirical data to that property estimated from each of the simulated datasets. For each check, the value of a test statistic from the data is compared to a distribution of that test statistic estimated from datasets simulated from the posterior. The checks used here are comparisons of the overall mean unit diversity, the overall standard deviation of unit diversity, the empirical cumulative distribution function, the mean unit diversity for each time step, and the standard deviation of unit diversity for each time step to those test statistics from 1000 posterior predictive datasets. Model adequacy is indicated by our simulated values being approximately equal to the observed values.
+Model adequacy was evaluated using a series of posterior predictive checks. Posterior predictive checks are a means for understanding model fit or adequacy. The concept of model adequacy is that if our model is an adequate descriptor of the observed data, then data simulated from the posterior predictive distribution should be similar to the observed given the same covariates, etc. \citep{Gelman2013d}. Posterior predictive checks can take many forms but the basic idea is to compare some property of the empirical data to that property estimated from each of the simulated datasets. For each check, the value of a test statistic from the data is compared to a distribution of that test statistic estimated from datasets simulated from the posterior. Model adequacy is indicated by our simulated values being approximately equal to the observed values.
+
+We used a variety of posterior predictive checks to assess the quality of model's fit to each of the different datasets. The goal of using this many and variety of checks is understand the quality and nature of model fit. For example, our model may have good fit to many aspects of the data but ``fail'' one or more checks, highlighting potential differences between our model and the data generating process thus promoting further study.
+
+The checks used here are comparisons of the overall mean unit diversity, the overall standard deviation of unit diversity, the empirical cumulative distribution function, the mean unit diversity for each time step, and the standard deviation of unit diversity for each time step to those test statistics from 1000 posterior predictive datasets. 
 
 
 \end{document}
