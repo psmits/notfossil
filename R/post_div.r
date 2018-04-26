@@ -306,6 +306,7 @@ plot_infertests <- function(shelly, type, brks, vert, foo, nsim, covname) {
 # diversity
 # unit div through time vs estimated div from model
   dg <- plot_divtime(shelly, type = type, brks, vert = hirnantian)
+  dg <- dg + coord_trans(y = 'sqrt')
   tn <- paste0('../doc/figure/unitdiv_time_', type, '.png')
   ggsave(plot = dg, filename = tn, width = 11, height = 8.5)
 
@@ -356,6 +357,7 @@ plot_infertests <- function(shelly, type, brks, vert, foo, nsim, covname) {
 
   tpg <- ggplot(toplot, aes(x = div.value, y = cov.value, colour = taxon)) +
     geom_point(aes(shape = covname)) + 
+    scale_shape_manual(values = c(0, 1, 2, 3, 4,  5, 6)) +
     geom_abline(intercept = 0, slope = 1) +
     coord_fixed(ratio = 1, xlim = c(0, 1), ylim = c(0, 1)) +
     facet_wrap(~ time) + 

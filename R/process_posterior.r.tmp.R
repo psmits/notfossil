@@ -43,12 +43,12 @@ constant <- 20
 ord <- c(460.4, 427.4)
 hirnantian <- 445.6
 nsim <- 1000
-shelly <- c( 'Anthozoa', # div, occ divergences
-             'Bivalvia', # div divergences
+shelly <- c( 'Anthozoa', # divergences
+             'Bivalvia', # divergences
              'Brachiopoda', 
-             'Gastropoda', 
-             'Mollusca', # div divergences
-             'Trilobita') # div divergences
+             'Gastropoda', # bonus data
+             'Mollusca', # bonus data
+             'Trilobita')
 type <- c('diversity', 'occurrence')
 
 # posterior predictive /checks
