@@ -9,7 +9,7 @@ data {
 
   real prior_intercept_location;
   real prior_intercept_scale;
-  real prior_phi_scale;
+  //real prior_phi_scale;
 }
 parameters {
   matrix[T, K] mu_raw;  // group-prior
@@ -19,12 +19,13 @@ parameters {
   matrix[K, T] z;  // for non-centered mv-normal
   vector<lower=0>[K] tau;  // scales of cov
   
-  real<lower=0> phi;  // over disperssion
+  real<lower=0> phi_inv;  // over disperssion
 }
 transformed parameters {
   matrix[T, K] mu;  // group-prior
   matrix[T, K] beta;  // regression coefficients time X covariate
   vector[N] location;  // put on right support
+  real<lower=0> phi;
   
   // rw prior
   for(k in 1:K) {
@@ -39,6 +40,8 @@ transformed parameters {
 
   // matrix algebra
   location = exp(rows_dot_product(beta[t], X));
+
+  phi = 1 / phi_inv;
 }
 model {
   mu_raw[1, 1] ~ normal(prior_intercept_location, prior_intercept_scale);
@@ -51,7 +54,7 @@ model {
   L_Omega ~ lkj_corr_cholesky(2);
   tau ~ normal(0, 1);
 
-  phi ~ normal(0, prior_phi_scale);
+  phi_inv ~ normal(0, 1);
 
   for(n in 1:N) 
     y[n] ~ neg_binomial_2(location[n], phi) T[1, ];

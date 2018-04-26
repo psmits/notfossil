@@ -83,7 +83,7 @@ tt <- full_join(out$Bivalvia, out$Gastropoda)
 tt <- tt %>%
   group_by(unit_id, bin) %>%
   dplyr::mutate(diversity = sum(diversity),
-                occurrence = sum(occurrence)) %>%
+                collections = sum(collections)) %>%
   ungroup() %>%
   distinct(unit_id, .keep_all = TRUE)
 out$Mollusca <- tt
@@ -93,7 +93,6 @@ out <- purrr::map(out, function(x) {
                     m <- x$unit_id != 19112
                     x <- x[m, ]
                     x})
-
 
 # do all the exporting
 # partials make this easier, imo

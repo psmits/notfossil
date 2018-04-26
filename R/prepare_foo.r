@@ -2,6 +2,7 @@
 get_values <- function(taxon, strat, shelly) {
   # which occurrences correspond to focal group
   focus <- taxon[taxon$group == shelly, ]
+  
   # these occurrences are in collections
   # collections are from units
   # geologic units with fossils from focal
@@ -9,7 +10,7 @@ get_values <- function(taxon, strat, shelly) {
   stratfocus <- strat[strat$unit_id %in% unitfocus, ]
 
   # assign a bin
-  stratfocus$bin <- NA
+  stratfocus$bin <- c()
   for(ii in seq(nrow(brks))) {
     mm <- stratfocus$m_age <= brks[ii, 1] & stratfocus$m_age > brks[ii, 2]
     stratfocus$bin[mm] <- ii
@@ -17,18 +18,21 @@ get_values <- function(taxon, strat, shelly) {
 
   oc <- stratfocus %>%
     group_by(unit_id) %>%
-    dplyr::transmute(occurrence = sum(pbdb_occurrences))
+    dplyr::transmute(collections = sum(pbdb_collections))
   stratfocus <- left_join(stratfocus, oc, by = 'unit_id')
  
-  unitdiv <- llply(split(focus, focus$unit), nrow)
+  unitdiv <- llply(split(focus, focus$unit), 
+                   function(x) length(unique(x$genus)))
   mm <- match(stratfocus$unit_id, names(unitdiv))
   stratfocus$diversity <- unlist(unitdiv)[mm]
-
+  
   stratfocus
 }
 
 # export focus to walk on
 export_standata <- function(x, name, type = c('diversity', 'occurrence')) {
+  x <- out[[1]]
+  type <- 'occurrence'
   litmat <- strict.lithology(x)
   bpod <- x[match(rownames(litmat), x$unit_id), ]
 
@@ -37,8 +41,8 @@ export_standata <- function(x, name, type = c('diversity', 'occurrence')) {
     standata$N <- length(bpod$diversity)
     standata$y <- bpod$diversity
   } else if(type == 'occurrence') {
-    standata$N <- length(bpod$occurrence)
-    standata$y <- bpod$occurrence
+    standata$N <- length(bpod$collections)
+    standata$y <- bpod$collections
   }
 
 
@@ -72,13 +76,13 @@ export_standata <- function(x, name, type = c('diversity', 'occurrence')) {
   } else {
     standata$prior_intercept_location <- 2
     standata$prior_intercept_scale <- 2
-    standata$prior_phi_scale <- 5
+    #standata$prior_phi_scale <- 5
   }
 
   if(type == 'occurrence') {
-    standata$prior_intercept_location <- 200
-    standata$prior_intercept_scale <- 100
-    standata$prior_phi_scale <- 500
+    standata$prior_intercept_location <- 3
+    standata$prior_intercept_scale <- 3
+    #standata$prior_phi_scale <- 50
   }
 
 
