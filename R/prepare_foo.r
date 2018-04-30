@@ -31,8 +31,6 @@ get_values <- function(taxon, strat, shelly) {
 
 # export focus to walk on
 export_standata <- function(x, name, type = c('diversity', 'occurrence')) {
-  x <- out[[1]]
-  type <- 'occurrence'
   litmat <- strict.lithology(x)
   bpod <- x[match(rownames(litmat), x$unit_id), ]
 
@@ -44,7 +42,6 @@ export_standata <- function(x, name, type = c('diversity', 'occurrence')) {
     standata$N <- length(bpod$collections)
     standata$y <- bpod$collections
   }
-
 
   standata$t <- bpod$bin
   standata$T <- max(bpod$bin)

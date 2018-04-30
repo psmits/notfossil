@@ -45,9 +45,9 @@ hirnantian <- 445.6
 nsim <- 1000
 shelly <- c( 'Anthozoa', # div, occ divergences
              'Bivalvia', # div divergences
-             'Brachiopoda', 
-             'Gastropoda', 
-             'Mollusca', # div divergences
+             'Brachiopoda', # occ divergences
+             'Gastropoda', # div, occ divergences
+             'Mollusca', # 
              'Trilobita') # div divergences
 type <- c('diversity', 'occurrence')
 
