@@ -1,0 +1,98 @@
+\begin{thebibliography}{12}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Betancourt and Girolami(2013)]{Betancourt2013}
+M.~J. Betancourt and Mark Girolami.
+\newblock {Hamiltonian Monte Carlo for Hierarchical Models}.
+\newblock \emph{arXiv}, 2013.
+\newblock \doi{10.1201/b18502-5}.
+\newblock URL \url{http://arxiv.org/abs/1312.0906}.
+
+\bibitem[Carpenter et~al.(2017)Carpenter, Gelman, Hoffman, Lee, Goodrich,
+  Betancourt, Brubaker, Guo, Li, and Riddell]{StanPaper}
+Bob Carpenter, Andrew Gelman, Matthew~D. Hoffman, Daniel Lee, Ben Goodrich,
+  Michael Betancourt, Marcus Brubaker, Jiqiang Guo, Peter Li, and Allen
+  Riddell.
+\newblock {Stan : A Probabilistic Programming Language}.
+\newblock \emph{Journal of Statistical Software}, 76\penalty0 (1), 2017.
+\newblock ISSN 1548-7660.
+\newblock \doi{10.18637/jss.v076.i01}.
+\newblock URL \url{http://www.jstatsoft.org/v76/i01/}.
+
+\bibitem[Egozcue et~al.(2003)Egozcue, Pawlowsky-Glahn, Mateu-Figueras, and
+  Barcel{\'{o}}-Vidal]{Egozcue2003}
+J.~J. Egozcue, V.~Pawlowsky-Glahn, G.~Mateu-Figueras, and
+  C.~Barcel{\'{o}}-Vidal.
+\newblock {Isometric Logratio Transformations for Compositional Data Analysis}.
+\newblock \emph{Mathematical Geology}, 35\penalty0 (3):\penalty0 279--300,
+  2003.
+\newblock ISSN 08828121.
+\newblock \doi{10.1023/A:1023818214614}.
+
+\bibitem[Gabry and Mahr(2018)]{bayesplotR}
+Jonah Gabry and Tristan Mahr.
+\newblock \emph{bayesplot: Plotting for Bayesian Models}, 2018.
+\newblock URL \url{https://CRAN.R-project.org/package=bayesplot}.
+\newblock R package version 1.5.0.
+
+\bibitem[Gelman and Hill(2006)]{ARM}
+Andrew Gelman and Jennifer Hill.
+\newblock \emph{{Data Analysis Using Regression and Multilevel/Hierarchical
+  Models}}.
+\newblock Cambridge University Press, Cambridge, 2006.
+
+\bibitem[Gelman et~al.(2014)Gelman, Carlin, Stern, Dunson, Vehtari, and
+  Rubin]{BDA3}
+Andrew Gelman, John~B Carlin, Hal~S Stern, David~B Dunson, Aki Vehtari, and
+  Donald~B Rubin.
+\newblock \emph{{Bayesian Data Analysis}}.
+\newblock CRC Press, Boca Raton, FL, 3rd edition, 2014.
+
+\bibitem[Gelman et~al.(2008)Gelman, Jakulin, Pittau, and Su]{Gelman2008}
+By~Andrew Gelman, Aleks Jakulin, Maria~Grazia Pittau, and Yu-Sung Su.
+\newblock {A weakly informative default prior distribution for logistic and
+  other regression models}.
+\newblock \emph{The Annals of Applied Statistics}, 2\penalty0 (4):\penalty0
+  1360--1383, 2008.
+\newblock \doi{10.1214/08-AOAS191}.
+
+\bibitem[Hron et~al.(2012)Hron, Filzmoser, and Thompson]{Hron2012}
+K.~Hron, P.~Filzmoser, and K.~Thompson.
+\newblock {Linear regression with compositional explanatory variables}.
+\newblock \emph{Journal of Applied Statistics}, 39\penalty0 (5):\penalty0
+  1115--1128, 2012.
+\newblock ISSN 02664763.
+\newblock \doi{10.1080/02664763.2011.644268}.
+
+\bibitem[Peters and McClennen(2015)]{Peters2016}
+Shanan~E. Peters and Michael McClennen.
+\newblock {The Paleobiology Database application programming interface}.
+\newblock \emph{Paleobiology}, 42\penalty0 (1):\penalty0 1--7, 2015.
+\newblock ISSN 00948373.
+\newblock \doi{10.1017/pab.2015.39}.
+
+\bibitem[Peters et~al.(2018)Peters, Husson, and Czaplewski]{Peters2018}
+Shanan~E Peters, Jon~M Husson, and John~J Czaplewski.
+\newblock {Macrostrat: a platform for geological data integration and deep-time
+  Earth crust research}.
+\newblock \emph{EarthArXiv}, 2018.
+\newblock \doi{http://doi.org/10.17605/OSF.IO/YNAXW}.
+\newblock URL \url{https://eartharxiv.org/ynaxw}.
+
+\bibitem[Team(2017)]{StanManual}
+Stan~Development Team.
+\newblock {Stan Modeling Language Users Guide and Reference Manual}, 2017.
+\newblock URL \url{http://mc-stan.org}.
+
+\bibitem[{van den Boogaart} et~al.(2014){van den Boogaart}, Tolosana, and
+  Bren]{compositionsR}
+K.~Gerald {van den Boogaart}, Raimon Tolosana, and Matevz Bren.
+\newblock \emph{compositions: Compositional Data Analysis}, 2014.
+\newblock URL \url{https://CRAN.R-project.org/package=compositions}.
+\newblock R package version 1.40-1.
+
+\end{thebibliography}
