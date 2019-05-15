@@ -1,5 +1,6 @@
 # this script pulls data from the Macrostrat API and the PBDB API
 # it generates the data used in this analysis
+#
 library(pacman)
 
 p_load(readr, dplyr, tidyr, purrr, glue)
