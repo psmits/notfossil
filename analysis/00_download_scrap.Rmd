@@ -1,3 +1,7 @@
+The data for this analysis is spread across multiple databases, and multiple tables within those databases.
+
+
+```{r}
 # this script pulls data from the Macrostrat API and the PBDB API
 # it generates the data used in this analysis
 #
@@ -64,3 +68,7 @@ pbdb_data <- read_csv(pbdb_url) %>%    # formerly `taxon`
   drop_na(genus)
 
 write_csv(pbdb_data, here::here('data', 'pbdb_occurrences.csv'))
+
+
+
+```

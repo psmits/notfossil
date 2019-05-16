@@ -1,0 +1,19 @@
+Package: notfossil
+Title: Analysis of Ordovicain/Silurian fossil record quality
+Version: 0.0.1
+Authors@R: 
+    person(given = "Peter",
+           family = "Smits",
+           role = c("aut", "cre"),
+           email = "peterdavidsmits@gmail.com",
+           comment = c(ORCID = "0000-0003-4074-1447"))
+Description: Research compendium of analysis of ordovician/silurian fossil record quality.
+License: What license it uses
+Imports:
+  dplyr,
+  readr,
+  tidyr,
+  purrr,
+  glue
+Encoding: UTF-8
+LazyData: true
