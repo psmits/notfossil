@@ -1,17 +1,20 @@
-The data for this analysis is spread across multiple databases, and multiple tables within those databases.
+# Scrap data from DBs
+
+We are analyzing the association between fossils and the geological units in which they are found. The data for this analysis is spread across multiple databases, and multiple tables within those databases. 
+
+The first major source is Macrostrat, which provides geological information for North America. This information includes unique id-s for fossil collections made from those geological units. 
+
+The second major source is the Paleobiology Database, which provides information on those fossil occurrences. Macrostrat and PBDB are linked by a few key variables, most importantly `unit_id` (unique identifer for each geologicla unit.)
+
+In this section, I'm going to pull all of the correct tables from their respective databases and then write them to disk. Which then sets up all of our subsequent analyses. We can regenerate/update our data at anytime by running this script. The only limits are internet connection and server status.
 
 
-```{r}
-# this script pulls data from the Macrostrat API and the PBDB API
-# it generates the data used in this analysis
-#
-library(pacman)
 
-p_load(readr, dplyr, tidyr, purrr, glue)
+## Macrostrat units
 
+The next step is pulling all of the geological units recorded in Macrostrat for the Ordovician and the Silurian. I've had trouble writing out API call to do this all in one step, so I've broken it out by period and then combine them.
 
-# macrostrat unit data from the orodovician and silurian
-# https://macrostrat.org/api/units
+```{r macro_unit, message = FALSE, results = 'hide'}
 
 ord_unit_url <- glue('https://macrostrat.org/api/v2/units?',
                      'interval_name=Ordovician&response=long&format=csv')
@@ -25,12 +28,16 @@ unit_data <- dplyr::union(ord_unit, sil_unit) # formerly `strat`
 
 write_csv(unit_data, here::here('data', 'macrostrat_units.csv'))
 
+```
 
-# now extract fossil occurrence information associated with geological units
-# unit_id is the key value for each of these units
-# units appear in columns
-# not every unit fossil associated with it
-# filter for those units to make things easier
+
+## Macrostrat fossils
+
+Now that we have the data for all of our fossil units, let's extract the relevant fossil information. `unit_id` is the key value that links the units and fossils tables within the Macrostrat DB. 
+
+However, not every unit that has Ordovician or Silurian sediments contains a fossil. A quick filter gives the `unit_id` values for fossil-bearing geological units. This vector can then be massaged and passed to the Macrostrat API.
+
+```{r macro_collect, message = FALSE, results = 'hide'}
 
 unit_w_fossils <- 
   unit_data %>%
@@ -39,23 +46,25 @@ unit_w_fossils <-
   pull() %>%
   glue_collapse(., sep = ',')
 
-fossil_url <- glue('https://macrostrat.org/api/v2/fossils?unit_id=',
+collect_url <- glue('https://macrostrat.org/api/v2/fossils?unit_id=',
                    '{unit_w_fossils}',
                    '&response=long&format=csv')
 
-fossil_data <- read_csv(fossil_url)    # formerly `fossil`
+collect_data <- read_csv(collect_url)  # formerly `fossil`
 
-write_csv(fossil_data, here::here('data', 'macrostrat_fossils.csv'))
+write_csv(collect_data, here::here('data', 'macrostrat_collect.csv'))
+
+```
 
 
-# this gives ids for fossil occurrences in the pbdb
-# cltn_id is pbdb collection id
-# genus_id is pbdb genus id?
-# use collection id to pull all occurrences from those collections
-# collections are also directly associated with the unit
+## PBDB occurrences
+
+The `collect_data` tibble has all the necessary information to recover fossil occurrence information from the PBDB. The column `cltn_id` has the unique identifier for the PBDB collections assocated with each geological unit (`unit_id`). We can extract and massage the `cltn_id` column into a vector we can pass to the PBDB API, making a call for an occurrence list. The resulting tibble has a row for every fossil occurrence found in collections made from geological units that contain Ordovician or Siliurian sediments.
+
+```{r pbdb_occurrence, message = FALSE, results = 'hide'}
 
 pbdb_collections <- 
-  fossil_data %>%
+  collect_data %>%
   dplyr::select(cltn_id) %>%
   pull() %>%
   glue_collapse(., sep = ',')
@@ -68,7 +77,5 @@ pbdb_data <- read_csv(pbdb_url) %>%    # formerly `taxon`
   drop_na(genus)
 
 write_csv(pbdb_data, here::here('data', 'pbdb_occurrences.csv'))
-
-
 
 ```

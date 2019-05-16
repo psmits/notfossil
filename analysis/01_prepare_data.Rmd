@@ -1,77 +1,105 @@
-# taxon variable is shelly
-library(pacman)
+# Preparing data for analysis
 
-p_load(here, tidyverse, readr, dplyr, purrr, reshape2,
-       arm, rstan, rstanarm, 
-       compositions, geosphere)
+The next step is to process our data so that it is ready for analysis. This process takes a lot of steps, but once it is complete we can start visualizing and modeling out data.
 
-source(here::here('helper01_prepare_foo.r'))
-source(here::here('helper02_rock_process.r'))
 
-#   fossil.ord # fossil occurrences in the ordovician
-#   strat.ord # fossil occurrences in the ordovician
+```{r import_raw}
+
+#source(here::here('R', 'helper01_prepare_foo.r'))
+#source(here::here('R', 'helper02_rock_process.r'))
 
 # formerly `strat`
 unit_data <- read_csv(here::here('data', 'macrostrat_units.csv'))
 
 # formerly `fossil`
-fossil_data <- read_csv(here::here('data', 'macrostrat_fossils.csv'))
+collect_data <- read_csv(here::here('data', 'macrostrat_collect.csv'))
 
 # formerly `taxon
 pbdb_data <- read_csv(here::here('data', 'pbdb_occurrences.csv'))
 
+```
+
+There are several useful constants that will appear throughout the next few sections.
+
+```{r constants}
 
 # useful constants
 constant <- 20
 shelly <- c('Brachiopoda', 'Anthozoa', 'Trilobita', 
             'Bivalvia', 'Gastropoda')#, 'Cephalopoda')
-ord <- c(460.4, 427.4)
+temp_range <- c(485.4, 419.2)          # ordovicain + silurian
 hirnantian <- 445.6
 
+```
 
-# join units with their fossils
-# multiple fossils per unit
-# some units have no fossils
-# lets attach the information to the fossils
-fossil_unit <- left_join(x = fossil_data, y = unit_data, 
+Now that that's out of the way, let's start getting out data into shape. An obvious first step is connect the Macrostrat units table to the fossils table. 
+
+There are multiple collections occurrences per unit, so I'll add all the appropriate unit information to each fossil collection. I'm not worrying about units that lack fossils (yet), hence the left join. 
+
+```{r join_macrostrat}
+
+collect_unit <- left_join(x = collect_data, y = unit_data, 
                          by = c('unit_id', 'col_id', 't_age', 'b_age')) %>%
-  dplyr::select(-(genus_no:taxon_no), refs.y) %>%
-  mutate(m_age = (t_age + b_age) / 2)  # mid age of unit
+  dplyr::select(-(genus_no:taxon_no), refs.y) # redundant/unnecessary
 
-fossil_unit
+print(collect_unit)
+
+```
+
+This gives a single table with all fossil collections associated with their geological information (lithology, age, etc.) The next step is associating the geological context of each collection with the individual occurrences within that collection. I'm only caring about occurrences recorded in the PBDB -- they have the most information -- hence the left join. I'm also going to filter the occurrences to just those of shelly marine taxa which I defined above as one of the useful constants.
+
+```{r join_pbdb}
+
+occur_collect <- 
+  pbdb_data %>%
+  filter(phylum %in% shelly | class %in% shelly) %>%
+  left_join(., collect_unit, by = c('collection_no' = 'cltn_id')) %>%
+  mutate(occur_mid_ma = (max_ma + min_ma) / 2,
+         unit_mid_ma = (t_age + b_age) / 2)
+
+```
+
+A big issue is that these occurrences from all over time, not just the Ordovician + Silurian. Just look.
 
 
-# filter to just the taxa i want
-pbdb_data %>%
-  filter(phylum %in% shelly | class %in% shelly)
 
-### here
+```{r vis_ages}
+
+occur_collect %>%
+  ggplot(aes(x = occur_mid_ma)) +
+  geom_bar(size = 2)
+
+```
+
+This problem due to geological units not being restricted to a particular time interval. A unit can range through, into, or out of our target temporal range.
+
+To overcome this and focus only on fossil occurrences from the Ordovician or Silurian, I filtering down to only those occurrences who's mid-point age is within `temp_range`.
+
+```{r filter_age}
+
+occur_collect <- 
+  occur_collect %>%
+  filter(between(occur_mid_ma, temp_range[2], temp_range[1]))
+
+occur_collect %>%
+  ggplot(aes(x = occur_mid_ma)) +
+  geom_bar(size = 2)
+
+```
+
+Much better.
 
 
 
-taxon <- taxon[taxon$phylum %in% shelly | taxon$class %in% shelly, ]
 
-# put occurrences at middle of unit
-ss <- fossil[, c('unit_id', 'b_age', 't_age')]
-ss$mid <- apply(ss[, 2:3], 1, mean)
-taxon$mid_ma <- ss$mid[match(taxon$unit, ss$unit_id)]
 
-# don't double count
-tt <- split(taxon, as.character(taxon$unit))
-tt <- llply(tt, function(x) x[!duplicated(x$genus), ])
-taxon <- Reduce(rbind, tt)
 
-taxon$group <- NA
-for(ii in seq(length(shelly))) {
-  taxon$group[taxon$phylum %in% shelly[ii]] <- shelly[ii]
-  taxon$group[taxon$class %in% shelly[ii]] <- shelly[ii]
-}
 
-# only fossil bearing units
-strat <- strat[strat$unit_id %in% taxon$unit, ]  # does unit have fossils
 
-# keep uits that have their mid point in time range
-strat <- strat[strat$m_age < ord[1] & strat$m_age > ord[2], ]
+```{r}
+
+
+
 
 # bin data
 # figure out logical breaks
@@ -117,3 +145,5 @@ esd <- partial(export_standata, type = 'diversity')
 purrr::walk2(out, shelly, esd)
 eso <- partial(export_standata, type = 'occurrence')
 purrr::walk2(out, shelly, eso)
+
+```

@@ -1,3 +1,8 @@
+
+
+
+
+
 # extract the important count information
 get_values <- function(taxon, strat, shelly) {
   # which occurrences correspond to focal group

@@ -1,0 +1,28 @@
+---
+title: "Analysis of Ordovician and Silurian fossil occurrences as a function of geological context"
+author: Peter Smits
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+---
+
+
+Step 0 is loading some useful packages for loading and cleaning data.
+
+```{r packages, message = FALSE, results = 'hide'}
+# TODO: just use compendium DESCRIPTION and 
+# devtools::load_all()
+# requires working out the helper*.R functions mess first
+
+library(pacman)
+
+p_load(here, readr, dplyr, tidyr, purrr, glue,
+       compositions, geosphere,
+       arm, rstan, rstanarm)
+
+```
+
+```{r child = '00_download_scrap.Rmd'}
+```
