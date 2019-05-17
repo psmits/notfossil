@@ -18,13 +18,23 @@ Step 0 is loading some useful packages for loading and cleaning data.
 
 library(pacman)
 
-p_load(here, readr, dplyr, tidyr, purrr, glue,
+p_load(here, readr, magrittr, dplyr, tidyr, purrr, glue, stringr, 
+       ggplot2, scales, grid, ggridges, viridis,
        compositions, geosphere,
-       arm, rstan, rstanarm)
+       arm, rstan, rstanarm, brms)
+
+source(here::here('R', 'bin_ages.R'))
+
+theme_set(theme_bw())
+
+# colour blind palette of choice
+blind <- c("#999999", "#E69F00", "#56B4E9", "#009E73", 
+           "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
 ```
 
 ```{r child = '00_download_scrap.Rmd'}
 ```
 
-
+```{r child = '01_prepare_data.Rmd'}
+```

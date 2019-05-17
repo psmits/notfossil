@@ -3,10 +3,7 @@
 The next step is to process our data so that it is ready for analysis. This process takes a lot of steps, but once it is complete we can start visualizing and modeling out data.
 
 
-```{r import_raw}
-
-#source(here::here('R', 'helper01_prepare_foo.r'))
-#source(here::here('R', 'helper02_rock_process.r'))
+```{r import_raw, message = FALSE, results = 'hide'}
 
 # formerly `strat`
 unit_data <- read_csv(here::here('data', 'macrostrat_units.csv'))
@@ -24,7 +21,6 @@ There are several useful constants that will appear throughout the next few sect
 ```{r constants}
 
 # useful constants
-constant <- 20
 shelly <- c('Brachiopoda', 'Anthozoa', 'Trilobita', 
             'Bivalvia', 'Gastropoda')#, 'Cephalopoda')
 temp_range <- c(485.4, 419.2)          # ordovicain + silurian
@@ -33,7 +29,7 @@ hirnantian <- c(445.2, 443.8)
 ```
 
 
-# Joining Macrostrat and PBDB
+## Joining Macrostrat and PBDB
 
 Now that that's out of the way, let's start getting out data into shape. An obvious first step is connect the Macrostrat units table to the fossils table. 
 
@@ -63,15 +59,15 @@ occur_collect <-
 ```
 
 
-# Filter by occurrence age
+## Filter by occurrence age
 
 A big issue is that these occurrences from all over time, not just the Ordovician + Silurian. Just look.
 
 ```{r vis_ages}
 
-occur_collect %>%
+occur_collect %>% 
   ggplot(aes(x = occur_mid_ma)) +
-  geom_bar(size = 2)
+  geom_bar(width = 2)
 
 ```
 
@@ -81,13 +77,12 @@ To overcome this and focus only on fossil occurrences from the Ordovician or Sil
 
 ```{r filter_age}
 
-occur_collect <- 
-  occur_collect %>%
+occur_collect %<>%
   filter(between(occur_mid_ma, temp_range[2], temp_range[1]))
 
 occur_collect %>%
   ggplot(aes(x = occur_mid_ma)) +
-  geom_bar(size = 2)
+  geom_bar(width = 2)
 
 ```
 
@@ -95,9 +90,31 @@ Much better.
 
 
 
-# Binning out occurrences
+## Binning occurrences
 
 The fossil record is a discrete recording of continuous time which creates all kinds of problems. Additionally, paleo-time is more of a range than an instaneous value. Binning out data helps alleviate this -- it just requires us to define a temporal width for each bin. There are two ways to do this: predetermine how many bins you want, or pick an (arbitrary) value. Luckily I've written a function that can do both: `bin_ages()`.
+
+I want to compare multiple arbitrary bin widths to pick whatever feels "smoothest". Sadly, I have trouble defining this algorithmically, but the general idea is to have as many bins as possible to have 1+ fossils and there are as few bins as possible with 0 fossils. Common bin widths include 1, 2, 5, and 10 million years, but I'm gonna look at a few more. 
+
+```{r compare_bin}
+
+occur_collect %>%
+  transmute(bin_01 = bin_ages(occur_mid_ma, by = 1, age = TRUE),
+            bin_02 = bin_ages(occur_mid_ma, by = 2, age = TRUE),
+            bin_025 = bin_ages(occur_mid_ma, by = 2.5, age = TRUE),
+            bin_05 = bin_ages(occur_mid_ma, by = 5, age = TRUE),
+            bin_10 = bin_ages(occur_mid_ma, by = 10, age = TRUE)) %>%
+  gather(key = key, value = value) %>%
+  ggplot(aes(x = value)) +
+  geom_bar(width = 2) +
+  facet_grid(key ~ .)
+
+```
+
+2 and 2.5 seem like the nicest of these options, and I like to favor having a lot of bins over having few bins so I'm going to stick with 2 million year bins.
+
+
+### Saving the Hirnantian
 
 However, there is a twist -- we're *really* interested in the occurrence patterns during the Hirnantian. This means I'd like the Hirnantian time interval preserved. The Hirnantian lasted from 445.2 to 443.8 Ma -- a *really* small interval of time.
 
@@ -119,8 +136,7 @@ occur_after <-
   dplyr::select(occurrence_no, bin_age)
 
 
-occur_collect <- 
-  occur_collect %>%
+occur_collect %<>%
   left_join(., occur_before, by = 'occurrence_no') %>%
   left_join(., occur_after, by = 'occurrence_no') %>%
   mutate(bin_age = coalesce(bin_age.x, bin_age.y),
@@ -132,65 +148,8 @@ occur_collect <-
          bin_num = as.numeric(as.factor(bin_age))) %>% 
   dplyr::select(-bin_age.x, -bin_age.y)
 
-```
-
-Now are tibble `occur_collect` has every observation assigned to a temporal bin and we know one of these bins (i.e. 445.2) is the Hirnantian.
-
-
-TODO HERE
-
-
-
-
-
-```{r}
-
-
-
-
-# bin data
-# figure out logical breaks
-ra <- range(strat$m_age)
-timerange <- abs(diff(ra))
-#timerange <- abs(diff(ord))
-rr <- timerange / constant
-brks1 <- seq(from = hirnantian, to = ra[2] + 1, by = rr) # 
-brks2 <- seq(from = hirnantian, to = ra[1] - 1, by = -rr) # 
-brks <- c(rev(brks2[-1]), brks1)
-brks <- cbind(brks[-1], brks[-length(brks)])
-brks <- brks[rev(seq(nrow(brks))), ]
-write_rds(brks, path = '../data/breaks.rds')
-
-# one pesky observation that doesn't play nice with bins
-strat <- strat[strat$m_age > min(brks), ]
-
-
-# get the count information from the data
-out <- purrr::map(shelly, ~ get_values(taxon, strat, .x))
-names(out) <- shelly
-
-
-# make a mollusc category after the fact
-tt <- full_join(out$Bivalvia, out$Gastropoda)
-tt <- tt %>%
-  group_by(unit_id, bin) %>%
-  dplyr::mutate(diversity = sum(diversity),
-                collections = sum(collections)) %>%
-  ungroup() %>%
-  distinct(unit_id, .keep_all = TRUE)
-out$Mollusca <- tt
-shelly <- names(out)
-
-out <- purrr::map(out, function(x) {
-                    m <- x$unit_id != 19112
-                    x <- x[m, ]
-                    x})
-
-# do all the exporting
-# partials make this easier, imo
-esd <- partial(export_standata, type = 'diversity')
-purrr::walk2(out, shelly, esd)
-eso <- partial(export_standata, type = 'occurrence')
-purrr::walk2(out, shelly, eso)
+write_csv(occur_collect, here::here('data', 'occurrences_clean.csv'))
 
 ```
+
+Now are tibble `occur_collect` has every observation assigned to a temporal bin and we know one of these bins (i.e. 445.2) is the Hirnantian. I've saved this to disk so it can be shared/interrogated on its own.
