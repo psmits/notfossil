@@ -67,7 +67,8 @@ A big issue is that these occurrences from all over time, not just the Ordovicia
 
 occur_collect %>% 
   ggplot(aes(x = occur_mid_ma)) +
-  geom_bar(width = 2)
+  geom_bar(width = 2) +
+  scale_x_reverse()
 
 ```
 
@@ -82,7 +83,8 @@ occur_collect %<>%
 
 occur_collect %>%
   ggplot(aes(x = occur_mid_ma)) +
-  geom_bar(width = 2)
+  geom_bar(width = 2) +
+  scale_x_reverse()
 
 ```
 
@@ -107,7 +109,8 @@ occur_collect %>%
   gather(key = key, value = value) %>%
   ggplot(aes(x = value)) +
   geom_bar(width = 2) +
-  facet_grid(key ~ .)
+  facet_grid(key ~ .) +
+  scale_x_reverse()
 
 ```
 

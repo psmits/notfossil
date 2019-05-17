@@ -25,7 +25,7 @@ p_load(here, readr, magrittr, dplyr, tidyr, purrr, glue, stringr,
 
 source(here::here('R', 'bin_ages.R'))
 
-theme_set(theme_bw())
+theme_set(theme_bw(base_size = 20))
 
 # colour blind palette of choice
 blind <- c("#999999", "#E69F00", "#56B4E9", "#009E73", 
@@ -37,4 +37,7 @@ blind <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
 ```
 
 ```{r child = '01_prepare_data.Rmd'}
+```
+
+```{r child = '02_data_plots.Rmd'}
 ```

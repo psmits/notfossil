@@ -40,7 +40,8 @@ occur_collect %>%
   geom_col() +
   scale_fill_viridis(discrete = TRUE) +
   scale_color_viridis(discrete = TRUE) +
-  labs(x = 'Time (Mya)', 'Count')
+  scale_x_reverse() +
+  labs(x = 'Time (Mya)', y = 'Count')
 
 occur_collect %>%
   group_by(shelly, bin_age) %>%
@@ -50,7 +51,8 @@ occur_collect %>%
   geom_col(position = 'fill') +
   scale_fill_viridis(discrete = TRUE) +
   scale_color_viridis(discrete = TRUE) +
-  labs(x = 'Time (Mya)', 'Proportion')
+  scale_x_reverse() +
+  labs(x = 'Time (Mya)', y = 'Proportion')
 
 ```
 
@@ -70,7 +72,8 @@ occur_collect %>%
   geom_col() +
   scale_fill_viridis(discrete = TRUE) +
   scale_color_viridis(discrete = TRUE) +
-  labs(x = 'Time (Mya)', 'Count')
+  scale_x_reverse() +
+  labs(x = 'Time (Mya)', y = 'Count')
 
 occur_collect %>%
   group_by(shelly, bin_age) %>%
@@ -81,16 +84,77 @@ occur_collect %>%
   geom_col(position = 'fill') +
   scale_fill_viridis(discrete = TRUE) +
   scale_color_viridis(discrete = TRUE) +
-  labs(x = 'Time (Mya)', 'Proportion')
+  scale_x_reverse() +
+  labs(x = 'Time (Mya)', y = 'Proportion')
 
 ```
 
 Mostly the same story as before, but some of the patterns we observed earlier are no longer as extreme. Makes sense because we're moving from abundance to incidence. 
 
 
+## Last occurrences
 
+When is the last time each genus occurs in our dataset? Group the tibble by genus and the calculate the *minimum* time bin. Minimum because time bin age *decreases* as we approach the present.
 
+```{r lad}
 
+lad <- 
+  occur_collect %>%
+  group_by(genus) %>%
+  dplyr::summarize(lad = min(bin_age)) %>%
+  group_by(lad) %>%
+  count() %>%
+  ungroup() %>%
+  arrange(desc(lad)) %>%
+  mutate(n_cum = cumsum(n))
+
+lad %>%
+  ggplot(aes(x = lad, y = n)) +
+  geom_line() +
+  scale_x_reverse() +
+  labs(x = 'Time (Mya)', y = 'LAD Count')
+
+lad %>%
+  ggplot(aes(x = lad, y = n_cum)) +
+  geom_line() +
+  scale_x_reverse() +
+  labs(x = 'Time (Mya)', y = 'LAD Cummulative')
+
+```
+
+And again by shelly group.
+
+```{r lad_shelly}
+
+lad_shelly <- 
+  occur_collect %>%
+  group_by(genus, shelly) %>%
+  dplyr::summarize(lad = min(bin_age)) %>%
+  group_by(shelly) %>%
+  ungroup() %>%
+  group_by(shelly, lad) %>%
+  count() %>%
+  ungroup() %>%
+  group_by(shelly) %>%
+  arrange(desc(lad)) %>%
+  mutate(n_cum = cumsum(n)) %>%
+  ungroup()
+
+lad_shelly %>%
+  ggplot(aes(x = lad, y = n)) +
+  geom_line() +
+  facet_wrap(~ shelly) +
+  scale_x_reverse() +
+  labs(x = 'Time (Mya)', y = 'LAD Count')
+
+lad_shelly %>%
+  ggplot(aes(x = lad, y = n_cum)) +
+  geom_line() +
+  facet_wrap(~ shelly) +
+  scale_x_reverse() +
+  labs(x = 'Time (Mya)', y = 'LAD Cummulative')
+
+```
 
 
 
@@ -100,62 +164,11 @@ Mostly the same story as before, but some of the patterns we observed earlier ar
 
 ```{r}
 
-source('../R/rock_functions.r')
-source('../R/rock_mung.r')
-source('../R/fossil_functions.r')
-source('../R/fossil_mung.r')
+#source('../R/rock_functions.r')
+#source('../R/rock_mung.r')
+#source('../R/fossil_functions.r')
+#source('../R/fossil_mung.r')
 
-
-
-# constants
-shelly <- c('Brachiopoda', 'Trilobita', 'Bivalvia', 'Gastropoda')
-ord <- c(460.4, 443.8)
-hirnantian <- 445.6
-
-strat$fossils <- factor((strat$unit_id %in% taxon$unit))
-taxon$group <- NA
-for(ii in seq(length(shelly))) {
-  taxon$group[taxon$phylum %in% shelly[ii]] <- shelly[ii]
-  taxon$group[taxon$class %in% shelly[ii]] <- shelly[ii]
-}
-
-
-
-# the plot
-unitgg <- ggplot(strat, aes(x = b_age, y = unit_id, colour = fossils)) 
-unitgg <- unitgg + geom_segment(mapping = aes(xend = t_age, yend = unit_id),
-                                alpha = 0.5)
-unitgg <- unitgg + geom_point(mapping = aes(x = m_age))
-unitgg <- unitgg + geom_point(data = taxon,
-                              mapping = aes(x = mid_ma, 
-                                            y = unit, 
-                                            colour = NULL), 
-                              shape = 4, alpha = 0.1, size = 1.1)
-unitgg <- unitgg + facet_wrap( ~ group)
-unitgg <- unitgg + labs(x = 'Mya', y = 'macrostrat unit')
-unitgg <- unitgg + geom_vline(xintercept = hirnantian, 
-                              linetype = 'dashed',
-                              colour = 'blue')  # start of hirnantian
-unitgg <- unitgg + coord_cartesian(xlim = ord)  # zoom in on ordovician
-unitgg <- unitgg + theme(axis.text.y = element_blank(),
-                         axis.ticks.y = element_blank())
-unitgg <- unitgg + scale_colour_manual(values = blind)
-
-# now figure out logical breaks
-timerange <- abs(diff(ord))
-brks <- timerange / 10
-brks <- data.frame(x = seq(from = ord[2], to = ord[1], by = brks))
-unitgg <- unitgg + geom_vline(data = brks, 
-                              mapping = aes(xintercept = x), 
-                              linetype = 'dotted', 
-                              colour = 'darkred')
-# mark beginning, end ordovician
-odf <- data.frame(x = ord)
-unitgg <- unitgg + geom_vline(data = odf, 
-                              mapping = aes(xintercept = x),
-                              colour = 'black', size = 1.5)
-ggsave(plot = unitgg, filename = '../doc/figure/data_plot_brach.png',
-       height = 5.5, width = 8)
 
 
 ```
