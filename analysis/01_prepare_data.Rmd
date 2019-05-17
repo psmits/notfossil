@@ -28,9 +28,12 @@ constant <- 20
 shelly <- c('Brachiopoda', 'Anthozoa', 'Trilobita', 
             'Bivalvia', 'Gastropoda')#, 'Cephalopoda')
 temp_range <- c(485.4, 419.2)          # ordovicain + silurian
-hirnantian <- 445.6
+hirnantian <- c(445.2, 443.8)
 
 ```
+
+
+# Joining Macrostrat and PBDB
 
 Now that that's out of the way, let's start getting out data into shape. An obvious first step is connect the Macrostrat units table to the fossils table. 
 
@@ -59,9 +62,10 @@ occur_collect <-
 
 ```
 
+
+# Filter by occurrence age
+
 A big issue is that these occurrences from all over time, not just the Ordovician + Silurian. Just look.
-
-
 
 ```{r vis_ages}
 
@@ -91,6 +95,49 @@ Much better.
 
 
 
+# Binning out occurrences
+
+The fossil record is a discrete recording of continuous time which creates all kinds of problems. Additionally, paleo-time is more of a range than an instaneous value. Binning out data helps alleviate this -- it just requires us to define a temporal width for each bin. There are two ways to do this: predetermine how many bins you want, or pick an (arbitrary) value. Luckily I've written a function that can do both: `bin_ages()`.
+
+However, there is a twist -- we're *really* interested in the occurrence patterns during the Hirnantian. This means I'd like the Hirnantian time interval preserved. The Hirnantian lasted from 445.2 to 443.8 Ma -- a *really* small interval of time.
+
+A solution is to bin all the data *before* and *after* the Hirnantian as per usual, leaving the Hirnantian as a one-off.  Here is that effort.
+
+
+```{r bin_occur}
+
+occur_before <- 
+  occur_collect %>%
+  filter(occur_mid_ma > max(hirnantian)) %>%
+  mutate(bin_age = bin_ages(occur_mid_ma, by = 2, age = TRUE)) %>%
+  dplyr::select(occurrence_no, bin_age)
+
+occur_after <- 
+  occur_collect %>%
+  filter(occur_mid_ma < min(hirnantian)) %>%
+  mutate(bin_age = bin_ages(occur_mid_ma, by = 2, age = TRUE)) %>%
+  dplyr::select(occurrence_no, bin_age)
+
+
+occur_collect <- 
+  occur_collect %>%
+  left_join(., occur_before, by = 'occurrence_no') %>%
+  left_join(., occur_after, by = 'occurrence_no') %>%
+  mutate(bin_age = coalesce(bin_age.x, bin_age.y),
+         bin_age = if_else(is.na(bin_age),
+                           true = 445.2,
+                           false = bin_age),
+         # worst trick in the book
+         # lower values, younger bin
+         bin_num = as.numeric(as.factor(bin_age))) %>% 
+  dplyr::select(-bin_age.x, -bin_age.y)
+
+```
+
+Now are tibble `occur_collect` has every observation assigned to a temporal bin and we know one of these bins (i.e. 445.2) is the Hirnantian.
+
+
+TODO HERE
 
 
 
