@@ -16,17 +16,6 @@ pbdb_data <- read_csv(here::here('data', 'pbdb_occurrences.csv'))
 
 ```
 
-There are several useful constants that will appear throughout the next few sections.
-
-```{r constants}
-
-# useful constants
-shelly <- c('Brachiopoda', 'Anthozoa', 'Trilobita', 
-            'Bivalvia', 'Gastropoda')#, 'Cephalopoda')
-temp_range <- c(485.4, 419.2)          # ordovicain + silurian
-hirnantian <- c(445.2, 443.8)
-
-```
 
 
 ## Joining Macrostrat and PBDB

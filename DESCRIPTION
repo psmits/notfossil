@@ -11,17 +11,27 @@ Description: Research compendium of analysis of ordovician/silurian fossil recor
 License: MIT + file LICENSE
 URL: https://github.com/psmits/notfossil
 Imports:
-  dplyr,
+  here,
   readr,
+  magrittr,
+  dplyr,
   tidyr,
   purrr,
   glue,
+  stringr,
+  ggplot2,
+  scales,
+  grid,
+  ggridges,
+  viridis,
   compositions,
   geosphere,
   arm,
   rstan,
-  rstanarm
+  rstanarm,
+  brms
 Suggests:
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
+RoxygenNote: 6.1.1

@@ -12,24 +12,35 @@ output:
 Step 0 is loading some useful packages for loading and cleaning data.
 
 ```{r packages, message = FALSE, results = 'hide'}
-# TODO: just use compendium DESCRIPTION and 
-# devtools::load_all()
-# requires working out the helper*.R functions mess first
+# packages listed DESCRIPTION
+# how just load those?
 
 library(pacman)
 
 p_load(here, readr, magrittr, dplyr, tidyr, purrr, glue, stringr, 
        ggplot2, scales, grid, ggridges, viridis,
        compositions, geosphere,
-       arm, rstan, rstanarm, brms)
+       arm, rstan, rstanarm, brms,
+       devtools)
 
-source(here::here('R', 'bin_ages.R'))
+devtools::load_all()
+
+```
+
+There are several useful constants that will appear throughout the next few sections.
+```{r constants}
 
 theme_set(theme_bw(base_size = 20))
 
 # colour blind palette of choice
 blind <- c("#999999", "#E69F00", "#56B4E9", "#009E73", 
            "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+# useful constants
+shelly <- c('Brachiopoda', 'Anthozoa', 'Trilobita', 
+            'Bivalvia', 'Gastropoda')#, 'Cephalopoda')
+temp_range <- c(485.4, 419.2)          # ordovicain + silurian
+hirnantian <- c(445.2, 443.8)
 
 ```
 

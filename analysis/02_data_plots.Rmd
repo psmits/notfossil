@@ -6,12 +6,6 @@ Now that's I've cleaned up the data a bunch, I'm going to explore some of the pa
 
 occur_collect <- read_csv(here::here('data', 'occurrences_clean.csv'))
 
-# re-upping useful constants
-shelly <- c('Brachiopoda', 'Anthozoa', 'Trilobita', 
-            'Bivalvia', 'Gastropoda')#, 'Cephalopoda')
-temp_range <- c(485.4, 419.2)          # ordovicain + silurian
-hirnantian <- c(445.2, 443.8)
-
 ```
 
 
@@ -110,17 +104,18 @@ lad <-
 
 lad %>%
   ggplot(aes(x = lad, y = n)) +
-  geom_line() +
+  geom_line(size = 2) +
   scale_x_reverse() +
   labs(x = 'Time (Mya)', y = 'LAD Count')
 
 lad %>%
   ggplot(aes(x = lad, y = n_cum)) +
-  geom_line() +
+  geom_line(size = 2) +
   scale_x_reverse() +
   labs(x = 'Time (Mya)', y = 'LAD Cummulative')
 
 ```
+
 
 And again by shelly group.
 
@@ -141,34 +136,55 @@ lad_shelly <-
   ungroup()
 
 lad_shelly %>%
-  ggplot(aes(x = lad, y = n)) +
-  geom_line() +
-  facet_wrap(~ shelly) +
+  ggplot(aes(x = lad, y = n, colour = shelly)) +
+  geom_line(size = 2) +
+  scale_colour_viridis(discrete = TRUE) +
   scale_x_reverse() +
   labs(x = 'Time (Mya)', y = 'LAD Count')
 
 lad_shelly %>%
-  ggplot(aes(x = lad, y = n_cum)) +
-  geom_line() +
-  facet_wrap(~ shelly) +
+  ggplot(aes(x = lad, y = n_cum, colour = shelly)) +
+  geom_line(size = 2) +
+  scale_colour_viridis(discrete = TRUE) +
   scale_x_reverse() +
   labs(x = 'Time (Mya)', y = 'LAD Cummulative')
 
 ```
 
+While not the largest spike, all of the shelly groups have spikes in number of LADs at the Hirnantian. How do we interptet this in light of our very biased occurrence record?
 
 
+## Lithology
 
+For each geological unit there is a short lithological description. Each lithological desciption can have multiple parts which are given a percent of total composition. Here is an example:
 
+```{r ex_lithology}
 
-
-```{r}
-
-#source('../R/rock_functions.r')
-#source('../R/rock_mung.r')
-#source('../R/fossil_functions.r')
-#source('../R/fossil_mung.r')
-
-
+occur_collect$lith[1]
 
 ```
+
+In this example, the lithology of this unit is made up of three major forms with each being approximately one-third of that units composition. Lucky for me, these descriptions have a very regular form which makes extracting important text information surprisingly easy.
+
+There are a lot of potential issues when processing lithological descriptions. For example:
+
+- lots of words that appear only once
+- similar word but different part of speech
+- descriptions are identical except for small modified ("black shale siliciclastic" vs "red shale siliciclastic")
+
+All of these problems mean I have to simplify these descriptions. 
+
+A basic way of dividing lithologies are by siliciclsatic vs carbonate. Unfortunately, this comparison is not truly binary as mixed-sediments are possible. Additionally, I might be able to extract better information that just "siliciclastic" from our descriptions. With this in mind, I've written a function to simplify lithological descriptions to be more amenable to analysis. My goal is to divide the litholgies into "coarse siliciclastic," "fine siliciclastic," "carbonate," and "other."
+
+
+```{r get_lithology}
+
+# lithologies are now a list-column
+occur_collect %<>%
+  mutate(lith_simple = simplify_lithology(lith))
+
+```
+
+
+
+
