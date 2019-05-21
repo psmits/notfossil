@@ -4,6 +4,7 @@
 #'
 #' @param desc nested list of descriptions
 #' @return desc but duplicated words removed
+#' @export
 worddup <- function(desc) {
 
   out <- map(desc, function(w) 

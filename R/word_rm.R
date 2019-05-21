@@ -5,6 +5,7 @@
 #' @param desc string description
 #' @param words vector of strings to be removed from desc
 #' @return desc but with words removed
+#' @export
 wordrm <- function(desc, words) {
   temp <- 
     map(desc, function(a) 

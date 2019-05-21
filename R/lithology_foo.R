@@ -56,9 +56,9 @@ simplify_lithology <- function(lith) {
     map(., function(tt)
         map(tt, function(x) 
             map(x, ~ case_when(any(.x == 'siliciclastic') & 
-                                 any(.x %in% fine_sil) ~ 'fine siliciclastic',
+                                 any(.x %in% fine_sil) ~ 'fine_siliciclastic',
                                any(.x == 'siliciclastic') & 
-                                 !(any(.x %in% fine_sil)) ~ 'coarse siliciclastic',
+                                 !(any(.x %in% fine_sil)) ~ 'coarse_siliciclastic',
                                any(.x == 'carbonate') ~ 'carbonate',
                                TRUE ~ 'other')))) %>%
     map(., ~ unlist(.x))
@@ -73,12 +73,13 @@ simplify_lithology <- function(lith) {
        function(x, y) {
          o <- tibble(words = x, value = as.numeric(y[, 2]))
          o})
-
+ 
   # aggregate duplicates by adding their numerics together
   lith_ready <- map(lith_recombo, ~ .x %>%
-      group_by(words) %>%
-      dplyr::summarize(value = sum(value)) %>%
-      mutate(value = value / sum(value)))
+                    group_by(words) %>%
+                    dplyr::summarize(value = sum(value)) %>%
+                    mutate(value = value / sum(value))) %>%
+    map(., ~ .x %>% spread(words, value))
 
   lith_ready
 }

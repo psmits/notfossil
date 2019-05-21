@@ -4,6 +4,7 @@
 #' @param desc description
 #' @param wordd vector of synonymous words
 #' @return description vector with synonyms replaced (no changes if no synonyms.)
+#' @export
 wordrep <- function(desc, wordd) {
   out <- map(desc, function(y) 
              map_chr(y, function(x) {

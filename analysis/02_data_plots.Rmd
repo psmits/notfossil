@@ -176,15 +176,127 @@ All of these problems mean I have to simplify these descriptions.
 
 A basic way of dividing lithologies are by siliciclsatic vs carbonate. Unfortunately, this comparison is not truly binary as mixed-sediments are possible. Additionally, I might be able to extract better information that just "siliciclastic" from our descriptions. With this in mind, I've written a function to simplify lithological descriptions to be more amenable to analysis. My goal is to divide the litholgies into "coarse siliciclastic," "fine siliciclastic," "carbonate," and "other."
 
-
 ```{r get_lithology}
 
 # lithologies are now a list-column
 occur_collect %<>%
-  mutate(lith_simple = simplify_lithology(lith))
+  mutate(lith_simple = simplify_lithology(lith)) %>%
+  unnest() %>%
+  mutate(carbonate = replace_na(carbonate, replace = 0),
+         coarse_siliciclastic = replace_na(coarse_siliciclastic, replace = 0),
+         fine_siliciclastic = replace_na(fine_siliciclastic, replace = 0),
+         other = replace_na(other, replace = 0)) %>%
+  nest(carbonate, coarse_siliciclastic, fine_siliciclastic, other,
+       .key = 'lith_simple')
 
 ```
 
+I've created a column vector `lith_simple` where each element is a tibble describing the lithologycal composition of that unit in a simpler form. Most of the tricks above are just to make it so each unit has all four lithological descriptors and that there are 0s instead of NAs when that descriptor wasn't measured.
 
 
 
+Now that that data is all in order, we can start exploring that space. Does the average lithological composition of a geologic unit change over time? If so, how?
+
+I'm making the lithological data into a [Atchinson composition](https://rdrr.io/cran/compositions/man/acomp.html) object of the data. This object type has convenient properties for interfacing with the `compositions` package. Once this is done, there are a lot of ways to try and summarize this data. From a math perspective, all the 0s in are dataset cause a lot of problems, but hopefully we'll be able to skirt those for now.
+
+
+First, I'm going to calculate mean lithology for the entire sample. Then I'm going to calculate mean lithology for each of the time bins we've defined.
+
+```{r mean_lithology}
+# divide units up by bin
+# then get mean lithology
+bin_lith <- 
+  occur_collect %>%
+  arrange(desc(bin_age)) %>%
+  group_by(bin_age) %>%
+  filter(!duplicated(unit_id)) %>%     # no multi-counting
+  ungroup() %>%
+  group_by(bin_age) %>%
+  group_map(~ .x %>% 
+              dplyr::select(lith_simple) %>% 
+              unnest() %>%
+              acomp() %>%
+              mean())
+
+# what age is each value from?
+bin_ages_match <- 
+  occur_collect %>%
+  arrange(desc(bin_age)) %>%
+  group_by(bin_age) %>%
+  filter(!duplicated(unit_id)) %>%     # again, no multi-counting
+  ungroup() %>%
+  dplyr::select(bin_age) %>% 
+  pull() %>%
+  unique()
+
+lith_time <- 
+  reduce(bin_lith, rbind) %>%
+  as_tibble() %>%
+  mutate(bin_age = bin_ages_match) %>%
+  gather(key = key, value = value, -bin_age)
+
+lith_time %>%
+  ggplot(aes(x = bin_age, y = value, fill = key)) +
+  geom_col(size = 1.5) +
+  scale_fill_viridis(discrete = TRUE) +
+  scale_colour_viridis(discrete = TRUE) +
+  scale_x_reverse() +
+  labs(x = 'Time (Mya)', y = 'Percent')
+
+```
+
+There do not appear to be any massive shifts in mean composition from time bin to time bin. Remember, some units span multiple bins -- we've divided units by occurrences.
+
+
+```{r pca_lithology}
+lith_data <- 
+  occur_collect %>%
+  arrange(desc(bin_age)) %>%
+  group_by(bin_age) %>%
+  filter(!duplicated(unit_id)) %>%     # no multi-counting
+  ungroup() %>%
+  dplyr::select(lith_simple) %>%
+  unnest() %>%
+  acomp()
+
+lith_pca <- princomp(lith_data)
+
+# ggfortify doesn't support princomp.acomp output
+# have to assemble plot by hand
+
+lith_labels <- 
+  occur_collect %>%
+  arrange(desc(bin_age)) %>%
+  group_by(bin_age) %>%
+  filter(!duplicated(unit_id)) %>%     # no multi-counting
+  ungroup() %>%
+  dplyr::select(bin_age) %>%
+  pull()
+
+as_tibble(lith_pca$scores) %>%
+  clean_names() %>%
+  mutate(age = lith_labels) %>%
+  ggplot(aes(x = comp_1, y = comp_2, colour = age)) +
+  geom_vline(xintercept = 0, linetype = 'dashed', alpha = 0.5) +
+  geom_hline(yintercept = 0, linetype = 'dashed', alpha = 0.5) +
+  geom_point(size = 2) +
+  scale_colour_viridis()
+
+```
+
+There doesn't appear to be a lot of obvious temporal pattern for the data.
+
+There are some other ways of looking at our PCA results. For example, we can look at the compositions implied by the loadings of the components (and its inverse). We can also look at the relative loadings of the components for each principle component on the respective ratios, both "up and down." The up si the loading, while the down in the inverse loading.
+
+```{r pca_more}
+
+# compositions that represent a perturbation with the vectors represented by the loadings of each of the factors
+plot(lith_pca, type = 'loadings', scale.sdev = 1)
+
+# compositions that represent a perturbation with the inverse of the vectors represented by the loadings of each of the factors
+plot(lith_pca, type = 'loadings', scale.sdev = -1)
+
+# relative loadings
+plot(lith_pca, type = 'relative')
+
+```

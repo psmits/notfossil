@@ -1,0 +1,35 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+# notfossil
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+
+when would we expect to see a fossil? what influences the presence and abundance of fossils in a geologic unit.
+
+
+## Using this code base
+
+This project is written as a [research compendium](https://amstat.tandfonline.com/doi/full/10.1080/00031305.2017.1375986). 
+
+To use the functions in this research compendium, you can build and install this research compendium as an R package. Alternatively, you can also use `devtools::load_all()` to bring all of the relevant functions into memory.
+
+And the development version from [GitHub](https://github.com/) with:
+
+``` r
+# install.packages("devtools")
+devtools::install_github("psmits/notfossil")
+```

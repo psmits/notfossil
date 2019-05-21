@@ -6,22 +6,30 @@ output:
   html_document:
     toc: true
     toc_depth: 2
+    fig_width: 7
+    fig_height: 6
 ---
 
 
 Step 0 is loading some useful packages for loading and cleaning data.
 
 ```{r packages, message = FALSE, results = 'hide'}
-# packages listed DESCRIPTION
-# how just load those?
 
-library(pacman)
+# either accomplishes the same task 
+# requires the compendium installed as a package
+library(notfossil)
 
-p_load(here, readr, magrittr, dplyr, tidyr, purrr, glue, stringr, 
-       ggplot2, scales, grid, ggridges, viridis,
-       compositions, geosphere,
-       arm, rstan, rstanarm, brms,
-       devtools)
+
+# does not require installing compendium
+
+#library(pacman)
+#
+#p_load(here, janitor, readr, magrittr, dplyr, tidyr, purrr, glue, stringr, 
+#       ggplot2, scales, grid, ggridges, viridis,
+#       compositions, geosphere,
+#       arm, rstan, rstanarm, brms,
+#       devtools)
+#
 
 devtools::load_all()
 
@@ -51,4 +59,11 @@ hirnantian <- c(445.2, 443.8)
 ```
 
 ```{r child = '02_data_plots.Rmd'}
+```
+
+
+```{r system_info}
+
+devtools::session_info()
+
 ```
