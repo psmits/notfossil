@@ -7,7 +7,6 @@
 #' @export
 simplify_lithology <- function(lith) {
 
-
   # some words are functional equivalents. synonymize!
   dup_words <- list(c('green', 'greenish'), 
                     c('limestone', 'lime'),

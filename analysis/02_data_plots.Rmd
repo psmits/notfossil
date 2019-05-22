@@ -183,6 +183,9 @@ All of these problems mean I have to simplify these descriptions.
 A basic way of dividing lithologies are by siliciclsatic vs carbonate. Unfortunately, this comparison is not truly binary as mixed-sediments are possible. Additionally, I might be able to extract better information that just "siliciclastic" from our descriptions. With this in mind, I've written a function to simplify lithological descriptions to be more amenable to analysis. My goal is to divide the litholgies into "coarse siliciclastic," "fine siliciclastic," "carbonate," and "other."
 
 ```{r get_lithology}
+p_load(profvis)
+lith <- occur_collect$lith
+
 
 # lithologies are now a list-column
 occur_collect %<>%
@@ -322,13 +325,13 @@ There are some other ways of looking at our PCA results. For example, we can loo
 
 ```{r pca_more}
 
-# compositions that represent a perturbation with the vectors represented by the loadings of each of the factors
-plot(lith_pca, type = 'loadings', scale.sdev = 1)
-
-# compositions that represent a perturbation with the inverse of the vectors represented by the loadings of each of the factors
-plot(lith_pca, type = 'loadings', scale.sdev = -1)
-
-# relative loadings
-plot(lith_pca, type = 'relative')
+## compositions that represent a perturbation with the vectors represented by the loadings of each of the factors
+#plot(lith_pca, type = 'loadings', scale.sdev = 1)
+#
+## compositions that represent a perturbation with the inverse of the vectors represented by the loadings of each of the factors
+#plot(lith_pca, type = 'loadings', scale.sdev = -1)
+#
+## relative loadings
+#plot(lith_pca, type = 'relative')
 
 ```

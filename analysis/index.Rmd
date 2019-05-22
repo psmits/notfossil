@@ -19,6 +19,7 @@ library(pacman)
 
 p_load(here, janitor, tibble, readr, magrittr, dplyr, 
        tidyr, purrr, glue, stringr, 
+       furrr,
        ggplot2, scales, grid, ggridges, viridis, ggrepel,
        compositions, geosphere,
        arm, rstan, rstanarm, brms,
@@ -53,11 +54,4 @@ hirnantian <- c(445.2, 443.8)
 ```
 
 ```{r child = '02_data_plots.Rmd'}
-```
-
-
-```{r system_info}
-
-#devtools::session_info()
-
 ```
