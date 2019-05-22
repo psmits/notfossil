@@ -2,21 +2,8 @@
 output: github_document
 ---
 
-<!-- README.md is generated from README.Rmd. Please edit that file -->
 
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>",
-  fig.path = "man/figures/README-",
-  out.width = "100%"
-)
-```
 # notfossil
-
-<!-- badges: start -->
-<!-- badges: end -->
-
 
 when would we expect to see a fossil? what influences the presence and abundance of fossils in a geologic unit.
 
