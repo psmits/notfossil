@@ -48,19 +48,21 @@ simplify_lithology <- function(lith) {
     lith_explode %>%
     map(., function(x) map(x, ~ str_split(.x[, 1], ' '))) %>%
     # some words are too common or unhelpful, get rid of them.
-    wordrm(., too_common) %>%
+    #wordrm(., too_common) %>%
     # some words are duplicated. get rid of those.
-    worddup(.) %>%
+    #worddup(.) %>%
     # now that we've cleaned the lithological descriptions
     # assign to one of the categories
-    map(., function(tt)
-        map(tt, function(x) 
-            map(x, ~ case_when(any(.x == 'siliciclastic') & 
-                                 any(.x %in% fine_sil) ~ 'fine_siliciclastic',
-                               any(.x == 'siliciclastic') & 
-                                 !(any(.x %in% fine_sil)) ~ 'coarse_siliciclastic',
-                               any(.x == 'carbonate') ~ 'carbonate',
-                               TRUE ~ 'other')))) %>%
+    future_map(., function(tt)
+               map(tt, function(x) 
+                   map(x, ~ case_when(any(.x == 'siliciclastic') & 
+                                      any(.x %in% fine_sil) ~ 
+                                      'fine_siliciclastic',
+                                    any(.x == 'siliciclastic') & 
+                                      !(any(.x %in% fine_sil)) ~ 
+                                      'coarse_siliciclastic',
+                                    any(.x == 'carbonate') ~ 'carbonate',
+                                    TRUE ~ 'other')))) %>%
     map(., ~ unlist(.x))
   
   # lith_words has all the words
@@ -69,17 +71,17 @@ simplify_lithology <- function(lith) {
 
   lith_explode <- flatten(lith_explode) # house keeping
 
-  lith_recombo <- map2(lith_words, lith_explode,
+  lith_recombo <- future_map2(lith_words, lith_explode,
        function(x, y) {
          o <- tibble(words = x, value = as.numeric(y[, 2]))
          o})
  
   # aggregate duplicates by adding their numerics together
-  lith_ready <- map(lith_recombo, ~ .x %>%
-                    group_by(words) %>%
-                    dplyr::summarize(value = sum(value)) %>%
-                    mutate(value = value / sum(value))) %>%
-    map(., ~ .x %>% spread(words, value))
+  lith_ready <- future_map(lith_recombo, ~ .x %>%
+                           group_by(words) %>%
+                           dplyr::summarize(value = sum(value)) %>%
+                           mutate(value = value / sum(value))) %>%
+    future_map(., ~ .x %>% spread(words, value))
 
   lith_ready
 }

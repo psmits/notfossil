@@ -2,6 +2,7 @@
 
 The next step is to process our data so that it is ready for analysis. This process takes a lot of steps, but once it is complete we can start visualizing and modeling out data.
 
+I've already prepared some data for this analysis. Check out `00_download_scrap.Rmd` for that (annotated) script.
 
 ```{r import_raw, message = FALSE, results = 'hide'}
 
