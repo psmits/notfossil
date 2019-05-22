@@ -7,6 +7,7 @@
 #' @param age logical bin age returned, not number (default FALSE, return bin number)
 #' @return vector of bin memberships
 #' @author Peter D Smits <peterdavidsmits@gmail.com>
+#' @export
 bin_ages <- function(x, by = NULL, number = NULL, age = FALSE) {
 
   if(is.null(by) & is.null(number)) {
