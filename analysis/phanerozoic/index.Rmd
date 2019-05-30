@@ -4,11 +4,14 @@ author: Peter Smits
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 
   html_document:
+    theme: paper
     toc: true
     toc_depth: 2
+    toc_float: true
     fig_width: 10
     fig_height: 6
     df_print: paged
+    code_folding: show
 ---
 
 # Introduction
@@ -108,7 +111,8 @@ collect_url <- glue('https://macrostrat.org/api/v2/fossils?unit_id=',
 collect_data <- read_csv(collect_url)
 
 ```
-```{r macro_collect_print) 
+
+```{r macro_collect_print}
 
 print(collect_data)
 
@@ -133,6 +137,7 @@ pbdb_collections <-
             pull %>% 
             glue_collapse(., sep = ','))
 
+# pbdb servers get overwhelmed easily, so not parallel
 pbdb_urls <- map(pbdb_collections, 
                  ~ glue('https://paleobiodb.org/data1.2/occs/list.txt?coll_id=',
                         '{.x}',
@@ -199,7 +204,8 @@ The fossil record is a discrete recording of continuous time which creates all k
 
 I want to compare multiple arbitrary bin widths to pick whatever feels "smoothest". Sadly, I have trouble defining this algorithmically, but the general idea is to have as many bins as possible to have 1+ fossils and there are as few bins as possible with 0 fossils. Common bin widths include 1, 2, 5, and 10 million years, but I'm gonna look at a few more. 
 
-```{r compare_bin}
+```{r compare_bin, fig.width = 6, fig.height = 10}
+# figure height > figure width
 
 bin_test <- 
   occur_collect %>%
@@ -270,7 +276,7 @@ occur_collect %>%
   group_by(shelly, bin_time) %>%
   count() %>%
   ggplot(aes(x = bin_time, y = n, fill = shelly)) +
-  geom_col() +
+  geom_col() +                         # geom_area doesn't play nice
   geom_vline(data = tibble(x = big_5),
              mapping = aes(xintercept = x),
              size = 1.5,
@@ -283,7 +289,7 @@ occur_collect %>%
   group_by(shelly, bin_time) %>%
   count() %>%
   ggplot(aes(x = bin_time, y = n, fill = shelly)) +
-  geom_col(position = 'fill') +
+  geom_area(position = 'fill') +
   geom_vline(data = tibble(x = big_5),
              mapping = aes(xintercept = x),
              size = 1.5,
@@ -299,6 +305,8 @@ Visually, there are three major "phases": Trilobites --> Brachiopods --> Bivalve
 
 However we have a glaring issue: raw abundance counts can be misleading for fossil occurrences. If we are barely recording which species were present, we certainly are getting a biased picture of their abundances. Let's redo both of the above graphs this time looking at diversity. Diversity here is the number of unique taxa present at a given time. For paleodata, we tend to previlege either species or genera as are taxonomic levels of choice, with a particular emphasis on genera because identifying species from partial material is very difficult.  
 
+Importantly, this measure of "diversity" is just the count of unique species occurrences for that time bin. This measure ignores range-through taxon and makes no effort to account for differences in sampling probability over time or between taxa. Here, diversity is just a raw count.
+
 ```{r vis_fossil_unique}
 
 occur_genera <- 
@@ -309,7 +317,7 @@ occur_genera <-
 
 occur_genera %>%
   ggplot(aes(x = bin_time, y = n, fill = shelly)) +
-  geom_col() +
+  geom_col() +                         # geom_area doesn't play nice
   geom_vline(data = tibble(x = big_5),
              mapping = aes(xintercept = x),
              size = 1.5,
@@ -320,7 +328,7 @@ occur_genera %>%
 
 occur_genera %>%
   ggplot(aes(x = bin_time, y = n, fill = shelly)) +
-  geom_col(position = 'fill') +
+  geom_area(position = 'fill') +
   geom_vline(data = tibble(x = big_5),
              mapping = aes(xintercept = x),
              size = 1.5,
@@ -331,13 +339,13 @@ occur_genera %>%
 
 ```
 
-Pretty much the same. Cool. Our fossil record resemble a pattern that most paleobiologists would consider "normal".
-
-
+Pretty much the same. Cool. Our fossil record resemble a pattern that most paleobiologists would consider "normal". No immediate concerns that I messed up the data during processing.
 
 
 
 ## Lithology over time
+
+Now for some exploration of the geological units from Macrostrat. Remember, these are We're particularly
 
 For each geological unit there is a short lithological description. Each lithological desciption can have multiple parts which are given a percent of total composition. Here is an example:
 
@@ -357,7 +365,7 @@ There are a lot of potential issues when processing lithological descriptions. F
 
 All of these problems mean I have to simplify these descriptions. 
 
-A basic way of dividing lithologies are by siliciclsatic vs carbonate. Unfortunately, this comparison is not truly binary as mixed-sediments are possible. Additionally, I might be able to extract better information that just "siliciclastic" from our descriptions. With this in mind, I've written a function (`simplify_lithology()`) to simplify lithological descriptions to be more amenable to analysis. My goal is to divide the litholgies into "coarse siliciclastic," "fine siliciclastic," "carbonate," and "other." Because this research compendium doubles as a package, I'll just call that function from the `notfossil` package.
+A basic way of dividing lithologies is simply siliciclsatic vs carbonate. Unfortunately, this comparison is not truly binary as mixed-sediments are possible. Additionally, I might be able to extract better information that just "siliciclastic" from our natural language descriptions. With this in mind, I've written a function (`simplify_lithology()`) to simplify lithological descriptions to be more amenable to analysis. My goal is to divide the litholgies into "coarse siliciclastic," "fine siliciclastic," "carbonate," and "other." Because this research compendium doubles as a package, I'll just call that function from the `notfossil` package.
 
 For a dataset this size, `simplify_lithology()` is memory intensive/slow for R. It is a lot of text manipulation, triple nested lists, tibble manipulation, and uses `tidyr::spread` internally. I've updated the major `map*()` calls to be `future_map*()` which is helping, but my laptop gets really angry.
 
@@ -365,43 +373,40 @@ So, because it is parallel internally, I'm going to chunk the data and then reco
 
 ```{r get_lithology}
 
-# lithologies are now a list-column
-lith <- occur_collect %>%
+occur_collect$lith_simple <- 
+  occur_collect %>%
   mutate(tile = ntile(n = 20)) %>%
   group_by(tile) %>%
+  # simplify_lithology is already parallel
   group_map(~ simplify_lithology(.x$lith)) %>%
   flatten()
 
-occur_collect %>%
-  mutate(lith_simple = lith)
-  unnest() %>%
-  mutate(carbonate = replace_na(carbonate, replace = 0),
-         coarse_siliciclastic = replace_na(coarse_siliciclastic, replace = 0),
-         fine_siliciclastic = replace_na(fine_siliciclastic, replace = 0),
-         other = replace_na(other, replace = 0)) %>%
-  nest(carbonate, coarse_siliciclastic, fine_siliciclastic, other,
-       .key = 'lith_simple')
+# no future_group_map (group_map is from dplyr and furrr focuses on parallel purrr), but there is 
+# group_by(tile) %>% 
+# nest(.id = 'data') %>% 
+# mutate(lith_simple = future_map(data$lith)) %>%
+# unnest()
 
 ```
 
-I've created a column vector `lith_simple` where each element is a tibble describing the lithological composition of that unit in a simpler form. Most of the tricks above are just to make it so each unit has all four lithological descriptors and that there are 0s instead of NAs when that descriptor wasn't measured.
+I've created a list column `lith_simple` where each element is a tibble describing the lithological composition of that unit in a simpler form. Most of the tricks above are just to make it so each unit has all four lithological descriptors and that there are 0s instead of NAs when that descriptor wasn't measured.
 
 Now that that data is all in order, we can start exploring that space. Does the average lithological composition of a geologic unit change over time? If so, how?
 
-I'm making the lithological data into a [Atchinson composition](https://rdrr.io/cran/compositions/man/acomp.html) object of the data. This object type has convenient properties for interfacing with the `compositions` package. Once this is done, there are a lot of ways to try and summarize this data. From a math perspective, all the 0s in are dataset cause a lot of problems, but hopefully we'll be able to skirt those for now.
+I'm making the lithological data into a [Atchinson composition](https://rdrr.io/cran/compositions/man/acomp.html) object of the data. This object type has convenient properties for interfacing with the `compositions` package. Once this is done, there are a lot of ways to try and summarize this data. From a math perspective, all the 0s in are dataset can cause a lot of problems, but hopefully we'll be able to skirt those for now. By coding them as 0s, though, we are explicit saying that if that lithology was present it was present in such a small amount as to be immeasurable.
 
-First, I'm going to calculate mean lithology for the entire sample. Then I'm going to calculate mean lithology for each of the time bins we've defined.
+I'm going to calculate mean lithology for each of the time bins we've defined to get an idea of how the average setting for fossilzation may have changed.
 
 ```{r mean_lithology}
 # divide units up by bin
 # then get mean lithology
 bin_lith <- 
   occur_collect %>%
-  arrange(desc(bin_age)) %>%
-  group_by(bin_age) %>%
+  arrange(desc(bin_time)) %>%
+  group_by(bin_time) %>%
   filter(!duplicated(unit_id)) %>%     # no multi-counting
   ungroup() %>%
-  group_by(bin_age) %>%
+  group_by(bin_time) %>%
   group_map(~ .x %>% 
               dplyr::select(lith_simple) %>% 
               unnest() %>%
@@ -409,25 +414,25 @@ bin_lith <-
               mean())
 
 # what age is each value from?
-bin_ages_match <- 
+bin_times_match <- 
   occur_collect %>%
-  arrange(desc(bin_age)) %>%
-  group_by(bin_age) %>%
+  arrange(desc(bin_time)) %>%
+  group_by(bin_time) %>%
   filter(!duplicated(unit_id)) %>%     # again, no multi-counting
   ungroup() %>%
-  dplyr::select(bin_age) %>% 
+  dplyr::select(bin_time) %>% 
   pull() %>%
   unique()
 
 lith_time <- 
   reduce(bin_lith, rbind) %>%
   as_tibble() %>%
-  mutate(bin_age = bin_ages_match) %>%
-  gather(key = key, value = value, -bin_age)
+  mutate(bin_time = bin_times_match) %>%
+  gather(key = key, value = value, -bin_time)
 
 lith_time %>%
-  ggplot(aes(x = bin_age, y = value, fill = key)) +
-  geom_col(size = 1.5) +
+  ggplot(aes(x = bin_time, y = value, fill = key)) +
+  geom_area() +
   geom_vline(data = tibble(x = big_5),
              mapping = aes(xintercept = x),
              size = 1.5,
@@ -444,15 +449,17 @@ There do not appear to be any massive shifts in mean composition from time bin t
 ```{r pca_lithology}
 lith_data <- 
   occur_collect %>%
-  arrange(desc(bin_age)) %>%
-  group_by(bin_age) %>%
+  arrange(desc(bin_time)) %>%
+  group_by(bin_time) %>%
   filter(!duplicated(unit_id)) %>%     # no multi-counting
   ungroup() %>%
   dplyr::select(lith_simple) %>%
   unnest() %>%
   acomp()
 
-# princomp.acomp
+# princomp.acomp is really slow
+# i guess no one has large compositional datasets
+# ...
 lith_pca <- princomp(lith_data)
 
 # ggfortify doesn't support princomp.acomp output
@@ -461,14 +468,14 @@ lith_pca <- princomp(lith_data)
 # get age and diversity labels
 lith_labels <- 
   occur_collect %>%
-  arrange(desc(bin_age)) %>%
-  group_by(bin_age, unit_id) %>%
+  arrange(desc(bin_time)) %>%
+  group_by(bin_time, unit_id) %>%
   mutate(div = n_distinct(genus)) %>%
   ungroup() %>%
-  group_by(bin_age) %>%
+  group_by(bin_time) %>%
   filter(!duplicated(unit_id)) %>%     # no multi-counting
   ungroup() %>%
-  dplyr::select(div, bin_age)
+  dplyr::select(div, bin_time)
 
 
 # get loadings to add to plot
@@ -482,7 +489,7 @@ lith_load <-
 # make the plot
 as_tibble(lith_pca$scores) %>%
   clean_names() %>%
-  mutate(age = lith_labels$bin_age,
+  mutate(time = lith_labels$bin_time,
          div = lith_labels$div) %>%
   ggplot() +
   geom_vline(xintercept = 0, linetype = 'dashed', alpha = 0.5) +
@@ -495,12 +502,43 @@ as_tibble(lith_pca$scores) %>%
                size = 1.5) +
   geom_text_repel(data = lith_load,
                   mapping = aes(x = comp_1, y = comp_2, label = rowname)) +
-  geom_point(mapping = aes(x = comp_1, y = comp_2, colour = age, size = div)) +
+  geom_point(mapping = aes(x = comp_1, y = comp_2, colour = time, size = div)) +
   scale_colour_viridis() +
-  labs(colour = 'Age (My)',
+  labs(colour = 'Time (Mya)',
        size = 'Diversity',
        x = 'PC 1',
        y = 'PC 2')
 
 ```
 
+
+# Lazarus occurrences
+
+Lazarus taxon -- species with a gap in the fossil record
+
+Lazarus effect -- lots of simultaneous first occurrences after a gap.
+
+I'm going to define the notion of a Lazarus occurrence as the first (re)occurrence of a species after a gap in their fossil record -- this excludes first occurrences.
+
+- look at the occurrence record of each species 
+- identify each gap
+- identify the occurrence after that gap
+- mark as Lazarus occurrence
+
+```{r get_lazarus}
+
+#occur_collect %>%
+#  group_by(bin_time, genus) %>%
+
+
+```
+
+
+graph pattern over time
+- vary by taxonomic group
+- mark big 5
+
+
+
+
+# Fossil bearing vs non-fossil bearing geological units

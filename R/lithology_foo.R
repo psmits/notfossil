@@ -55,15 +55,15 @@ simplify_lithology <- function(lith) {
     future_map(., function(tt)
                map(tt, function(x) 
                    map(x, ~ case_when(any(.x == 'siliciclastic') & 
-                                      any(.x %in% fine_sil) ~ 
-                                      'fine_siliciclastic',
-                                    any(.x == 'siliciclastic') & 
-                                      !(any(.x %in% fine_sil)) ~ 
-                                      'coarse_siliciclastic',
-                                    any(.x == 'carbonate') ~ 'carbonate',
-                                    TRUE ~ 'other')))) %>%
+                                        any(.x %in% fine_sil) ~ 
+                                        'fine_siliciclastic',
+                                      any(.x == 'siliciclastic') & 
+                                        !(any(.x %in% fine_sil)) ~ 
+                                        'coarse_siliciclastic',
+                                      any(.x == 'carbonate') ~ 'carbonate',
+                                      TRUE ~ 'other')))) %>%
     future_map(., ~ unlist(.x))
-  
+
   # lith_words has all the words
   # lith_explode has both words [1] and numeric [2]
   # replace lith_explode words with lith_words
@@ -71,10 +71,10 @@ simplify_lithology <- function(lith) {
   lith_explode <- flatten(lith_explode) # house keeping
 
   lith_recombo <- future_map2(lith_words, lith_explode,
-       function(x, y) {
-         o <- tibble(words = x, value = as.numeric(y[, 2]))
-         o})
- 
+                              function(x, y) {
+                                o <- tibble(words = x, value = as.numeric(y[, 2]))
+                                o})
+
   # aggregate duplicates by adding their numerics together
   lith_ready <- future_map(lith_recombo, ~ .x %>%
                            group_by(words) %>%
@@ -82,7 +82,17 @@ simplify_lithology <- function(lith) {
                            mutate(value = value / sum(value))) %>%
     future_map(., ~ .x %>% spread(words, value))
 
+  lith_ready <- 
+    tibble(x = lith_ready) %>%
+    unnest() %>%
+    mutate(carbonate = replace_na(carbonate, replace = 0),
+           coarse_siliciclastic = replace_na(coarse_siliciclastic, replace = 0),
+           fine_siliciclastic = replace_na(fine_siliciclastic, replace = 0),
+           other = replace_na(other, replace = 0)) %>%
+    split(., seq(nrow(.)))
+
   lith_ready
+
 }
 
 
