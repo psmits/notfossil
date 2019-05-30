@@ -1,0 +1,506 @@
+---
+title: "Analysis of Phanerozoic fossil occurrences as a function of geological context"
+author: Peter Smits
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+    fig_width: 10
+    fig_height: 6
+    df_print: paged
+---
+
+# Introduction
+
+The fossil record is full of gaps -- it fails to record the environment more often than it succeeds. My metaphor of choice has been a busted grabbing claw.
+
+Inconsistent sampling of a taxon over time is a common type of gap in the fossil record. For example, a fossil of species X is observed in time $t_{1}$ and time $t_{3}$ but not at time $t_{2}$. The occurrence record of species X can then be labeled a ["Lazarus taxon"](https://en.wikipedia.org/wiki/Lazarus_taxon) -- it was believed gone but it reappeared. This type of occurrence record applies to any size gap and can be generalised to mean any species occurrence record where that species is observed at times $t_{n}$ and $t_{m}$ where $n$ and $m$ are nonconsecutive time intervals and there are no occurrences between times $n$ and $m$.
+
+The Lazarus effect is when multiple Lazarus taxa share their gaps and observation times. When multiple Lazarus taxa appear in the same interval, this is called a Lazarus effect. For example, species X, Y, and Z are observed at times $t_{1}$ and $t_{3}$, but are not observed at time $t_{2}$. 
+
+The Lazarus effect after a mass extinction could be caused by a change to the quality of the stratigraphic record. If there are fewer rocks with fossils in then, it is harder to observe fossils.
+
+Another potential cause of the Lazarus effect after mass extinctions is mass rarity -- if a species is rarer on the ground, then it is much less likely to be sampled. All mass extinctions are biotic crises -- the environment is completely reshaped through loss of key interactors. We might expect then that species abundance decreases universally. Until abundance recovers, the probability of sampling any species is just too low. Thus, we might then expect a Lazarus effect in an time interval after a mass extinction.
+
+So what is contributing more to simultaneous gaps in the occurrence records of multiple species? Is it the inconsistent quality of the fossil record or is it the rarity of taxa? 
+
+To start getting a better handle on how these two potential causes may contribute to gaps in the fossil record, I'm going to exploring two databases: [Macrostrat](https://macrostrat.org/) and the [Paleobiology database (PBDB)](https://paleobiodb.org/#/). Macrostrat is a database of all North American geological units, while the PBDB is a database of fossil occurrences across the entire globe and for the whole Phanerozoic. The PBDB is a community project and is an incomplete record of all known fossil occurrences, it is the single largest database of its kind and is the discipline standard for global occurrence data.
+
+
+# Loading data
+
+Macrostrat geological units have metadata that includes PBDB collections unique identifiers, but the PBDB includes no information about which Macrostrat units are associated with PBDB occurrences. This frustration is probably cased by the PBDB being older than Macrostrat.
+
+
+Step 0 is loading some useful packages for loading and cleaning data.
+
+```{r packages, message = FALSE, warning = FALSE, results = 'hide'}
+
+library(pacman)
+
+p_load(here, janitor, tibble, readr, magrittr, dplyr, 
+       tidyr, purrr, glue, stringr, furrr,
+       ggplot2, scales, grid, ggridges, viridis, ggrepel,
+       compositions, geosphere,
+       arm, rstan, rstanarm, brms,
+       devtools)
+
+library(notfossil)
+# devtools::load_all()
+
+```
+
+There are also several useful constants that will appear throughout the next few sections.
+
+```{r constants}
+
+plan(multiprocess)
+
+theme_set(theme_bw(base_size = 20))
+
+# useful constants
+shelly <- c('Brachiopoda', 'Anthozoa', 'Trilobita', 
+            'Bivalvia', 'Gastropoda')#, 'Cephalopoda')
+temp_range <- c(541, 0)                # phanerozoic
+big_5 <- c(443.8, 358.9, 251.9, 201.3, 66)
+
+```
+
+## Macrostrat geological units
+
+The first set is pulling the relevant raw data from Macrostrat. I want geological units from the entire Phanerozoic (the last 541 million years). In Macrostrat, a geological unit is defined as a gap-bounded litho-stratigraphic interval -- an association of rocks in sequence that is distinct from those rocks above and below.
+
+Macrostrat has a [minimal, barely documented API](https://macrostrat.org/api), so I'll just write out a call for all geological units. I believe the underlying structure is a GeoJSON database, but there are a lot of different output options. I'm using a CSV output because I'm interested in lithologic (rock type) and stratigraphic (rock position in time/space) information, but I'm not interested in the spatial/map objects available for each geological unit.
+
+```{r macro_unit, message = FALSE, warning = FALSE, results = 'hide'}
+
+unit_url <- glue('https://macrostrat.org/api/v2/units?',
+                      'interval_name=Phanerozoic&response=long&format=csv')
+unit_data <- read_csv(unit_url)
+
+```
+```{r macro_unit_print}
+
+print(unit_data)
+
+```
+
+## Macrostrat fossil collections
+
+`unit_data` is a tibble where each row is a [geological unit](https://macrostrat.org/api/units). Each unit has a unique identifier `unit_id`. Each unit also two fields, `pbdb_collections` and `pbdb_occurrences`, which are counts of the number of collections or occurrences, respectively, that are associated with that unit. Collections are groups of occurrences that are associated, frequently because they were recorded in the same paper. A collection has one or more occurrences associated with it. 
+
+Frustratingly, the information on *which* collections or occurrences are associated with that unit is missing from the `units` table. Instead, I need to write a query to the `fossils` table in Macrostrat to get the relevant information. Using the `unit_id` key from the `units` table, I'll write a quick query for all fossil occurrence information from any unit that has at least 1 occurrence. With a tiny bit of massaging, these units can be entered into a second Macrostrat API call.
+
+```{r macro_collect, message = FALSE, warning = FALSE, results = 'hide'}
+
+unit_w_fossils <- 
+  unit_data %>%
+  filter(pbdb_occurrences > 0) %>%
+  dplyr::select(unit_id) %>%
+  pull() %>%
+  glue_collapse(., sep = ',')
+
+collect_url <- glue('https://macrostrat.org/api/v2/fossils?unit_id=',
+                   '{unit_w_fossils}',
+                   '&response=long&format=csv')
+
+collect_data <- read_csv(collect_url)
+
+```
+```{r macro_collect_print) 
+
+print(collect_data)
+
+```
+
+## PBDB occurrences
+
+The `collect_data` tibble has all the necessary information to recover fossil occurrence information from the PBDB. The column `cltn_id` has the unique identifier for the PBDB collections associated with each geological unit (`unit_id`). We can extract and massage the `cltn_id` column into a vector we can pass to the PBDB API, making a call for an occurrence list. The resulting tibble has a row for every fossil occurrence found in collections made from geological units in our Macrostrat data.
+
+One of the issues we face here is that the number of collections is *so large* that the URI is so long that it throws a [HTTP error 414](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/414). So I'm going to chop the query up and then combine the results.
+
+```{r pbdb_occurrence, message = FALSE, warning = FALSE, results = 'hide'}
+
+pbdb_collections <- 
+  collect_data %>%
+  dplyr::select(cltn_id) %>%
+  filter(!duplicated(cltn_id)) %>%
+  mutate(chunk = ntile(n = 20)) %>%
+  group_by(chunk) %>%
+  group_map(., ~ .x %>% 
+            dplyr::select(cltn_id) %>% 
+            pull %>% 
+            glue_collapse(., sep = ','))
+
+pbdb_urls <- map(pbdb_collections, 
+                 ~ glue('https://paleobiodb.org/data1.2/occs/list.txt?coll_id=',
+                        '{.x}',
+                        '&show=full'))
+
+pbdb_data <- future_map(pbdb_urls, ~ read_csv(.x)) %>%
+  reduce(., rbind)                     
+  # type inference issues from read_csv prevent union ;_;
+
+```
+
+
+## Joining Macrostrat and PBDB
+
+Now that that's out of the way, let's start getting out data into shape. An obvious first step is connect the Macrostrat units table to the fossils table. 
+
+There are multiple collections occurrences per unit, so I'll add all the appropriate unit information to each fossil collection. I'm not worrying about units that lack fossils (yet), hence the left join. 
+
+```{r join_macrostrat}
+
+collect_unit <- left_join(x = collect_data, y = unit_data, 
+                         by = c('unit_id', 'col_id', 't_age', 'b_age')) %>%
+  dplyr::select(-(genus_no:taxon_no), refs.y) # redundant/unnecessary
+
+```
+
+This gives a single table with all fossil collections associated with their geological information (lithology, age, etc.) The next step is associating the geological context of each collection with the individual occurrences within that collection. I'm only caring about occurrences recorded in the PBDB -- they have the most information -- hence the left join. 
+
+```{r join_pbdb}
+
+occur_collect <- 
+  pbdb_data %>%
+  left_join(., collect_unit, by = c('collection_no' = 'cltn_id')) %>%
+  mutate(occur_mid_ma = (max_ma + min_ma) / 2,
+         unit_mid_ma = (t_age + b_age) / 2)
+
+```
+
+
+## Filter by occurrence age and taxonomic group
+
+A big issue is that these occurrences from all over time, not just the Phanerozoic. This problem due to geological units not being restricted to a particular time interval. A unit can range through, into, or out of our target temporal range. So, while we might have only queried Phanerozoic units, those units can exist both before and during the Phanerozoic.
+
+To overcome this and focus only on fossil occurrences from Phanerozoic, I filtering down to only those occurrences who's mid-point age is within `temp_range`.
+
+In paleobiology we also tend to focus on the record of shelly, skeletonized species like bivalves, gastropods, and brachiopods. These taxa preserve more readily than softbodied taxa like most cnidarians and polychetes. I'm going to restric our fossil occurrences to just those from the "shelly" groups.
+
+```{r filters}
+
+occur_collect %<>%
+  mutate(phylum_shelly = ifelse(phylum %in% shelly, phylum, NA),
+         class_shelly = ifelse(class %in% shelly, class, NA),
+         shelly = coalesce(phylum_shelly, class_shelly)) %>%
+  filter(between(occur_mid_ma, temp_range[2], temp_range[1]),
+         !(is.na(shelly)))
+
+```
+
+
+
+## Binning occurrences
+
+The fossil record is a discrete recording of continuous time which creates all kinds of problems. Additionally, paleo-time is more of a range than an instaneous value. Binning out data helps alleviate this -- it just requires us to define a temporal width for each bin. There are two ways to do this: predetermine how many bins you want, or pick an (arbitrary) value. Luckily I've written a function that can do both: `bin_ages()`.
+
+I want to compare multiple arbitrary bin widths to pick whatever feels "smoothest". Sadly, I have trouble defining this algorithmically, but the general idea is to have as many bins as possible to have 1+ fossils and there are as few bins as possible with 0 fossils. Common bin widths include 1, 2, 5, and 10 million years, but I'm gonna look at a few more. 
+
+```{r compare_bin}
+
+bin_test <- 
+  occur_collect %>%
+  transmute(bin_01 = bin_ages(occur_mid_ma, by = 1, age = TRUE),
+            bin_02 = bin_ages(occur_mid_ma, by = 2, age = TRUE),
+            bin_025 = bin_ages(occur_mid_ma, by = 2.5, age = TRUE),
+            bin_05 = bin_ages(occur_mid_ma, by = 5, age = TRUE),
+            bin_10 = bin_ages(occur_mid_ma, by = 10, age = TRUE)) %>%
+  gather(key = key, value = value) 
+
+# how many empty bins
+empty_bin <- function(x, by = 1) {
+  all_bins <- seq(from = min(x), to = max(x), by = by)
+  missing_bins <- !(all_bins %in% x)
+  missing_bins
+}
+
+bin_test %>%
+  group_by(key) %>%
+  nest() %>%
+  mutate(n_bin = map2(data, c(1, 2, 2.5, 5, 10),
+                      ~ length(seq(from = min(.x$value),
+                                   to = max(.x$value),
+                                   by = .y))),
+         n_empty = map2(data, c(1, 2, 2.5, 5, 10), 
+                        ~ sum(empty_bin(.x$value, .y)))) %>%
+  dplyr::select(-data) %>%
+  unnest() %>%
+  print()
+
+bin_test %>%
+  ggplot(aes(x = value)) +
+  geom_bar(width = 1) +
+  facet_grid(key ~ .) +
+  scale_x_reverse(breaks = scales::pretty_breaks(n = 10)) 
+
+```
+
+For a record this long, a coarser bin size is totally fine. With only 1 empty bin, a bin width of 5 million years seems fine.
+
+```{r bin_occurrences}
+
+occur_collect %<>%
+  mutate(bin_time = bin_ages(occur_mid_ma, by = 5, age = TRUE),
+         bin_num = bin_ages(occur_mid_ma, by = 5, age = FALSE))
+
+```
+
+
+# Sanity checks and exploring 
+
+Now that's I've cleaned up the data a bunch, I'm going to explore some of the patterns in the data. I'm interested in how occurrence changes over time, when multiple last occurrences are in the same time bin, and geological unit lithological composition.
+
+Something important to review now is what exactly our data represents. `occur_collect` is a tibble of fossil occurrences from North American recorded in the PBDB that appear in geological units recorded in Macrostrat. Opportunistic sampling at its best.
+
+
+## Fossils over time
+
+I'm going to start by just looking at the fossils over time. Are there time intervals with a high number of observations? Are there major shifts in the relative diversity of the taxonomic groups?
+
+First, let's explore occurrences over time. Let's just look at the raw counts of PBDB occurrences for each time binby taxonomic group, and the relative abundance of the shelly taxonomic groups over time. 
+
+I'll even include lines representing the [big 5 mass extinctions](https://en.wikipedia.org/wiki/Extinction_event).
+
+```{r vis_fossil}
+
+occur_collect %>%
+  group_by(shelly, bin_time) %>%
+  count() %>%
+  ggplot(aes(x = bin_time, y = n, fill = shelly)) +
+  geom_col() +
+  geom_vline(data = tibble(x = big_5),
+             mapping = aes(xintercept = x),
+             size = 1.5,
+             linetype = 'dashed') +
+  scale_fill_viridis(discrete = TRUE) +
+  scale_x_reverse(breaks = scales::pretty_breaks(n = 10)) +
+  labs(x = 'Time (Mya)', y = 'Abundance')
+
+occur_collect %>%
+  group_by(shelly, bin_time) %>%
+  count() %>%
+  ggplot(aes(x = bin_time, y = n, fill = shelly)) +
+  geom_col(position = 'fill') +
+  geom_vline(data = tibble(x = big_5),
+             mapping = aes(xintercept = x),
+             size = 1.5,
+             linetype = 'dashed') +
+  scale_fill_viridis(discrete = TRUE) +
+  scale_x_reverse(breaks = scales::pretty_breaks(n = 10)) +
+  labs(x = 'Time (Mya)', y = 'Relative Abundance')
+
+```
+
+Visually, there are three major "phases": Trilobites --> Brachiopods --> Bivalves + Gastropods. [Sepkoski demonstrated this way back in the early 80s](https://www.jstor.org/stable/2400639). So, these results are not surprising and are a sanity check -- very good! 
+
+
+However we have a glaring issue: raw abundance counts can be misleading for fossil occurrences. If we are barely recording which species were present, we certainly are getting a biased picture of their abundances. Let's redo both of the above graphs this time looking at diversity. Diversity here is the number of unique taxa present at a given time. For paleodata, we tend to previlege either species or genera as are taxonomic levels of choice, with a particular emphasis on genera because identifying species from partial material is very difficult.  
+
+```{r vis_fossil_unique}
+
+occur_genera <- 
+  occur_collect %>%
+  group_by(shelly, bin_time) %>%
+  filter(!duplicated(genus)) %>%
+  count()
+
+occur_genera %>%
+  ggplot(aes(x = bin_time, y = n, fill = shelly)) +
+  geom_col() +
+  geom_vline(data = tibble(x = big_5),
+             mapping = aes(xintercept = x),
+             size = 1.5,
+             linetype = 'dashed') +
+  scale_fill_viridis(discrete = TRUE) +
+  scale_x_reverse(breaks = scales::pretty_breaks(n = 10)) +
+  labs(x = 'Time (Mya)', y = 'Diversity (genera)')
+
+occur_genera %>%
+  ggplot(aes(x = bin_time, y = n, fill = shelly)) +
+  geom_col(position = 'fill') +
+  geom_vline(data = tibble(x = big_5),
+             mapping = aes(xintercept = x),
+             size = 1.5,
+             linetype = 'dashed') +
+  scale_fill_viridis(discrete = TRUE) +
+  scale_x_reverse(breaks = scales::pretty_breaks(n = 10)) +
+  labs(x = 'Time (Mya)', y = 'Relative Diversity (genera)')
+
+```
+
+Pretty much the same. Cool. Our fossil record resemble a pattern that most paleobiologists would consider "normal".
+
+
+
+
+
+## Lithology over time
+
+For each geological unit there is a short lithological description. Each lithological desciption can have multiple parts which are given a percent of total composition. Here is an example:
+
+```{r ex_lithology}
+
+occur_collect$lith[1]
+
+```
+
+In this example, the lithology of this unit is made up of three major forms with each being approximately one-third of that units composition. Lucky for me, these descriptions have a very regular form which makes extracting important text information surprisingly easy.
+
+There are a lot of potential issues when processing lithological descriptions. For example:
+
+- lots of words that appear only once
+- similar word but different part of speech
+- descriptions are identical except for small modified ("black shale siliciclastic" vs "red shale siliciclastic")
+
+All of these problems mean I have to simplify these descriptions. 
+
+A basic way of dividing lithologies are by siliciclsatic vs carbonate. Unfortunately, this comparison is not truly binary as mixed-sediments are possible. Additionally, I might be able to extract better information that just "siliciclastic" from our descriptions. With this in mind, I've written a function (`simplify_lithology()`) to simplify lithological descriptions to be more amenable to analysis. My goal is to divide the litholgies into "coarse siliciclastic," "fine siliciclastic," "carbonate," and "other." Because this research compendium doubles as a package, I'll just call that function from the `notfossil` package.
+
+For a dataset this size, `simplify_lithology()` is memory intensive/slow for R. It is a lot of text manipulation, triple nested lists, tibble manipulation, and uses `tidyr::spread` internally. I've updated the major `map*()` calls to be `future_map*()` which is helping, but my laptop gets really angry.
+
+So, because it is parallel internally, I'm going to chunk the data and then recombine after each segment is finished. The other option would be removing the parallel operations from `simplify_lithology()`, splitting the data, and then running parallel operations on those splits. I'm not sure which is actually faster.
+
+```{r get_lithology}
+
+# lithologies are now a list-column
+lith <- occur_collect %>%
+  mutate(tile = ntile(n = 20)) %>%
+  group_by(tile) %>%
+  group_map(~ simplify_lithology(.x$lith)) %>%
+  flatten()
+
+occur_collect %>%
+  mutate(lith_simple = lith)
+  unnest() %>%
+  mutate(carbonate = replace_na(carbonate, replace = 0),
+         coarse_siliciclastic = replace_na(coarse_siliciclastic, replace = 0),
+         fine_siliciclastic = replace_na(fine_siliciclastic, replace = 0),
+         other = replace_na(other, replace = 0)) %>%
+  nest(carbonate, coarse_siliciclastic, fine_siliciclastic, other,
+       .key = 'lith_simple')
+
+```
+
+I've created a column vector `lith_simple` where each element is a tibble describing the lithological composition of that unit in a simpler form. Most of the tricks above are just to make it so each unit has all four lithological descriptors and that there are 0s instead of NAs when that descriptor wasn't measured.
+
+Now that that data is all in order, we can start exploring that space. Does the average lithological composition of a geologic unit change over time? If so, how?
+
+I'm making the lithological data into a [Atchinson composition](https://rdrr.io/cran/compositions/man/acomp.html) object of the data. This object type has convenient properties for interfacing with the `compositions` package. Once this is done, there are a lot of ways to try and summarize this data. From a math perspective, all the 0s in are dataset cause a lot of problems, but hopefully we'll be able to skirt those for now.
+
+First, I'm going to calculate mean lithology for the entire sample. Then I'm going to calculate mean lithology for each of the time bins we've defined.
+
+```{r mean_lithology}
+# divide units up by bin
+# then get mean lithology
+bin_lith <- 
+  occur_collect %>%
+  arrange(desc(bin_age)) %>%
+  group_by(bin_age) %>%
+  filter(!duplicated(unit_id)) %>%     # no multi-counting
+  ungroup() %>%
+  group_by(bin_age) %>%
+  group_map(~ .x %>% 
+              dplyr::select(lith_simple) %>% 
+              unnest() %>%
+              acomp() %>%
+              mean())
+
+# what age is each value from?
+bin_ages_match <- 
+  occur_collect %>%
+  arrange(desc(bin_age)) %>%
+  group_by(bin_age) %>%
+  filter(!duplicated(unit_id)) %>%     # again, no multi-counting
+  ungroup() %>%
+  dplyr::select(bin_age) %>% 
+  pull() %>%
+  unique()
+
+lith_time <- 
+  reduce(bin_lith, rbind) %>%
+  as_tibble() %>%
+  mutate(bin_age = bin_ages_match) %>%
+  gather(key = key, value = value, -bin_age)
+
+lith_time %>%
+  ggplot(aes(x = bin_age, y = value, fill = key)) +
+  geom_col(size = 1.5) +
+  geom_vline(data = tibble(x = big_5),
+             mapping = aes(xintercept = x),
+             size = 1.5,
+             linetype = 'dashed') +
+  scale_fill_viridis(discrete = TRUE) +
+  scale_colour_viridis(discrete = TRUE) +
+  scale_x_reverse() +
+  labs(x = 'Time (Mya)', y = 'Percent')
+
+```
+
+There do not appear to be any massive shifts in mean composition from time bin to time bin. Remember, some units span multiple bins -- we've divided units by occurrences. We can also have point size vary by the diversity -- the number of unique genera in that unit at that time.
+
+```{r pca_lithology}
+lith_data <- 
+  occur_collect %>%
+  arrange(desc(bin_age)) %>%
+  group_by(bin_age) %>%
+  filter(!duplicated(unit_id)) %>%     # no multi-counting
+  ungroup() %>%
+  dplyr::select(lith_simple) %>%
+  unnest() %>%
+  acomp()
+
+# princomp.acomp
+lith_pca <- princomp(lith_data)
+
+# ggfortify doesn't support princomp.acomp output
+# have to assemble plot by hand
+
+# get age and diversity labels
+lith_labels <- 
+  occur_collect %>%
+  arrange(desc(bin_age)) %>%
+  group_by(bin_age, unit_id) %>%
+  mutate(div = n_distinct(genus)) %>%
+  ungroup() %>%
+  group_by(bin_age) %>%
+  filter(!duplicated(unit_id)) %>%     # no multi-counting
+  ungroup() %>%
+  dplyr::select(div, bin_age)
+
+
+# get loadings to add to plot
+lith_load <- 
+  data.frame(lith_pca$loadings[1:4, 1:3]) %>%
+  rownames_to_column() %>%
+  as_tibble() %>%
+  clean_names() %>%
+  mutate(origin = 0)
+
+# make the plot
+as_tibble(lith_pca$scores) %>%
+  clean_names() %>%
+  mutate(age = lith_labels$bin_age,
+         div = lith_labels$div) %>%
+  ggplot() +
+  geom_vline(xintercept = 0, linetype = 'dashed', alpha = 0.5) +
+  geom_hline(yintercept = 0, linetype = 'dashed', alpha = 0.5) +
+  geom_segment(data = lith_load,
+               mapping = aes(x = origin, y = origin,
+                             xend = comp_1,
+                             yend = comp_2),
+               arrow = arrow(length = unit(0.2, 'cm')),
+               size = 1.5) +
+  geom_text_repel(data = lith_load,
+                  mapping = aes(x = comp_1, y = comp_2, label = rowname)) +
+  geom_point(mapping = aes(x = comp_1, y = comp_2, colour = age, size = div)) +
+  scale_colour_viridis() +
+  labs(colour = 'Age (My)',
+       size = 'Diversity',
+       x = 'PC 1',
+       y = 'PC 2')
+
+```
+

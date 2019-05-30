@@ -33,6 +33,8 @@ library(notfossil)
 There are several useful constants that will appear throughout the next few sections.
 ```{r constants}
 
+plan(multiprocess)
+
 theme_set(theme_bw(base_size = 20))
 
 # colour blind palette of choice

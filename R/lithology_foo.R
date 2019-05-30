@@ -38,14 +38,14 @@ simplify_lithology <- function(lith) {
   lith_explode <- 
     lith %>%
     # list elements are vector of words from each description
-    map(., ~ str_split(.x, '\\|')) %>%
-    map(., function(x) map(x, str_trim)) %>%
-    map(., function(x) map(x, ~ str_split(.x, '  ~ ', simplify = TRUE)))
+    future_map(., ~ str_split(.x, '\\|')) %>%
+    future_map(., function(x) map(x, str_trim)) %>%
+    future_map(., function(x) map(x, ~ str_split(.x, '  ~ ', simplify = TRUE)))
 
   # work with just the text description
   lith_words <- 
     lith_explode %>%
-    map(., function(x) map(x, ~ str_split(.x[, 1], ' '))) %>%
+    future_map(., function(x) map(x, ~ str_split(.x[, 1], ' '))) %>%
     # some words are too common or unhelpful, get rid of them.
     #wordrm(., too_common) %>%
     # some words are duplicated. get rid of those.
@@ -62,7 +62,7 @@ simplify_lithology <- function(lith) {
                                       'coarse_siliciclastic',
                                     any(.x == 'carbonate') ~ 'carbonate',
                                     TRUE ~ 'other')))) %>%
-    map(., ~ unlist(.x))
+    future_map(., ~ unlist(.x))
   
   # lith_words has all the words
   # lith_explode has both words [1] and numeric [2]
