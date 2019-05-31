@@ -10,6 +10,8 @@ Authors@R:
 Description: Research compendium of analysis of ordovician/silurian fossil record quality.
 License: MIT + file LICENSE
 URL: https://github.com/psmits/notfossil
+Depends:
+  R (>= 3.5.0)
 Imports:
   here,
   readr,

@@ -85,10 +85,7 @@ simplify_lithology <- function(lith) {
   lith_ready <- 
     tibble(x = lith_ready) %>%
     unnest() %>%
-    mutate(carbonate = replace_na(carbonate, replace = 0),
-           coarse_siliciclastic = replace_na(coarse_siliciclastic, replace = 0),
-           fine_siliciclastic = replace_na(fine_siliciclastic, replace = 0),
-           other = replace_na(other, replace = 0)) %>%
+    mutate_all(.funs = ~ replace_na(.x, replace = 0)) %>%
     split(., seq(nrow(.)))
 
   lith_ready

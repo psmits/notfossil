@@ -2,6 +2,9 @@
 #' 
 #' Have fun with this. Basic rules. Greater than equal to base, less than top.
 #' 
+#' Binning starts at the ceiling of the maximum age in the data. Binning ends at the floor of the minimum age in the data. 
+#' This means that while all intervals are technically the same length, they might not have a "full" record.
+#' 
 #' @param x vector of ages
 #' @param by bin width
 #' @param age logical bin age returned, not number (default FALSE, return bin number)
