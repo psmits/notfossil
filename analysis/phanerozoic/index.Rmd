@@ -238,7 +238,7 @@ bin_test %>%
 
 bin_test %>%
   ggplot(aes(x = value)) +
-  geom_bar(width = 1) +
+  geom_bar(position = 'dodge') +
   facet_grid(key ~ .) +
   scale_x_reverse(breaks = scales::pretty_breaks(n = 10)) 
 
@@ -297,24 +297,51 @@ First, let's explore occurrences over time. Let's just look at the raw counts of
 
 I'll even include lines representing the [big 5 mass extinctions](https://en.wikipedia.org/wiki/Extinction_event).
 
+The issue here is that there are multiple intervals where some taxonomic groups are not observed. A lot of `geom_*()` functions *really* don't like this. So I have to do some filling.
+
 ```{r vis_fossil}
 
-occur_collect %>%
+# what bins exist
+bins_all <- 
+  occur_collect %>%
+  dplyr::select(bin_time) %>%
+  pull() %>%
+  unique() %>%
+  sort()
+
+# what bins are missing from each 
+bins_missing <- 
+  occur_collect %>%
+  arrange(shelly) %>%
+  group_by(shelly) %>%
+  group_map(~ bins_all[!(bins_all %in% .x$bin_time)])
+
+# which temporal bins are 0s
+bins_fill <- 
+  tibble(shelly = sort(shelly),
+         bin_time = bins_missing,
+         n = 0) %>%
+  unnest()
+
+occur_count <- 
+  occur_collect %>%
   group_by(shelly, bin_time) %>%
   count() %>%
-  ggplot(aes(x = bin_time, y = n, colour = shelly)) +
-  geom_line() +                        # geom_area doesn't play nice
+  union(., bins_fill)
+
+# now make the plot of interest
+occur_count %>%
+  ggplot(aes(x = bin_time, y = n, fill = shelly)) +
+  geom_area() +
   geom_vline(data = tibble(x = big_5),
              mapping = aes(xintercept = x),
              size = 1.5,
              linetype = 'dashed') +
-  scale_color_viridis(discrete = TRUE) +
+  scale_fill_viridis(discrete = TRUE) +
   scale_x_reverse(breaks = scales::pretty_breaks(n = 10)) +
   labs(x = 'Time (Mya)', y = 'Abundance', fill = 'Taxa')
 
-occur_collect %>%
-  group_by(shelly, bin_time) %>%
-  count() %>%
+occur_count %>%
   ggplot(aes(x = bin_time, y = n, fill = shelly)) +
   geom_area(position = 'fill') +
   geom_vline(data = tibble(x = big_5),
@@ -339,16 +366,17 @@ occur_genera <-
   occur_collect %>%
   group_by(shelly, bin_time) %>%
   filter(!duplicated(genus)) %>%
-  count()
+  count() %>%
+  union(., bins_fill)
 
 occur_genera %>%
-  ggplot(aes(x = bin_time, y = n, colour = shelly)) +
-  geom_line() +
+  ggplot(aes(x = bin_time, y = n, fill = shelly)) +
+  geom_area() +
   geom_vline(data = tibble(x = big_5),
              mapping = aes(xintercept = x),
              size = 1.5,
              linetype = 'dashed') +
-  scale_color_viridis(discrete = TRUE) +
+  scale_fill_viridis(discrete = TRUE) +
   scale_x_reverse(breaks = scales::pretty_breaks(n = 10)) +
   labs(x = 'Time (Mya)', y = 'Diversity (genera)', fill = 'Taxa')
 
@@ -407,12 +435,6 @@ occur_collect$lith_simple <-
   group_map(~ simplify_lithology(.x$lith)) %>%
   flatten()
 
-# no future_group_map (group_map is from dplyr and furrr focuses on parallel purrr), but there is 
-# group_by(tile) %>% 
-# nest(.id = 'data') %>% 
-# mutate(lith_simple = future_map(data$lith)) %>%
-# unnest()
-
 ```
 
 I've created a list column `lith_simple` where each element is a tibble describing the lithological composition of that unit in a simpler form. Most of the tricks above are just to make it so each unit has all four lithological descriptors and that there are 0s instead of NAs when that descriptor wasn't measured.
@@ -470,7 +492,8 @@ lith_time %>%
 
 ```
 
-There do not appear to be any massive shifts in mean composition from time bin to time bin. Remember, some units span multiple bins -- we've divided units by occurrences. We can also have point size vary by the diversity -- the number of unique genera in that unit at that time.
+
+We can also do a PCA of our composition data and then visualize the first two principle components, with point color corresponding to the age of that unit and point size varying by genus diversity (i.e. the number of unique genera in that unit at that time).
 
 ```{r pca_lithology}
 lith_data <- 
@@ -538,7 +561,7 @@ as_tibble(lith_pca$scores) %>%
 ```
 
 
-# Lazarus occurrences
+# Lazarus-type occurrences
 
 Lazarus taxon -- species with a gap in the fossil record
 
@@ -546,19 +569,30 @@ Lazarus effect -- lots of simultaneous first occurrences after a gap.
 
 I'm going to define the notion of a Lazarus occurrence as the first (re)occurrence of a species after a gap in their fossil record -- this excludes first occurrences.
 
-- look at the occurrence record of each species 
-- identify each gap
-- identify the occurrence after that gap
-- mark as Lazarus occurrence
+Cave occurrences are the last occurrence of a taxon before a gap in their fossil record, excluding last occurrences. I'm calling these cave occurrences because of the story of Lazarus. Lazarus went into a cave, was gone for a while, and then reappeared. 
 
 Something important to remember right now is that `bin_time` and `bin_num` *decrease* as we approach the present.
+
+
+## Count number of Lazarus occurrences
+
+The logic I'm using to identify Lazarus (and cave) occurrences is:
+
+1. look at the occurrence record of each species,
+2. identify each gap,
+3. identify the first occurrence after that gap,
+4. mark as Lazarus occurrence.
+
+The cave occurrences have a slightly different step 3, where I identify the last occurrence before a gap.
+
+Here is all of that in action. And it is a mess.
 
 ```{r get_lazarus}
 
 # first, let's just get genus occurrence over time
 # i want to include the abundance of that genus in that bin just in case
 # i do admit that all of this is **insane**
-genus_occur <- 
+genus_lazarus <- 
   occur_collect %>%
   # count genus occurrences
   group_by(bin_num, genus) %>%
@@ -576,30 +610,272 @@ genus_occur <-
   # now we want to look at genera and their runs
   group_by(genus, seq_id) %>%
   # identify all first occurrences in a run
+  # identify all last occurrences in a run
   mutate(cave = if_else(bin_num == min(bin_num), 1, 0),
          lazarus = if_else(bin_num == max(bin_num), 1, 0)) %>%
   ungroup() %>%
   # FADs are not lazarus occurrences
+  # LADs are not cave occurrences
   group_by(genus) %>%
-  mutate(lazarus = if_else(bin_num == max(bin_num), 0, lazarus)) %>%
+  mutate(cave = if_else(bin_num == min(bin_num), 0, cave),
+         lazarus = if_else(bin_num == max(bin_num), 0, lazarus)) %>%
   ungroup()
 
-genus_occur %>%
+```
+
+So that was a whirlwind, but now we have identified which occurrences are Lazarus occurrences. I've also identified all the cave occurrences.
+
+## Lazarus occurrences over time
+
+First, let's look at Lazarus occurrences over time. 
+
+```{r vis_lazarus}
+
+# got to fill in all those gaps
+bins_missing <- 
+  genus_lazarus %>%
+  arrange(shelly) %>%
+  group_by(shelly) %>%
+  group_map(~ bins_all[!(bins_all %in% .x$bin_time)])
+
+bins_fill <- 
+  tibble(shelly = sort(shelly),
+         bin_time = bins_missing,
+         count = 0) %>%
+  unnest()
+
+lazarus_count <- 
+  genus_lazarus %>%
   group_by(bin_time, shelly) %>%
   summarize(count = sum(lazarus)) %>%
-  ggplot(aes(x = bin_time, y = count, colour = shelly)) +
-  geom_line(size = 2, alpha = 0.75) +
+  union(., bins_fill)
+
+# count
+lazarus_count %>%
+  ggplot(aes(x = bin_time, y = count, fill = shelly)) +
+  geom_area() +
   geom_vline(data = tibble(x = big_5),
              mapping = aes(xintercept = x),
              size = 1.5,
              linetype = 'dashed') +
-  scale_colour_viridis(discrete = TRUE) +
+  scale_fill_viridis(discrete = TRUE) +
   scale_x_reverse(breaks = scales::pretty_breaks(n = 10)) +
-  labs(x = 'Time (Mya)', y = 'Relative Abundance', colour = 'Taxa')
+  labs(x = 'Time (Mya)', y = 'Lazarus occurrences', 
+       fill = 'Taxa')
+
+```
+
+As expected there are multiple time intervals with large numbers of Lazarus occurrences, which we could consider a Lazarus effect. Interestingly, some of these intervals are not associated with the big 5 mass extinction events. 
+
+Now let's also look at the cave occurrences. 
+
+```{r vis_cave}
+
+# count
+cave_count <- 
+  genus_lazarus %>%
+  group_by(bin_time, shelly) %>%
+  summarize(count = sum(cave)) %>%
+  union(., bins_fill) 
+
+cave_count %>%
+  ggplot(aes(x = bin_time, y = count, fill = shelly)) +
+  geom_area() +
+  geom_vline(data = tibble(x = big_5),
+             mapping = aes(xintercept = x),
+             size = 1.5,
+             linetype = 'dashed') +
+  scale_fill_viridis(discrete = TRUE) +
+  scale_x_reverse(breaks = scales::pretty_breaks(n = 10)) +
+  labs(x = 'Time (Mya)', y = 'Cave occurrences', 
+       fill = 'Taxa')
+
+```
+
+The obvious pattern here is the the number of Lazarus and cave occurrences tends to increase as we approach the present. This makes sense because we're increaseing in both diversity and the quality of fossil record as we approach the present.
+
+## Percent Lazarus
+
+The other way of looking at this would be what percent of occurrences in a time bin are Lazarus (or cave) occurrences. I'm going to compare across the taxonomic groups because that might be particularly interesting.
+
+Wrinkle to remember: an occurrence can be both a Lazarus and a cave occurrence. There are no restrictions against this.
+
+```{r percent_lazarus}
+
+genus_percent <- 
+  genus_lazarus %>%
+  group_by(bin_time, shelly) %>%
+  dplyr::summarize(lazarus_n = sum(lazarus),
+                   cave_n = sum(cave),
+                   total = n())
+
+bins_missing <- 
+  genus_percent %>%
+  arrange(shelly) %>%
+  group_by(shelly) %>%
+  group_map(~ bins_all[!(bins_all %in% .x$bin_time)])
+
+bins_fill <- 
+  tibble(shelly = sort(shelly),
+         bin_time = bins_missing,
+         total = 0,
+         lazarus_n = 0,
+         cave_n = 0) %>%
+  unnest()
+
+laz_percent <- 
+  genus_percent %>%
+  union(., bins_fill) %>%
+  mutate(normal = total - lazarus_n) %>%
+  dplyr::select(-cave_n, -total) %>%
+  gather(key = key, value = value, -bin_time, -shelly) %>%
+  mutate(key = case_when(key == 'lazarus_n' ~ 'Lazarus',
+                         key == 'normal' ~ 'Regular'))
+
+laz_percent %>%
+  ggplot(aes(x = bin_time, y = value, fill = key)) +
+  geom_area() +
+  geom_vline(data = tibble(x = big_5),
+             mapping = aes(xintercept = x),
+             size = 1.5,
+             linetype = 'dashed') +
+  facet_wrap(~ shelly) +
+  scale_fill_viridis(discrete = TRUE) +
+  scale_x_reverse(breaks = scales::pretty_breaks(n = 5)) +
+  theme(legend.position = 'bottom') +
+  labs(fill = 'Occurrence type',
+       x = 'Time (Mya)', y = 'Count')
+
+# as percents this time
+laz_percent %>%
+  ggplot(aes(x = bin_time, y = value, fill = key)) +
+  geom_area(position = 'fill') +
+  geom_vline(data = tibble(x = big_5),
+             mapping = aes(xintercept = x),
+             size = 1.5,
+             linetype = 'dashed') +
+  facet_wrap(~ shelly) +
+  scale_fill_viridis(discrete = TRUE) +
+  scale_x_reverse(breaks = scales::pretty_breaks(n = 5)) +
+  theme(legend.position = 'bottom') +
+  labs(fill = 'Occurrence type',
+       x = 'Time (Mya)', y = 'Percent')
+
+```
+
+We can do the same for cave occurrences.
+
+```{r percent_cave}
+
+cave_percent <- 
+  genus_percent %>%
+  union(., bins_fill) %>%
+  mutate(normal = total - cave_n) %>%
+  dplyr::select(-lazarus_n, -total) %>%
+  gather(key = key, value = value, -bin_time, -shelly) %>%
+  mutate(key = case_when(key == 'cave_n' ~ 'Cave',
+                         key == 'normal' ~ 'Regular'))
+
+cave_percent %>%
+  ggplot(aes(x = bin_time, y = value, fill = key)) +
+  geom_area() +
+  geom_vline(data = tibble(x = big_5),
+             mapping = aes(xintercept = x),
+             size = 1.5,
+             linetype = 'dashed') +
+  facet_wrap(~ shelly) +
+  scale_fill_viridis(discrete = TRUE) +
+  scale_x_reverse(breaks = scales::pretty_breaks(n = 5)) +
+  theme(legend.position = 'bottom') +
+  labs(fill = 'Occurrence type',
+       x = 'Time (Mya)', y = 'Count')
+
+# as percents this time
+cave_percent %>%
+  ggplot(aes(x = bin_time, y = value, fill = key)) +
+  geom_area(position = 'fill') +
+  geom_vline(data = tibble(x = big_5),
+             mapping = aes(xintercept = x),
+             size = 1.5,
+             linetype = 'dashed') +
+  facet_wrap(~ shelly) +
+  scale_fill_viridis(discrete = TRUE) +
+  scale_x_reverse(breaks = scales::pretty_breaks(n = 5)) +
+  theme(legend.position = 'bottom') +
+  labs(fill = 'Occurrence type',
+       x = 'Time (Mya)', y = 'Percent')
 
 ```
 
 
-There are multiple time intervals with an excess of Lazarus occurrences. Also, there are some intervals with a high number of Lazarus occurrences only for a single taxonomic group.
+## Highlight PCA by Lazarus occurrences
 
+We can also go back to the earlier PCA and now have the point size of the geological units be a function of the number of Lazarus (or cave) occurrences in that unit. We can compress our taxonomic groups because we're currently interested in those big spikes.
 
+```{r lazarus_pca}
+
+lazarus_sum <- 
+  lazarus_count %>%
+  group_by(bin_time) %>%
+  dplyr::summarize(count = sum(count))
+
+as_tibble(lith_pca$scores) %>%
+  clean_names() %>%
+  mutate(bin_time = lith_labels$bin_time) %>%
+  left_join(., lazarus_sum, by = 'bin_time') %>%
+  ggplot() +
+  geom_vline(xintercept = 0, linetype = 'dashed', alpha = 0.5) +
+  geom_hline(yintercept = 0, linetype = 'dashed', alpha = 0.5) +
+  geom_segment(data = lith_load,
+               mapping = aes(x = origin, y = origin,
+                             xend = comp_1,
+                             yend = comp_2),
+               arrow = arrow(length = unit(0.2, 'cm')),
+               size = 1.5) +
+  geom_text_repel(data = lith_load,
+                  mapping = aes(x = comp_1, y = comp_2, label = rowname)) +
+  geom_point(mapping = aes(x = comp_1, y = comp_2, 
+                           colour = bin_time, size = count)) +
+  scale_colour_viridis() +
+  labs(colour = 'Time (Mya)',
+       size = 'Lazarus occurrences',
+       x = 'PC 1',
+       y = 'PC 2')
+
+```
+
+I'm unsure if an actual pattern is really manifesting here but there are some interesting things on here. There might be something between coarse siliciclastics and the number of Lazarus occurrences.
+
+We can do the same but using the cave occurrences.
+
+```{r cave_pca}
+
+cave_sum <- 
+  cave_count %>%
+  group_by(bin_time) %>%
+  dplyr::summarize(count = sum(count))
+
+as_tibble(lith_pca$scores) %>%
+  clean_names() %>%
+  mutate(bin_time = lith_labels$bin_time) %>%
+  left_join(., cave_sum, by = 'bin_time') %>%
+  ggplot() +
+  geom_vline(xintercept = 0, linetype = 'dashed', alpha = 0.5) +
+  geom_hline(yintercept = 0, linetype = 'dashed', alpha = 0.5) +
+  geom_segment(data = lith_load,
+               mapping = aes(x = origin, y = origin,
+                             xend = comp_1,
+                             yend = comp_2),
+               arrow = arrow(length = unit(0.2, 'cm')),
+               size = 1.5) +
+  geom_text_repel(data = lith_load,
+                  mapping = aes(x = comp_1, y = comp_2, label = rowname)) +
+  geom_point(mapping = aes(x = comp_1, y = comp_2, 
+                           colour = bin_time, size = count)) +
+  scale_colour_viridis() +
+  labs(colour = 'Time (Mya)',
+       size = 'Cave occurrences',
+       x = 'PC 1',
+       y = 'PC 2')
+
+```
