@@ -1,5 +1,5 @@
 ---
-title: "Analysis of Phanerozoic fossil occurrences as a function of geological context"
+title: "Phanerozoic fossil occurrences and their geological context"
 author: Peter Smits
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 
@@ -24,7 +24,7 @@ The Lazarus effect is when multiple Lazarus taxa share their gaps and observatio
 
 The Lazarus effect after a mass extinction could be caused by a change to the quality of the stratigraphic record. If there are fewer rocks with fossils in then, it is harder to observe fossils.
 
-Another potential cause of the Lazarus effect after mass extinctions is mass rarity -- if a species is rarer on the ground, then it is much less likely to be sampled. All mass extinctions are biotic crises -- the environment is completely reshaped through loss of key interactors. We might expect then that species abundance decreases universally. Until abundance recovers, the probability of sampling any species is just too low. Thus, we might then expect a Lazarus effect in an time interval after a mass extinction.
+Another potential cause of the Lazarus effect after mass extinctions is mass rarity -- if a species is rarer on the ground, then it is much less likely to be sampled. All mass extinctions are biotic crises -- the environment is completely reshaped through loss of key interactors. We might expect then that species abundance decreases universally. Until abundance recovers, the probability of sampling any species is too low. Thus, we might then expect a Lazarus effect in an time interval after a mass extinction.
 
 So what is contributing more to simultaneous gaps in the occurrence records of multiple species? Is it the inconsistent quality of the fossil record or is it the rarity of taxa? 
 
@@ -45,9 +45,8 @@ library(pacman)
 p_load(here, janitor, tibble, readr, magrittr, dplyr, 
        tidyr, purrr, glue, stringr, furrr,
        ggplot2, scales, grid, ggridges, viridis, ggrepel,
-       compositions, geosphere,
-       arm, rstan, rstanarm, brms,
-       devtools)
+       compositions, 
+       arm, brms)
 
 library(notfossil)
 # devtools::load_all()
@@ -74,7 +73,7 @@ big_5 <- c(443.8, 358.9, 251.9, 201.3, 66)
 
 The first set is pulling the relevant raw data from Macrostrat. I want geological units from the entire Phanerozoic (the last 541 million years). In Macrostrat, a geological unit is defined as a gap-bounded litho-stratigraphic interval -- an association of rocks in sequence that is distinct from those rocks above and below.
 
-Macrostrat has a [minimal, barely documented API](https://macrostrat.org/api), so I'll just write out a call for all geological units. I believe the underlying structure is a GeoJSON database, but there are a lot of different output options. I'm using a CSV output because I'm interested in lithologic (rock type) and stratigraphic (rock position in time/space) information, but I'm not interested in the spatial/map objects available for each geological unit.
+Macrostrat has a [minimally documented API](https://macrostrat.org/api), so I'll write out a call for all geological units. I believe the underlying structure is a GeoJSON database, but there are a lot of different output options. I'm using a CSV output because I'm interested in lithologic (rock type) and stratigraphic (rock position in time/space) information, but I'm not interested in the spatial/map objects available for each geological unit.
 
 ```{r macro_unit, cache = TRUE, message = FALSE, warning = FALSE, results = 'hide'}
 
@@ -120,7 +119,7 @@ print(collect_data)
 
 ## PBDB occurrences
 
-The `collect_data` tibble has all the necessary information to recover fossil occurrence information from the PBDB. The column `cltn_id` has the unique identifier for the PBDB collections associated with each geological unit (`unit_id`). We can extract and massage the `cltn_id` column into a vector we can pass to the PBDB API, making a call for an occurrence list. The resulting tibble has a row for every fossil occurrence found in collections made from geological units in our Macrostrat data.
+The `collect_data` tibble has all the necessary information to recover fossil occurrence information from the PBDB. The column `cltn_id` has the unique identifier for the PBDB collections associated with each geological unit (`unit_id`). We can extract and massage the `cltn_id` column into a vector we can pass to the [better documented PBDB API](https://paleobiodb.org/data1.2/), making a call for an [occurrence list](https://paleobiodb.org/data1.2/occs/list_doc.html). The resulting tibble has a row for every fossil occurrence found in collections made from geological units in our Macrostrat data.
 
 One of the issues we face here is that the number of collections is *so large* that the URI is so long that it throws a [HTTP error 414](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/414). So I'm going to chop the query up and then combine the results.
 
@@ -137,18 +136,23 @@ pbdb_collections <-
             pull %>% 
             glue_collapse(., sep = ','))
 
-  # pbdb servers get overwhelmed easily, so not parallel
-  pbdb_urls <- map(pbdb_collections, 
-                   ~ glue('https://paleobiodb.org/data1.2/occs/list.txt?coll_id=',
-                          '{.x}',
-                          '&show=full'))
+# pbdb servers get overwhelmed easily, so not parallel
+pbdb_urls <- 
+  map(pbdb_collections, 
+      ~ glue('https://paleobiodb.org/data1.2/occs/list.txt?coll_id=',
+             '{.x}',
+             '&show=full'))
 
-  pbdb_data <- future_map(pbdb_urls, ~ read_csv(.x)) %>%
-    reduce(., rbind)                     
-  # type inference issues from read_csv prevent union ;_;
+pbdb_data <- future_map(pbdb_urls, ~ read_csv(.x)) %>%
+  reduce(., rbind)                     
+# type inference issues from read_csv prevent union ;_;
 
 ```
+```{r pbdb_occurrences_print}
 
+print(pbdb_data)
+
+```
 
 ## Joining Macrostrat and PBDB
 
@@ -179,21 +183,21 @@ occur_collect <-
 
 ## Filter by occurrence age and taxonomic group
 
-A big issue is that these occurrences from all over time, not just the Phanerozoic. This problem due to geological units not being restricted to a particular time interval. A unit can range through, into, or out of our target temporal range. So, while we might have only queried Phanerozoic units, those units can exist both before and during the Phanerozoic.
+A big issue is that these occurrences from all over time, not the Phanerozoic. This problem due to geological units not being restricted to a particular time interval. A unit can range through, into, or out of our target temporal range. So, while we might have only queried Phanerozoic units, those units can exist both before and during the Phanerozoic.
 
 To overcome this and focus only on fossil occurrences from Phanerozoic, I filtering down to only those occurrences who's mid-point age is within `temp_range`.
 
-In paleobiology we also tend to focus on the record of shelly, skeletonized species like bivalves, gastropods, and brachiopods. These taxa preserve more readily than softbodied taxa like most cnidarians and polychetes. I'm going to restric our fossil occurrences to just those from the "shelly" groups.
+In paleobiology we also tend to focus on the record of shelly, skeletonized species like bivalves, gastropods, and brachiopods. These taxa preserve more readily than soft-bodied taxa like most cnidarians and polychetes. I'm going to restrict our fossil occurrences to those from the "shelly" groups.
 
-```{r filters}
+```{r misc_filters}
 
 occur_collect %<>%
   mutate(phylum_shelly = ifelse(phylum %in% shelly, phylum, NA),
          class_shelly = ifelse(class %in% shelly, class, NA),
          shelly = coalesce(phylum_shelly, class_shelly)) %>%
-filter(between(occur_mid_ma, temp_range[2], temp_range[1]),
-       !(is.na(shelly)),
-       !(is.na(genus)))
+  filter(between(occur_mid_ma, temp_range[2], temp_range[1]),
+         !(is.na(shelly)),
+         !(is.na(genus)))
 
 ```
 
@@ -201,11 +205,11 @@ filter(between(occur_mid_ma, temp_range[2], temp_range[1]),
 
 ## Binning occurrences
 
-The fossil record is a discrete recording of continuous time which creates all kinds of problems. Additionally, paleo-time is more of a range than an instaneous value. Binning out data helps alleviate this -- it just requires us to define a temporal width for each bin. There are two ways to do this: predetermine how many bins you want, or pick an (arbitrary) value. Luckily I've written a function that can do both: `bin_ages()`.
+The fossil record is a discrete recording of continuous time which creates all kinds of problems. Additionally, paleo-time is more of a range than an instantaneous value. Binning out data helps alleviate this -- it requires us to define a temporal width for each bin. There are two ways to do this: predetermine how many bins you want, or pick an (arbitrary) value. Luckily I've written a function that can do both: `bin_ages()`.
 
 I want to compare multiple arbitrary bin widths to pick whatever feels "smoothest". Sadly, I have trouble defining this algorithmically, but the general idea is to have as many bins as possible to have 1+ fossils and there are as few bins as possible with 0 fossils. Common bin widths include 1, 2, 5, and 10 million years, but I'm gonna look at a few more. 
 
-```{r compare_bin, fig.width = 6, fig.height = 10}
+```{r compare_bin, fig.width = 10, fig.height = 10}
 
 bin_test <- 
   occur_collect %>%
@@ -239,7 +243,7 @@ bin_test %>%
 bin_test %>%
   ggplot(aes(x = value)) +
   geom_bar(position = 'dodge') +
-  facet_grid(key ~ .) +
+  facet_wrap(~ key, ncol = 1) +
   scale_x_reverse(breaks = scales::pretty_breaks(n = 10)) 
 
 ```
@@ -268,7 +272,8 @@ occur_collect <-
        ~ occur_collect %>%
          filter(between(occur_mid_ma, left = .x, right = .y)) %>%
          mutate(bin_time = bin_ages(occur_mid_ma, by = 5, age = TRUE),
-                bin_time = if_else(bin_time == max(bin_time), .y, bin_time))) %>%
+                bin_time = if_else(bin_time == max(bin_time), 
+                                   .y, bin_time))) %>%
   reduce(., rbind)
 
 # add in rank order of time bins
@@ -291,9 +296,9 @@ Something important to review now is what exactly our data represents. `occur_co
 
 ## Fossils over time
 
-I'm going to start by just looking at the fossils over time. Are there time intervals with a high number of observations? Are there major shifts in the relative diversity of the taxonomic groups?
+I'm going to start by looking at the fossils over time. Are there time intervals with a high number of observations? Are there major shifts in the relative diversity of the taxonomic groups?
 
-First, let's explore occurrences over time. Let's just look at the raw counts of PBDB occurrences for each time binby taxonomic group, and the relative abundance of the shelly taxonomic groups over time. 
+First, let's explore occurrences over time. Let's look at the raw counts of PBDB occurrences for each time bin by taxonomic group, and the relative abundance of the shelly taxonomic groups over time. 
 
 I'll even include lines representing the [big 5 mass extinctions](https://en.wikipedia.org/wiki/Extinction_event).
 
@@ -339,7 +344,7 @@ occur_count %>%
              linetype = 'dashed') +
   scale_fill_viridis(discrete = TRUE) +
   scale_x_reverse(breaks = scales::pretty_breaks(n = 10)) +
-  labs(x = 'Time (Mya)', y = 'Abundance', fill = 'Taxa')
+  labs(x = 'Time (Mya)', y = 'Observations', fill = 'Taxa')
 
 occur_count %>%
   ggplot(aes(x = bin_time, y = n, fill = shelly)) +
@@ -350,15 +355,15 @@ occur_count %>%
              linetype = 'dashed') +
   scale_fill_viridis(discrete = TRUE) +
   scale_x_reverse(breaks = scales::pretty_breaks(n = 10)) +
-  labs(x = 'Time (Mya)', y = 'Relative Abundance', fill = 'Taxa')
+  labs(x = 'Time (Mya)', y = 'Relative observations', fill = 'Taxa')
 
 ```
 
 Visually, there are three major "phases": Trilobites --> Brachiopods --> Bivalves + Gastropods. [Sepkoski demonstrated this way back in the early 80s](https://www.jstor.org/stable/2400639). So, these results are not surprising and are a sanity check -- very good! 
 
-However we have a glaring issue: raw abundance counts can be misleading for fossil occurrences. If we are barely recording which species were present, we certainly are getting a biased picture of their abundances. Let's redo both of the above graphs this time looking at diversity. Diversity here is the number of unique taxa present at a given time. For paleodata, we tend to previlege either species or genera as are taxonomic levels of choice, with a particular emphasis on genera because identifying species from partial material is very difficult.  
+However we have a glaring issue: raw occurrence abundance counts can be misleading for fossil data. If we are barely recording which species were present, we certainly are getting a biased picture of their abundances. Let's redo both of the above graphs this time looking at diversity. Diversity here is the number of unique taxa present at a given time. For paleodata, we tend to privilege either species or genera as are taxonomic levels of choice, with a particular emphasis on genera because identifying species from partial material is very difficult.  
 
-Importantly, this measure of "diversity" is just the count of unique species occurrences for that time bin. This measure ignores range-through taxon and makes no effort to account for differences in sampling probability over time or between taxa. Here, diversity is just a raw count.
+Importantly, this measure of "diversity" is the count of unique species occurrences for that time bin. This measure ignores range-through taxon and makes no effort to account for differences in sampling probability over time or between taxa. Here, diversity is a raw count.
 
 ```{r vis_fossil_unique}
 
@@ -419,13 +424,13 @@ There are a lot of potential issues when processing lithological descriptions. F
 
 All of these problems mean I have to simplify these descriptions. 
 
-A basic way of dividing lithologies is simply siliciclsatic vs carbonate. Unfortunately, this comparison is not truly binary as mixed-sediments are possible. Additionally, I might be able to extract better information that just "siliciclastic" from our natural language descriptions. With this in mind, I've written a function (`simplify_lithology()`) to simplify lithological descriptions to be more amenable to analysis. My goal is to divide the litholgies into "coarse siliciclastic," "fine siliciclastic," "carbonate," and "other." Because this research compendium doubles as a package, I'll just call that function from the `notfossil` package.
+A basic way of dividing lithologies is simply siliciclsatic vs carbonate. Unfortunately, this comparison is not truly binary as mixed-sediments are possible. Additionally, I might be able to extract better information that "siliciclastic" from our natural language descriptions. With this in mind, I've written a function (`simplify_lithology()`) to simplify lithological descriptions to be more amenable to analysis. My goal is to divide the litholgies into "coarse siliciclastic," "fine siliciclastic," "carbonate," and "other." Because this research compendium doubles as a package, I'll call that function from the `notfossil` package.
 
 For a dataset this size, `simplify_lithology()` is memory intensive/slow for R. It is a lot of text manipulation, triple nested lists, tibble manipulation, and uses `tidyr::spread` internally. I've updated the major `map*()` calls to be `future_map*()` which is helping, but my laptop gets really angry.
 
 So, because it is parallel internally, I'm going to chunk the data and then recombine after each segment is finished. The other option would be removing the parallel operations from `simplify_lithology()`, splitting the data, and then running parallel operations on those splits. I'm not sure which is actually faster. And on a machine with more RAM (e.g. my work computer), this whole split-apply-combine stuff isn't necessary, so the internal parallel seems easiest?
 
-```{r get_lithology}
+```{r get_lithology, cache = TRUE}
 
 occur_collect$lith_simple <- 
   occur_collect %>%
@@ -437,7 +442,7 @@ occur_collect$lith_simple <-
 
 ```
 
-I've created a list column `lith_simple` where each element is a tibble describing the lithological composition of that unit in a simpler form. Most of the tricks above are just to make it so each unit has all four lithological descriptors and that there are 0s instead of NAs when that descriptor wasn't measured.
+I've created a list column `lith_simple` where each element is a tibble describing the lithological composition of that unit in a simpler form. Most of the tricks above are to make it so each unit has all four lithological descriptors and that there are 0s instead of NAs when that descriptor wasn't measured.
 
 Now that that data is all in order, we can start exploring that space. Does the average lithological composition of a geologic unit change over time? If so, how?
 
@@ -495,7 +500,8 @@ lith_time %>%
 
 We can also do a PCA of our composition data and then visualize the first two principle components, with point color corresponding to the age of that unit and point size varying by genus diversity (i.e. the number of unique genera in that unit at that time).
 
-```{r pca_lithology}
+```{r pca_lithology, fig.width = 10, fig.height = 8}
+
 lith_data <- 
   occur_collect %>%
   arrange(desc(bin_time)) %>%
@@ -561,36 +567,34 @@ as_tibble(lith_pca$scores) %>%
 ```
 
 
-# Lazarus-type occurrences
+# Lazarus-type occurrences {#lazarus}
 
-Lazarus taxon -- species with a gap in the fossil record
+So, technically, a **Lazarus taxon** is a taxon with a gap in its fossil record. To help better understand Lazarus taxon, I'm going to define a few features of their records. 
 
-Lazarus effect -- lots of simultaneous first occurrences after a gap.
+I'm going to define a **Lazarus occurrence** is the first occurrence of that species after a gap in their fossil record. We can further refine this to define a **Lazarus observation** as each unique geological unit, genus, time bin combination. This means that a Lazarus occurrence can be made of multiple Lazarus observations.
 
-I'm going to define the notion of a Lazarus occurrence as the first (re)occurrence of a species after a gap in their fossil record -- this excludes first occurrences.
+Similar to a Lazarus occurrence, I'm going to also define **cave occurrences**. A cave occurrence is the last occurrence of a taxon before a gap in their fossil record. I'm calling these cave occurrences because of the story of Lazarus. Lazarus went into a cave, was gone for a while, and then reappeared. 
 
-Cave occurrences are the last occurrence of a taxon before a gap in their fossil record, excluding last occurrences. I'm calling these cave occurrences because of the story of Lazarus. Lazarus went into a cave, was gone for a while, and then reappeared. 
-
-Something important to remember right now is that `bin_time` and `bin_num` *decrease* as we approach the present.
+When all of this is combined, we can then clearly state the **Lazarus effect** as when there are a multiple Lazarus occurrences at the same time. This definition means that the size of the Lazarus effect can be measured for a time bin.
 
 
-## Count number of Lazarus occurrences
+## Identify Lazarus occurrences
 
 The logic I'm using to identify Lazarus (and cave) occurrences is:
 
-1. look at the occurrence record of each species,
+1. look at the occurrence record of each taxon (i.e. genus),
 2. identify each gap,
 3. identify the first occurrence after that gap,
 4. mark as Lazarus occurrence.
 
 The cave occurrences have a slightly different step 3, where I identify the last occurrence before a gap.
 
-Here is all of that in action. And it is a mess.
+Here is all of that in action. And it is a mess. Something that is important to remember right now is that `bin_time` and `bin_num` *decrease* as we approach the present.
 
 ```{r get_lazarus}
 
-# first, let's just get genus occurrence over time
-# i want to include the abundance of that genus in that bin just in case
+# first, let's get genus occurrence over time
+# i want to include the abundance of that genus in that bin in case
 # i do admit that all of this is **insane**
 genus_lazarus <- 
   occur_collect %>%
@@ -602,9 +606,10 @@ genus_lazarus <-
   group_by(bin_num) %>%
   filter(!(duplicated(genus))) %>%
   ungroup() %>%
-  arrange(bin_num) %>%                 # temporal order (runs related)
-  group_by(genus) %>%                  # by genus
+  arrange(bin_num) %>%                 # temporal order needed for runs
+  group_by(genus) %>%                  
   # identify runs
+  # thank you stackoverflow
   group_by(seq_id = cumsum(c(1, diff(bin_num) != 1))) %>%
   ungroup() %>%
   # now we want to look at genera and their runs
@@ -624,6 +629,9 @@ genus_lazarus <-
 ```
 
 So that was a whirlwind, but now we have identified which occurrences are Lazarus occurrences. I've also identified all the cave occurrences.
+
+I've specifically identified if a genus occurs before or after a gap in its record. This isn't an occurrence as defined above: that was a unique observation of a fossil. Here an occurrence is the appearance of that genus in the fossil record -- this genus can have multiple observations in that same bin.
+
 
 ## Lazarus occurrences over time
 
@@ -660,14 +668,26 @@ lazarus_count %>%
              linetype = 'dashed') +
   scale_fill_viridis(discrete = TRUE) +
   scale_x_reverse(breaks = scales::pretty_breaks(n = 10)) +
-  labs(x = 'Time (Mya)', y = 'Lazarus occurrences', 
+  labs(x = 'Time (Mya)', y = 'Genus Lazarus occurrence', 
+       fill = 'Taxa')
+
+lazarus_count %>%
+  ggplot(aes(x = bin_time, y = count, fill = shelly)) +
+  geom_area(position = 'fill') +
+  geom_vline(data = tibble(x = big_5),
+             mapping = aes(xintercept = x),
+             size = 1.5,
+             linetype = 'dashed') +
+  scale_fill_viridis(discrete = TRUE) +
+  scale_x_reverse(breaks = scales::pretty_breaks(n = 10)) +
+  labs(x = 'Time (Mya)', y = 'Relative Lazarus occurrence', 
        fill = 'Taxa')
 
 ```
 
-As expected there are multiple time intervals with large numbers of Lazarus occurrences, which we could consider a Lazarus effect. Interestingly, some of these intervals are not associated with the big 5 mass extinction events. 
+As expected there are multiple time intervals with large numbers of Lazarus occurrences, which we could consider a Lazarus effect. Interestingly, some of these intervals are not associated with the big 5 mass extinction events. Also, these patterns tend to match the patterns we observed earlier in diversity; when a group is diverse for a long time, it has more potential for gaps in the records within that group.
 
-Now let's also look at the cave occurrences. 
+Now let's look at the cave occurrences. 
 
 ```{r vis_cave}
 
@@ -687,12 +707,24 @@ cave_count %>%
              linetype = 'dashed') +
   scale_fill_viridis(discrete = TRUE) +
   scale_x_reverse(breaks = scales::pretty_breaks(n = 10)) +
-  labs(x = 'Time (Mya)', y = 'Cave occurrences', 
+  labs(x = 'Time (Mya)', y = 'Genus cave occurrence', 
+       fill = 'Taxa')
+
+cave_count %>%
+  ggplot(aes(x = bin_time, y = count, fill = shelly)) +
+  geom_area(position = 'fill') +
+  geom_vline(data = tibble(x = big_5),
+             mapping = aes(xintercept = x),
+             size = 1.5,
+             linetype = 'dashed') +
+  scale_fill_viridis(discrete = TRUE) +
+  scale_x_reverse(breaks = scales::pretty_breaks(n = 10)) +
+  labs(x = 'Time (Mya)', y = 'Relative cave occurrence', 
        fill = 'Taxa')
 
 ```
 
-The obvious pattern here is the the number of Lazarus and cave occurrences tends to increase as we approach the present. This makes sense because we're increaseing in both diversity and the quality of fossil record as we approach the present.
+The obvious pattern here is the number of Lazarus and cave occurrences tends to increase as we approach the present. This makes sense because we're increasing in both diversity and the quality of fossil record as we approach the present.
 
 ## Percent Lazarus
 
@@ -700,7 +732,7 @@ The other way of looking at this would be what percent of occurrences in a time 
 
 Wrinkle to remember: an occurrence can be both a Lazarus and a cave occurrence. There are no restrictions against this.
 
-```{r percent_lazarus}
+```{r percent_lazarus, fig.width = 10, fig.height = 10}
 
 genus_percent <- 
   genus_lazarus %>%
@@ -739,11 +771,11 @@ laz_percent %>%
              mapping = aes(xintercept = x),
              size = 1.5,
              linetype = 'dashed') +
-  facet_wrap(~ shelly) +
+  facet_wrap(~ shelly, ncol = 2) +
   scale_fill_viridis(discrete = TRUE) +
   scale_x_reverse(breaks = scales::pretty_breaks(n = 5)) +
   theme(legend.position = 'bottom') +
-  labs(fill = 'Occurrence type',
+  labs(fill = 'Genus occurrence type',
        x = 'Time (Mya)', y = 'Count')
 
 # as percents this time
@@ -754,11 +786,11 @@ laz_percent %>%
              mapping = aes(xintercept = x),
              size = 1.5,
              linetype = 'dashed') +
-  facet_wrap(~ shelly) +
+  facet_wrap(~ shelly, ncol = 2) +
   scale_fill_viridis(discrete = TRUE) +
   scale_x_reverse(breaks = scales::pretty_breaks(n = 5)) +
   theme(legend.position = 'bottom') +
-  labs(fill = 'Occurrence type',
+  labs(fill = 'Genus occurrence type',
        x = 'Time (Mya)', y = 'Percent')
 
 ```
@@ -783,11 +815,11 @@ cave_percent %>%
              mapping = aes(xintercept = x),
              size = 1.5,
              linetype = 'dashed') +
-  facet_wrap(~ shelly) +
+  facet_wrap(~ shelly, ncol = 2) +
   scale_fill_viridis(discrete = TRUE) +
   scale_x_reverse(breaks = scales::pretty_breaks(n = 5)) +
   theme(legend.position = 'bottom') +
-  labs(fill = 'Occurrence type',
+  labs(fill = 'Genus occurrence type',
        x = 'Time (Mya)', y = 'Count')
 
 # as percents this time
@@ -798,11 +830,11 @@ cave_percent %>%
              mapping = aes(xintercept = x),
              size = 1.5,
              linetype = 'dashed') +
-  facet_wrap(~ shelly) +
+  facet_wrap(~ shelly, ncol = 2) +
   scale_fill_viridis(discrete = TRUE) +
   scale_x_reverse(breaks = scales::pretty_breaks(n = 5)) +
   theme(legend.position = 'bottom') +
-  labs(fill = 'Occurrence type',
+  labs(fill = 'Genus occurrence type',
        x = 'Time (Mya)', y = 'Percent')
 
 ```
@@ -812,7 +844,7 @@ cave_percent %>%
 
 We can also go back to the earlier PCA and now have the point size of the geological units be a function of the number of Lazarus (or cave) occurrences in that unit. We can compress our taxonomic groups because we're currently interested in those big spikes.
 
-```{r lazarus_pca}
+```{r lazarus_pca, fig.width = 10, fig.height = 8}
 
 lazarus_sum <- 
   lazarus_count %>%
@@ -838,7 +870,7 @@ as_tibble(lith_pca$scores) %>%
                            colour = bin_time, size = count)) +
   scale_colour_viridis() +
   labs(colour = 'Time (Mya)',
-       size = 'Lazarus occurrences',
+       size = 'Lazarus diversity',
        x = 'PC 1',
        y = 'PC 2')
 
@@ -848,7 +880,7 @@ I'm unsure if an actual pattern is really manifesting here but there are some in
 
 We can do the same but using the cave occurrences.
 
-```{r cave_pca}
+```{r cave_pca, fig.width = 10, fig.height = 10}
 
 cave_sum <- 
   cave_count %>%
@@ -874,8 +906,99 @@ as_tibble(lith_pca$scores) %>%
                            colour = bin_time, size = count)) +
   scale_colour_viridis() +
   labs(colour = 'Time (Mya)',
-       size = 'Cave occurrences',
+       size = 'Cave diversity',
        x = 'PC 1',
        y = 'PC 2')
 
 ```
+
+
+
+
+# TODO Modeling Lazaurus occurrences
+
+
+There are $n$ observations in the data set where an observational unit is a unique genus, geological unit, time bin combination. Let's call it $y_{i}$ where $i = 1, \ldots, n$.
+
+Predictors/covariates
+
+- unit lithological composition (`lith`)
+- taxonomic group (`shelly`)
+- geological unit (`unit_id`)
+- time of observation (`bin_time` or `bin_num`)
+- (optional) genus identity (`genus`)
+
+Compositional data needs to be transformed before being included as predictors in a model. This is because the data must sum to 1, which creates a non-identifiability if all parts are included as predictors. A similar problem would be having a categorical predictor and not assigning one state to the model intercept, which causes the model to effectively have 2 intercepts and a **massive** ridge in posterior density.
+
+The standard transform for composition data to be included as a predictor in a GLM(M)/hierarchical model is the isometric log-ratio transform. DEFINE. I'm going to let the effects of these composition variables vary by taxonomic group. After all, not all taxa preserve the same but we might expect genera of the same phylum or class to have similar fossilization properties/potential.
+
+I'm also going to have taxonomic group included as a varying-intercept, thus defining a varying-intercept and varying-slope model. As per usual with varying-intercept and varying-slope models, the covariance between all of these parameters due to taxonomic identity (some groups are more similar than others e.g. Bivalves and Brachiopods). 
+
+There aren't a lot of different taxonomic groups in this data, so I'm going to opt for fairly tight priors for all of these parameters.
+
+Geological unit, and time of observation can be included as non-nested varying-intercepts. Because these are
+
+## Defining a model
+
+## Is this a useful model?
+
+
+## Preparing data for model
+
+So we have both Lazarus occurrences and Lazarus observations, but I've technically only identified the Lazarus occurrences. 
+
+```{r add_lazarus}
+
+# for each individual observation of a fossil
+# add in if its occurrence is during a Lazarus occurrence interval  
+gen_laz <- genus_lazarus %>%
+  dplyr::select(genus, bin_num, bin_time, seq_id, lazarus, cave)
+
+occur_collect <- 
+  left_join(occur_collect, gen_laz, by = c('genus', 'bin_num', 'bin_time'))
+
+```
+
+Now slim to unique genus, geological unit, time bin combination. Currently, genera can appear multiple times in the same unit--time bin combo. These lines in the tibble are virtually identical: same genus, same unit, same time bin, same lithological composition, same Lazarus observation state. I'm weary of double counting (or more) and I don't know if an individual-level effect is warranted.
+
+```{r filter_unique_genus}
+
+occur_collect <- 
+  occur_collect %>%
+  #group_by(genus, unit_id, bin_num) %>%
+  ## abundance: count of 'identical' observations
+  #mutate(abundance = n()) %>%
+  #ungroup() %>%
+  group_by(unit_id, bin_num) %>%
+  # no double includes
+  filter(!(duplicated(genus)))
+
+```
+
+
+## Defining priors
+
+
+## Fitting a model
+
+
+## Model adequacy
+
+
+
+
+# TODO A different data--model combo
+
+What if instead of focusing on the Lazarus occurrences, we instead focused on the presence vs absence of a genus in geological units within its observation window. For each genus, from first appearance to last appearance, identify every geological unit--time bin combination. Mark 1 present, 0 absent. Same predictors as above.
+
+For each genus, find all the gaps in its record. Focus on temporal gaps. Identify all geological units present during those gaps. Use model posterior predictions to get posterior probability of probability of being present.
+
+Assuming our predictors are meaningful and we have a useful model...
+
+If we would predict something to be there based on lithology, but it isn't then that's evidence against record quality predicting individual gaps. 
+
+If there are concentrations of periods of time where many taxa are absent but our model predicts them to be there, than that's evidence against record quality predicting mass gaps.
+
+
+
+TO DO

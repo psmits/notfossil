@@ -7,29 +7,29 @@
 #' @export
 simplify_lithology <- function(lith) {
 
-  # some words are functional equivalents. synonymize!
-  dup_words <- list(c('green', 'greenish'), 
-                    c('limestone', 'lime'),
-                    c('red', 'reddish'), 
-                    c('blue', 'bluish'),
-                    c('brown', 'brownish'),
-                    c('yellow', 'yellowish'),
-                    c('thin', 'thinly'),
-                    c('thick', 'thickly'),
-                    c('bedded', 'laminated'),
-                    c('dolomite', 'dolomitic'),
-                    c('chert', 'cherty'),
-                    c('sandstone', 'sand', 'sandy'),
-                    c('mudstone', 'mud'),
-                    c('laminated', 'laminations'),
-                    c('shale', 'shaly', 'shaley'),
-                    c('siltstone', 'silty', 'siliceous'),
-                    c('arkose', 'arkosic'),
-                    c('argillite', 'argillaceous'))
+  ## some words are functional equivalents. synonymize!
+  #dup_words <- list(c('green', 'greenish'), 
+  #                  c('limestone', 'lime'),
+  #                  c('red', 'reddish'), 
+  #                  c('blue', 'bluish'),
+  #                  c('brown', 'brownish'),
+  #                  c('yellow', 'yellowish'),
+  #                  c('thin', 'thinly'),
+  #                  c('thick', 'thickly'),
+  #                  c('bedded', 'laminated'),
+  #                  c('dolomite', 'dolomitic'),
+  #                  c('chert', 'cherty'),
+  #                  c('sandstone', 'sand', 'sandy'),
+  #                  c('mudstone', 'mud'),
+  #                  c('laminated', 'laminations'),
+  #                  c('shale', 'shaly', 'shaley'),
+  #                  c('siltstone', 'silty', 'siliceous'),
+  #                  c('arkose', 'arkosic'),
+  #                  c('argillite', 'argillaceous'))
 
-  # some words aren't useful: too common or too rare
-  too_common <- c('sedimentary', 'light', 'dark', 'white', 'grey', 
-                  'phosphatic', 'tan', 'yellow', 'medium', 'red', 'black')
+  ## some words aren't useful: too common or too rare
+  #too_common <- c('sedimentary', 'light', 'dark', 'white', 'grey', 
+  #                'phosphatic', 'tan', 'yellow', 'medium', 'red', 'black')
   
   # fine type siliciclastics
   fine_sil <- c('siltstone', 'claystone', 'mudstone', 'shale', 'argillite')
